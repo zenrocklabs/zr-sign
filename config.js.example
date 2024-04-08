@@ -1,0 +1,32 @@
+module.exports = {
+  // BIP39 mnemonic phrase
+  MNEMONIC: "",
+  
+  // INFURA API key
+  INFURA_KEY: "",
+
+  QUICKNODE_ZK_POLYGON_KEY: ""
+
+  // ETHERSCAN API key
+  ETHERSCAN_KEY: "",
+
+  // OPTIMISM API key
+  OPTIMISM_KEY: "",
+
+  QUICKNODE_KEY: "",
+
+  // ARBITRUM API key
+  ARBITRUM_KEY: "",
+
+  // POLYGON API key
+  POLYGON_KEY: "",
+
+  // AVALANCHE API key
+  AVALANCHE_KEY: "",
+
+  // Proxy admin - can upgrade implementation contract
+  PROXY_ADMIN_ADDRESS: "",
+
+  // ZrSignTypes library address
+  Q_SIGN_TYPES: "",
+};

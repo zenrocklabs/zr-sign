@@ -1,0 +1,12 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ZrSign (Zenrock)
+Upstream-Contact: Qredo Ltd. <support@zenrock.com>
+Source: zenrock.com
+
+Files: docs/* test/* migrations/* README * config.js.example package.json slither.config.json truffle-config.js .*
+Copyright: 2024 Fusion Laboratories Ltd.
+License: BSL
+
+Files: contracts/AccessControl.sol contracts/Context.sol contracts/ERC165.sol contracts/Initializable.sol  contracts/Migrations.sol  contracts/ReentrancyGuard.sol  contracts/proxy/ERC1967Proxy.sol  contracts/proxy/ERC1967Upgrade.sol  contracts/proxy/Proxy.sol  interfaces/IAccessControl.sol  interfaces/IBeacon.sol  interfaces/IERC165.sol  libraries/Address.sol  libraries/Math.sol  libraries/StorageSlot.sol  libraries/Strings.sol
+Copyright: 2016-2023 zOS Global Limited and contributors
+License: MIT
