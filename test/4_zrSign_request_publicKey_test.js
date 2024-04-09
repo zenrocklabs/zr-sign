@@ -37,14 +37,14 @@ contract("ZrSign request public key tests", (accounts) => {
       let wallets;
 
       //When
-      wallets = await helpers.getQKeys(
+      wallets = await helpers.getZrKeys(
         supportedWalletType,
         regularAddress,
         instances.proxied
       );
 
       baseFee = await helpers.getBaseFee(instances.proxied);
-      tx = await helpers.qKeyReq(
+      tx = await helpers.zrKeyReq(
         supportedWalletType,
         baseFee,
         regularAddress,
@@ -53,7 +53,7 @@ contract("ZrSign request public key tests", (accounts) => {
 
       //Then
       await helpers.expectTXSuccess(tx);
-      await helpers.checkQKeyReqEvent(
+      await helpers.checkZrKeyReqEvent(
         tx.receipt.logs[0],
         supportedWalletType,
         regularAddress,
@@ -86,7 +86,7 @@ contract("ZrSign request public key tests", (accounts) => {
         let tx;
 
         //When
-        tx = helpers.qKeyReq(
+        tx = helpers.zrKeyReq(
           c.walletTypeId,
           c.fee,
           c.caller,
