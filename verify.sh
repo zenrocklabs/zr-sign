@@ -23,8 +23,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Verifying ZrSign with custom-proxy QProxy and network $network..."
-truffle run verify ZrSign --custom-proxy QProxy --network $network
+echo "Verifying ZrSign with custom-proxy ZrProxy and network $network..."
+truffle run verify ZrSign --custom-proxy ZrProxy --network $network
 if [ $? -ne 0 ]; then
     echo "Error verifying ZrSign with custom-proxy. Exiting."
     exit 1

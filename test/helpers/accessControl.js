@@ -1,7 +1,7 @@
 const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 const MPC_ROLE =
-  "0xe10371affd65e24cab392f019bf45e5e4f84b16aafda5a4c67d3489692543958"; // web3.utils.keccak256("qredo.role.mpc");
+  "0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14"; // web3.utils.keccak256("zenrock.role.mpc");
 
 async function grantRole(role, account, caller, instance) {
   //Given

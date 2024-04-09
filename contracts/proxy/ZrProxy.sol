@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 // This file is a modification of OpenZeppelin Contracts v4.4.1 (proxy/transparent/TransparentUpgradeableProxy.sol), released under the MIT license

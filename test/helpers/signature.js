@@ -93,7 +93,7 @@ async function zrSignRes(
   return tx;
 }
 
-function checkQSigRequestEvent(
+function checkZrSigRequestEvent(
   log,
   traceId,
   walletTypeId,
@@ -106,7 +106,7 @@ function checkQSigRequestEvent(
 ) {
   assert.equal(
     log.event,
-    "QSigRequest",
+    "ZrSigRequest",
     `Transaction: ${log.transactionHash} emitted wrong event`
   );
   assert.equal(
@@ -151,7 +151,7 @@ function checkQSigRequestEvent(
   );
 }
 
-function checkQSigResolveEvent(
+function checkZrSigResolveEvent(
   log,
   traceId,
   signature,
@@ -159,7 +159,7 @@ function checkQSigResolveEvent(
 ) {
   assert.equal(
     log.event,
-    "QSigResolve",
+    "ZrSigResolve",
     `Transaction: ${log.transactionHash} emitted wrong event`
   );
   assert.equal(
@@ -184,6 +184,6 @@ module.exports = {
   zrSignData,
   zrSignTx,
   zrSignRes,
-  checkQSigRequestEvent,
-  checkQSigResolveEvent,
+  checkZrSigRequestEvent,
+  checkZrSigResolveEvent,
 };

@@ -69,7 +69,7 @@ contract("ZrSign request signature tests", (accounts) => {
     const vHex = ("0" + vValue.toString(16)).slice(-2); // Ensures two characters
     const authSignature = signature.slice(0, -2) + vHex;
 
-    await helpers.qKeyRes(
+    await helpers.zrKeyRes(
       supportedWalletTypeId,
       regularAddress,
       pki,
@@ -152,7 +152,7 @@ contract("ZrSign request signature tests", (accounts) => {
 
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigRequestEvent(
+        await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
           c.traceId,
           c.walletTypeId,
@@ -250,7 +250,7 @@ contract("ZrSign request signature tests", (accounts) => {
 
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigRequestEvent(
+        await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
           c.traceId,
           c.walletTypeId,
@@ -353,7 +353,7 @@ contract("ZrSign request signature tests", (accounts) => {
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
 
-        wallets = await helpers.getQKeys(
+        wallets = await helpers.getZrKeys(
           c.walletTypeId,
           c.caller,
           instances.proxied

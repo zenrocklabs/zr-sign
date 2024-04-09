@@ -1,16 +1,16 @@
 const { assert } = require("chai");
 
-async function getQKeys(walletTypeId, owner, instance) {
-  return await instance.getQKeys.call(walletTypeId, owner);
+async function getZrKeys(walletTypeId, owner, instance) {
+  return await instance.getZrKeys.call(walletTypeId, owner);
 }
 
-async function qKeyReq(walletTypeId, msgValue, caller, instance) {
+async function zrKeyReq(walletTypeId, msgValue, caller, instance) {
   //Given
   let tx;
   //When
   const params = { walletTypeId: walletTypeId };
 
-  tx = instance.qKeyReq(params, {
+  tx = instance.zrKeyReq(params, {
     from: caller,
     value: msgValue,
   });
@@ -18,10 +18,10 @@ async function qKeyReq(walletTypeId, msgValue, caller, instance) {
   return tx;
 }
 
-function checkQKeyReqEvent(log, walletTypeId, owner, walletIndex) {
+function checkZrKeyReqEvent(log, walletTypeId, owner, walletIndex) {
   assert.equal(
     log.event,
-    "QKeyRequest",
+    "ZrKeyRequest",
     `Transaction: ${log.transactionHash} emitted wrong event`
   );
   assert.equal(
@@ -41,7 +41,7 @@ function checkQKeyReqEvent(log, walletTypeId, owner, walletIndex) {
   );
 }
 
-async function qKeyRes(
+async function zrKeyRes(
   walletTypeId,
   owner,
   walletIndex,
@@ -54,7 +54,7 @@ async function qKeyRes(
   let tx;
   //When
   const params = { walletTypeId: walletTypeId, owner: owner, walletIndex: walletIndex, publicKey: publicKey, authSignature: signature };
-  tx = instance.qKeyRes(params, {
+  tx = instance.zrKeyRes(params, {
     from: caller,
   });
 
@@ -62,10 +62,10 @@ async function qKeyRes(
   return tx;
 }
 
-function checkQKeyResEvent(log, walletTypeId, walletIndex, owner, publicKey) {
+function checkZrKeyResEvent(log, walletTypeId, walletIndex, owner, publicKey) {
   assert.equal(
     log.event,
-    "QKeyResolve",
+    "ZrKeyResolve",
     `Transaction: ${log.transactionHash} emitted wrong event`
   );
   assert.equal(
@@ -91,9 +91,9 @@ function checkQKeyResEvent(log, walletTypeId, walletIndex, owner, publicKey) {
 }
 
 module.exports = {
-  getQKeys,
-  qKeyReq,
-  checkQKeyReqEvent,
-  qKeyRes,
-  checkQKeyResEvent,
+  getZrKeys,
+  zrKeyReq,
+  checkZrKeyReqEvent,
+  zrKeyRes,
+  checkZrKeyResEvent,
 };
