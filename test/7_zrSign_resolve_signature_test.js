@@ -4,6 +4,7 @@ const RLP = require("rlp");
 
 contract("ZrSign resolve signature tests", (accounts) => {
   const owner = accounts[0];
+  const tokenomicsAddress = accounts[8];
   const proxyAdmin = accounts[9];
   const regularAddress = accounts[1];
   const ovmAddress = accounts[2];
@@ -17,7 +18,10 @@ contract("ZrSign resolve signature tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner);
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+
     const pki = 0;
 
     const wt = helpers.EVM_CHAIN_TYPE;
@@ -45,14 +49,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
       instances.proxied
     );
 
-    await helpers.setupBaseFee(baseFee, owner, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, owner, instances.proxied);
-    await helpers.grantRole(
-      helpers.MPC_ROLE,
-      ovmAddress,
-      caller,
-      instances.proxied
-    );
+
 
     const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
     const authSignature = await helpers.getAuthSignature(ovmAddress, payload);

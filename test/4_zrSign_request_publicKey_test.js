@@ -3,19 +3,21 @@ const helpers = require("./helpers");
 
 contract("ZrSign request public key tests", (accounts) => {
   const owner = accounts[0];
+  const tokenomicsAddress = accounts[8];
   const proxyAdmin = accounts[9];
   const regularAddress = accounts[1];
   const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
   const unsupportedWalletType = helpers.UNSUPPORTED_CHAIN_TYPE_HASH;
+
   const baseFee = web3.utils.toWei("80", "gwei");
   const networkFee = web3.utils.toWei("4", "wei");
 
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner);
-    await helpers.setupBaseFee(baseFee, owner, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, owner, instances.proxied);
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
+    await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
 
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;

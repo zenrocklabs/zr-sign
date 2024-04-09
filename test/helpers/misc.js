@@ -36,13 +36,16 @@ function handleCustomError(error, customError) {
   const types = errorAbi.inputs.map((elem) => elem.type);
   const revertData = typeof error.data === "string" ? error.data : error.data.result;
 
-  const errorId = keccak256(["string"], [`${customError.name}(${types ? types.toString() : ""})`]).substring(0, 10);
-  expect(JSON.stringify(revertData), `Expected custom error ${customError.name} (${errorId})`).to.include(errorId);
+  const errorId = keccak256(["string"], [`${customError.name}(${types ? types.toString() : ""})`]).substring(0, 10).toLowerCase();  // Convert errorId to lowercase
+  expect(JSON.stringify(revertData).toLowerCase(), `Expected custom error ${customError.name} (${errorId})`).to.include(errorId);  // Convert revertData to lowercase in comparison
 
   if (customError.params) {
     expect(customError.params.length, "Expected the number of customError.params to match the number of types").to.eq(types.length);
     const decodedValues = defaultAbiCoder.decode(types, hexDataSlice(revertData, 4));
-    decodedValues.forEach((elem, index) => expect(elem.toString()).to.eq(customError.params[index].toString()));
+    decodedValues.forEach((elem, index) => {
+      // Convert both elements to string and lowercase before comparison
+      expect(elem.toString().toLowerCase()).to.eq(customError.params[index].toString().toLowerCase());
+    });
   }
 }
 
