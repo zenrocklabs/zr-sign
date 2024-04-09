@@ -1,15 +1,10 @@
 const { assert } = require("chai");
 const helpers = require("./helpers");
 const RLP = require("rlp");
-const {
-  UNSUPPORTED_CHAIN_TYPE,
-  EVM_CHAIN_TYPE,
-  EVM_CHAIN_TYPE_HASH,
-  UNSUPPORTED_CHAIN_TYPE_HASH,
-} = require("./helpers");
 
 contract("ZrSign integration tests", (accounts) => {
   const owner = accounts[0];
+  const tokenomicsAddress = accounts[8];
   const proxyAdmin = accounts[9];
   const regularAddress = accounts[1];
   const regularAddress1 = accounts[7];
@@ -25,7 +20,7 @@ contract("ZrSign integration tests", (accounts) => {
   let instances;
 
   before(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner);
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
   });
 
   describe("setup fee", async () => {
@@ -33,12 +28,12 @@ contract("ZrSign integration tests", (accounts) => {
       {
         testName: "setup base fee",
         baseFee: web3.utils.toWei("30", "gwei"),
-        caller: owner,
+        caller: tokenomicsAddress,
       },
       {
         testName: "change base fee",
         baseFee: web3.utils.toWei("80", "gwei"),
-        caller: owner,
+        caller: tokenomicsAddress,
       },
     ];
 
@@ -69,12 +64,12 @@ contract("ZrSign integration tests", (accounts) => {
       {
         testName: "setup network fee",
         networkFee: web3.utils.toWei("6", "wei"),
-        caller: owner,
+        caller: tokenomicsAddress,
       },
       {
         testName: "change network fee",
         networkFee: web3.utils.toWei("4", "wei"),
-        caller: owner,
+        caller: tokenomicsAddress,
       },
     ];
 

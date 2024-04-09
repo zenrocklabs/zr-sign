@@ -3,7 +3,7 @@
 
 pragma solidity 0.8.20;
 
-import "./ISign.sol";
+import { ISign } from "./ISign.sol";
 
 interface IZrSign is ISign {
     function initializeV1() external;

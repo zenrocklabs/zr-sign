@@ -3,6 +3,7 @@ const helpers = require("./helpers");
 
 contract("ZrSign resolve public key tests", (accounts) => {
   const owner = accounts[0];
+  const tokenomicsAddress = accounts[8];
   const proxyAdmin = accounts[9];
   const regularAddress = accounts[1];
   const ovmAddress = accounts[2];
@@ -15,16 +16,10 @@ contract("ZrSign resolve public key tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner);
-    await helpers.setupBaseFee(baseFee, owner, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, owner, instances.proxied);
-    await helpers.grantRole(
-      helpers.MPC_ROLE,
-      ovmAddress,
-      owner,
-      instances.proxied
-    );
-
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+    
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;
     const caller = owner;

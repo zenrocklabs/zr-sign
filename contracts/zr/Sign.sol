@@ -3,23 +3,22 @@
 
 pragma solidity 0.8.20;
 
+import { AccessControl } from "../AccessControl.sol";
+import { ECDSA } from "../../libraries/ECDSA.sol";
+import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol";
 
-import "../Context.sol";
-import "../AccessControl.sol";
-import "../Initializable.sol";
-import "../../libraries/ECDSA.sol";
-import "../../libraries/MessageHashUtils.sol";
+import { ISign } from "../../interfaces/zr/ISign.sol";
+import { SignTypes } from "../../libraries/zr/SignTypes.sol";
+import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 
-import "../../interfaces/zr/ISign.sol";
-import "../../libraries/zr/SignTypes.sol";
-import "../../libraries/zr/ZrSignTypes.sol";
 
 abstract contract Sign is AccessControl, ISign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
     using MessageHashUtils for bytes32;
     using ECDSA for bytes32;
 
-    bytes32 public constant MPC_ROLE = keccak256("zenrock.role.mpc");
+    bytes32 public constant MPC_ROLE =
+        0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14; //keccak256("zenrock.role.mpc");
 
     bytes32 public constant SRC_WALLET_TYPE_ID =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a; // keccak256(abi.encode(ChainInfo{purpose:44 coinType: 60}));
@@ -38,7 +37,7 @@ abstract contract Sign is AccessControl, ISign {
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
     }
-    
+
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant SIGN_STORAGE_LOCATION =
         0xa30be26d48c79c53518f37fd0be48e3bd1b55edc6a24c0bc6a2effeee4c2c800;
@@ -350,7 +349,7 @@ abstract contract Sign is AccessControl, ISign {
     function _walletTypeIdConfig(
         ZrSignTypes.ChainInfo memory c,
         bool support
-    ) internal virtual returns(bytes32) {
+    ) internal virtual returns (bytes32) {
         SignStorage storage $ = _getSignStorage();
         bytes32 walletTypeId = c.hashChainInfo();
         if (support) {
@@ -368,7 +367,7 @@ abstract contract Sign is AccessControl, ISign {
         }
         return walletTypeId;
     }
-    
+
     function _chainIdConfig(
         bytes32 walletTypeId,
         bytes32 chainId,
@@ -390,21 +389,18 @@ abstract contract Sign is AccessControl, ISign {
         }
     }
 
-    function _setupBaseFee(
-        uint256 newBaseFee
-    ) internal virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function _setupBaseFee(uint256 newBaseFee) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit BaseFeeUpdate($._baseFee, newBaseFee);
         $._baseFee = newBaseFee;
     }
 
-    function _setupNetworkFee(
-        uint256 newNetworkFee
-    ) internal virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    function _setupNetworkFee(uint256 newNetworkFee) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit NetworkFeeUpdate($._networkFee, newNetworkFee);
         $._networkFee = newNetworkFee;
     }
+
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
     function _getWalletByIndex(
         bytes32 walletTypeId,
