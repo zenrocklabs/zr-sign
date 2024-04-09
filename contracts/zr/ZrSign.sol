@@ -3,16 +3,14 @@
 
 pragma solidity 0.8.20;
 
-import "../Context.sol";
-import "../AccessControl.sol";
-import "../Initializable.sol";
-
-import "./Sign.sol";
-import "../../libraries/zr/ZrSignTypes.sol";
-import "../../interfaces/zr/IZrSign.sol";
+import { Sign } from "./Sign.sol";
+import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
+import { IZrSign } from "../../interfaces/zr/IZrSign.sol";
 
 contract ZrSign is Sign, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
+
+    bytes32 public constant TOKENOMICS_ROLE = 0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
 
     //****************************************************************** CONSTRUCTOR FUNCTION ******************************************************************/
 
@@ -64,13 +62,13 @@ contract ZrSign is Sign, IZrSign {
 
     function setupBaseFee(
         uint256 newBaseFee
-    ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external virtual override onlyRole(TOKENOMICS_ROLE) {
         _setupBaseFee(newBaseFee);
     }
 
     function setupNetworkFee(
         uint256 newNetworkFee
-    ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external virtual override onlyRole(TOKENOMICS_ROLE) {
         _setupNetworkFee(newNetworkFee);
     }
 
@@ -79,7 +77,7 @@ contract ZrSign is Sign, IZrSign {
         payable
         virtual
         override
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(TOKENOMICS_ROLE)
     {
         address payable sender = payable(_msgSender());
         uint256 amount = address(this).balance;
