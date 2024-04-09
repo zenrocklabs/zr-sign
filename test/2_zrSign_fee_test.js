@@ -3,13 +3,14 @@ const helpers = require("./helpers");
 
 contract("ZrSign fee tests", (accounts) => {
   const owner = accounts[0];
+  const tokenomicsAddress = accounts[8];
   const proxyAdmin = accounts[9];
   const regularAddress = accounts[1];
 
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner);
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
   });
 
   describe("positive tests", async () => {
@@ -24,7 +25,7 @@ contract("ZrSign fee tests", (accounts) => {
       oldBaseFee = await helpers.getBaseFee(instances.proxied);
       tx = await helpers.setupBaseFee(
         expectedBaseFee,
-        owner,
+        tokenomicsAddress,
         instances.proxied
       );
       updatedBaseFee = await helpers.getBaseFee(instances.proxied);
@@ -53,7 +54,7 @@ contract("ZrSign fee tests", (accounts) => {
       oldNetworkFee = await helpers.getNetworkFee(instances.proxied);
       tx = await helpers.setupNetworkFee(
         expectedNetworkFee,
-        owner,
+        tokenomicsAddress,
         instances.proxied
       );
       updatedNetworkFee = await helpers.getNetworkFee(instances.proxied);
@@ -78,14 +79,14 @@ contract("ZrSign fee tests", (accounts) => {
       //Given
       let tx;
       let expectedBaseFee = web3.utils.toWei("80", "gwei");
-      let defaultAdminRole;
+      let role;
       let expectedError;
 
       //When
-      defaultAdminRole = await instances.proxied.DEFAULT_ADMIN_ROLE.call();
+      role = await instances.proxied.TOKENOMICS_ROLE.call();
       const customError = {
         name: "AccessControlUnauthorizedAccount",
-        params: [regularAddress, defaultAdminRole],
+        params: [regularAddress, role],
         instance: instances.proxied
       };
 
@@ -103,14 +104,14 @@ contract("ZrSign fee tests", (accounts) => {
       //Given
       let tx;
       let expectedNetworkFee = web3.utils.toWei("4", "wei");
-      let defaultAdminRole;
+      let role;
       let expectedError;
 
       //When
-      defaultAdminRole = await instances.proxied.DEFAULT_ADMIN_ROLE.call();
+      role = await instances.proxied.TOKENOMICS_ROLE.call();
       const customError = {
         name: "AccessControlUnauthorizedAccount",
-        params: [regularAddress, defaultAdminRole],
+        params: [regularAddress, role],
         instance: instances.proxied
       };
 

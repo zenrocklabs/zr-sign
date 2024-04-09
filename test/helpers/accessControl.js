@@ -1,7 +1,10 @@
 const DEFAULT_ADMIN_ROLE =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
+
 const MPC_ROLE =
   "0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14"; // web3.utils.keccak256("zenrock.role.mpc");
+
+const TOKENOMICS_ROLE = "0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b"; // web3.utils.keccak256("zenrock.role.tokenomics");
 
 async function grantRole(role, account, caller, instance) {
   //Given
@@ -94,4 +97,5 @@ module.exports = {
   checkRevokeRoleEvent,
   DEFAULT_ADMIN_ROLE,
   MPC_ROLE,
+  TOKENOMICS_ROLE,
 };

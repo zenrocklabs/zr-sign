@@ -19,7 +19,7 @@ abstract contract Sign is AccessControl, ISign {
     using MessageHashUtils for bytes32;
     using ECDSA for bytes32;
 
-    bytes32 public constant MPC_ROLE = keccak256("zenrock.role.mpc");
+    bytes32 public constant MPC_ROLE = 0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14; //keccak256("zenrock.role.mpc");
 
     bytes32 public constant SRC_WALLET_TYPE_ID =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a; // keccak256(abi.encode(ChainInfo{purpose:44 coinType: 60}));
@@ -392,7 +392,7 @@ abstract contract Sign is AccessControl, ISign {
 
     function _setupBaseFee(
         uint256 newBaseFee
-    ) internal virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit BaseFeeUpdate($._baseFee, newBaseFee);
         $._baseFee = newBaseFee;
@@ -400,11 +400,12 @@ abstract contract Sign is AccessControl, ISign {
 
     function _setupNetworkFee(
         uint256 newNetworkFee
-    ) internal virtual onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit NetworkFeeUpdate($._networkFee, newNetworkFee);
         $._networkFee = newNetworkFee;
     }
+    
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
     function _getWalletByIndex(
         bytes32 walletTypeId,
