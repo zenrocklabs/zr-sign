@@ -57,7 +57,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
     const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
     const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
-    await helpers.qKeyRes(
+    await helpers.zrKeyRes(
       supportedWalletTypeId,
       regularAddress,
       pki,
@@ -128,7 +128,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
         );
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigResolveEvent(
+        await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           c.traceId,
           signature,
@@ -208,7 +208,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigResolveEvent(
+        await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           c.traceId,
           signature,

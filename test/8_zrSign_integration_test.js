@@ -665,13 +665,13 @@ contract("ZrSign integration tests", (accounts) => {
         let wallets;
         let tx;
         //When
-        wallets = await helpers.getQKeys(
+        wallets = await helpers.getZrKeys(
           walletTypeId,
           c.caller,
           instances.proxied
         );
 
-        tx = await helpers.qKeyReq(
+        tx = await helpers.zrKeyReq(
           walletTypeId,
           c.fee,
           c.caller,
@@ -679,7 +679,7 @@ contract("ZrSign integration tests", (accounts) => {
         );
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQKeyReqEvent(
+        await helpers.checkZrKeyReqEvent(
           tx.receipt.logs[0],
           walletTypeId,
           regularAddress,
@@ -713,13 +713,13 @@ contract("ZrSign integration tests", (accounts) => {
         let walletsAfter;
 
         //When
-        walletsBefore = await helpers.getQKeys(
+        walletsBefore = await helpers.getZrKeys(
           c.walletTypeId,
           c.caller,
           instances.proxied
         );
 
-        tx = helpers.qKeyReq(
+        tx = helpers.zrKeyReq(
           c.walletTypeId,
           c.fee,
           c.caller,
@@ -727,7 +727,7 @@ contract("ZrSign integration tests", (accounts) => {
         );
         //Then
         await helpers.expectRevert(tx, c.expectedError);
-        walletsAfter = await helpers.getQKeys(
+        walletsAfter = await helpers.getZrKeys(
           c.walletTypeId,
           c.caller,
           instances.proxied
@@ -771,7 +771,7 @@ contract("ZrSign integration tests", (accounts) => {
         let walletsAfter;
         let tx;
         //When
-        walletsBefore = await helpers.getQKeys(
+        walletsBefore = await helpers.getZrKeys(
           walletTypeId,
           c.owner,
           instances.proxied
@@ -780,7 +780,7 @@ contract("ZrSign integration tests", (accounts) => {
         const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [walletTypeId, c.owner, c.walletIndex, c.publicKey]);
         const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
-        tx = await helpers.qKeyRes(
+        tx = await helpers.zrKeyRes(
           walletTypeId,
           c.owner,
           c.walletIndex,
@@ -789,14 +789,14 @@ contract("ZrSign integration tests", (accounts) => {
           c.caller,
           instances.proxied
         );
-        walletsAfter = await helpers.getQKeys(
+        walletsAfter = await helpers.getZrKeys(
           walletTypeId,
           c.owner,
           instances.proxied
         );
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQKeyResEvent(
+        await helpers.checkZrKeyResEvent(
           tx.receipt.logs[0],
           walletTypeId,
           walletsBefore.length,
@@ -883,7 +883,7 @@ contract("ZrSign integration tests", (accounts) => {
         let walletsBefore;
         let walletsAfter;
         //When
-        walletsBefore = await helpers.getQKeys(
+        walletsBefore = await helpers.getZrKeys(
           walletTypeId,
           c.owner,
           instances.proxied
@@ -891,7 +891,7 @@ contract("ZrSign integration tests", (accounts) => {
         const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
-        tx = helpers.qKeyRes(
+        tx = helpers.zrKeyRes(
           walletTypeId,
           c.owner,
           c.walletIndex,
@@ -902,7 +902,7 @@ contract("ZrSign integration tests", (accounts) => {
         );
         //Then
         await helpers.expectRevert(tx, c.expectedError);
-        walletsAfter = await helpers.getQKeys(
+        walletsAfter = await helpers.getZrKeys(
           walletTypeId,
           c.owner,
           instances.proxied
@@ -985,7 +985,7 @@ contract("ZrSign integration tests", (accounts) => {
 
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigRequestEvent(
+        await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
           c.traceId,
           c.walletTypeId,
@@ -1114,7 +1114,7 @@ contract("ZrSign integration tests", (accounts) => {
 
         let tx;
         //When
-        const ev = await instances.proxied.getPastEvents("QSigRequest", {
+        const ev = await instances.proxied.getPastEvents("ZrSigRequest", {
           filter: filter,
           fromBlock: 0,
           toBlock: "latest",
@@ -1140,7 +1140,7 @@ contract("ZrSign integration tests", (accounts) => {
 
         //Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkQSigResolveEvent(
+        await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           event.args.traceId,
           signature,
@@ -1196,7 +1196,7 @@ contract("ZrSign integration tests", (accounts) => {
           payloadHash,
           FAKE_EVM_MPC_ADDRESS
         );
-        const evBefore = await instances.proxied.getPastEvents("QSigResolve");
+        const evBefore = await instances.proxied.getPastEvents("ZrSigResolve");
 
         const resPayload = web3.eth.abi.encodeParameters(['uint256', 'bytes', 'bool'], [c.traceId, signature, c.broadcast]);
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
@@ -1212,7 +1212,7 @@ contract("ZrSign integration tests", (accounts) => {
 
         //Then
         await helpers.expectRevert(tx, c.expectedError);
-        const evAfter = await instances.proxied.getPastEvents("QSigResolve");
+        const evAfter = await instances.proxied.getPastEvents("ZrSigResolve");
         assert.deepEqual(
           evAfter,
           evBefore,

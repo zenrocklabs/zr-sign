@@ -1,14 +1,14 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023 Qredo Ltd.
+// SPDX-License-Identifier: BUSL
+// SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 pragma solidity 0.8.20;
 
 library SignTypes {
-    struct QKeyReqParams {
+    struct ZrKeyReqParams {
         bytes32 walletTypeId;
     }
 
-    struct QKeyResParams {
+    struct ZrKeyResParams {
         bytes32 walletTypeId;
         address owner;
         uint256 walletIndex;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 pragma solidity 0.8.20;
@@ -102,17 +103,17 @@ abstract contract Sign is AccessControl, ISign {
 
     //****************************************************************** EXTERNAL FUNCTIONS ******************************************************************/
 
-    function qKeyReq(
-        SignTypes.QKeyReqParams memory params
+    function zrKeyReq(
+        SignTypes.ZrKeyReqParams memory params
     ) external payable keyFee walletTypeGuard(params.walletTypeId) {
         SignStorage storage $ = _getSignStorage();
         bytes32 id = _getId(params.walletTypeId, _msgSender());
         uint256 walletIndex = $.wallets[id].length;
-        emit QKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
+        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
     }
 
-    function qKeyRes(
-        SignTypes.QKeyResParams memory params
+    function zrKeyRes(
+        SignTypes.ZrKeyResParams memory params
     ) external walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
         SignStorage storage $ = _getSignStorage();
 
@@ -135,7 +136,7 @@ abstract contract Sign is AccessControl, ISign {
         );
 
         $.wallets[id].push(params.publicKey);
-        emit QKeyResolve(
+        emit ZrKeyResolve(
             params.walletTypeId,
             params.owner,
             $.wallets[id].length - 1,
@@ -235,7 +236,7 @@ abstract contract Sign is AccessControl, ISign {
             $._traceId = $._traceId + 1;
         }
 
-        emit QSigRequest(
+        emit ZrSigRequest(
             $._traceId,
             walletId,
             params.walletTypeId,
@@ -264,7 +265,7 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     function _resSig(SignTypes.SignResParams memory params) internal virtual {
-        emit QSigResolve(params.traceId, params.signature, params.broadcast);
+        emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
 
     function _mustValidateAuthSignature(
@@ -302,14 +303,14 @@ abstract contract Sign is AccessControl, ISign {
         return $._networkFee;
     }
 
-    function getQKeys(
+    function getZrKeys(
         bytes32 walletTypeId,
         address owner
     ) external view virtual override returns (string[] memory) {
         return _getWallets(walletTypeId, owner);
     }
 
-    function getQKey(
+    function getZrKey(
         bytes32 walletTypeId,
         address owner,
         uint256 index

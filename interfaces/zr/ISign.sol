@@ -1,16 +1,16 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023 Qredo Ltd.
+// SPDX-License-Identifier: BUSL
+// SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 pragma solidity 0.8.20;
 
-import "./IAccessControl.sol";
-import "../libraries/SignTypes.sol";
-import "../libraries/ZrSignTypes.sol";
+import "../IAccessControl.sol";
+import "../../libraries/zr/SignTypes.sol";
+import "../../libraries/zr/ZrSignTypes.sol";
 
 interface ISign is IAccessControl {
-    function zrKeyReq(SignTypes.QKeyReqParams calldata params) external payable;
+    function zrKeyReq(SignTypes.ZrKeyReqParams calldata params) external payable;
 
-    function zrKeyRes(SignTypes.QKeyResParams calldata params) external;
+    function zrKeyRes(SignTypes.ZrKeyResParams calldata params) external;
 
     function zrSignHash(SignTypes.ZrSignParams calldata params) external payable;
 
