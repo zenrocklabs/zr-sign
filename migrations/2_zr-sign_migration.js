@@ -4,7 +4,6 @@ const ZrSign = artifacts.require("ZrSign");
 const ZrProxy = artifacts.require("ZrProxy");
 const fs = require("fs");
 const path = require("path");
-const helpers = require("../test/helpers");
 
 if (fs.existsSync(path.join(__dirname, "..", "config.js"))) {
   ({
