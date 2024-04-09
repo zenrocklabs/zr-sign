@@ -1,8 +1,12 @@
-const { assert } = require("chai");
+const SignTypes = artifacts.require("SignTypes");
+const ZrSignTypes = artifacts.require("ZrSignTypes");
 const ZrProxy = artifacts.require("ZrProxy");
 const ZrSign = artifacts.require("ZrSign");
 
 async function initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddr, mpcAddr) {
+  await ZrSign.link(SignTypes);
+  await ZrSign.link(ZrSignTypes);
+
   let implInstance = await ZrSign.new();
   const implContract = new web3.eth.Contract(implInstance.abi);
   const data = implContract.methods.initializeV1().encodeABI();
