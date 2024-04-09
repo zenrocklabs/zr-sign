@@ -45,7 +45,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       let walletsAfter;
 
       //When
-      walletsBefore = await helpers.getQKeys(
+      walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -55,7 +55,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, walletIndex, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
-      tx = await helpers.qKeyRes(
+      tx = await helpers.zrKeyRes(
         supportedWalletTypeId,
         regularAddress,
         walletIndex,
@@ -65,7 +65,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         instances.proxied
       );
 
-      walletsAfter = await helpers.getQKeys(
+      walletsAfter = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -73,7 +73,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
 
       //Then
       await helpers.expectTXSuccess(tx);
-      await helpers.checkQKeyResEvent(
+      await helpers.checkZrKeyResEvent(
         tx.receipt.logs[0],
         supportedWalletTypeId,
         walletsBefore.length,
@@ -128,7 +128,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         let walletsBefore;
         let walletsAfter;
         //When
-        walletsBefore = await helpers.getQKeys(
+        walletsBefore = await helpers.getZrKeys(
           supportedWalletTypeId,
           regularAddress,
           instances.proxied
@@ -138,7 +138,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, walletIndex, c.mpcAddress]);
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
-        tx = helpers.qKeyRes(
+        tx = helpers.zrKeyRes(
           c.walletTypeId,
           c.owner,
           walletIndex,
@@ -148,7 +148,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
           instances.proxied
         );
 
-        walletsAfter = await helpers.getQKeys(
+        walletsAfter = await helpers.getZrKeys(
           supportedWalletTypeId,
           regularAddress,
           instances.proxied
@@ -167,7 +167,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       let walletsAfter;
       const expectedError = "qs::qKeyRes:incorrect walletIndex";
       //When
-      walletsBefore = await helpers.getQKeys(
+      walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -178,7 +178,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, nextIndex, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
-      tx = helpers.qKeyRes(
+      tx = helpers.zrKeyRes(
         supportedWalletTypeId,
         regularAddress,
         nextIndex,
@@ -188,7 +188,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         instances.proxied
       );
 
-      walletsAfter = await helpers.getQKeys(
+      walletsAfter = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -206,7 +206,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const pki = 0;
       const expectedError = "qs::qKeyRes:incorrect walletIndex";
       //When
-      walletsBefore = await helpers.getQKeys(
+      walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -215,7 +215,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
-      tx = await helpers.qKeyRes(
+      tx = await helpers.zrKeyRes(
         supportedWalletTypeId,
         regularAddress,
         pki,
@@ -226,7 +226,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
       );
 
       await helpers.expectTXSuccess(tx);
-      await helpers.checkQKeyResEvent(
+      await helpers.checkZrKeyResEvent(
         tx.receipt.logs[0],
         supportedWalletTypeId,
         walletsBefore.length,
@@ -235,7 +235,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         ovmAddress
       );
 
-      walletsAfter = await helpers.getQKeys(
+      walletsAfter = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
@@ -243,13 +243,13 @@ contract("ZrSign resolve public key tests", (accounts) => {
 
       assert.equal(walletsAfter.length, walletsBefore.length + 1);
 
-      walletsBefore = await helpers.getQKeys(
+      walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied
       );
 
-      tx = helpers.qKeyRes(
+      tx = helpers.zrKeyRes(
         supportedWalletTypeId,
         regularAddress,
         pki,
@@ -259,7 +259,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
         instances.proxied
       );
 
-      walletsAfter = await helpers.getQKeys(
+      walletsAfter = await helpers.getZrKeys(
         supportedWalletTypeId,
         regularAddress,
         instances.proxied

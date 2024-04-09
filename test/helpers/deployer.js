@@ -1,5 +1,5 @@
 const { assert } = require("chai");
-const QProxy = artifacts.require("QProxy");
+const ZrProxy = artifacts.require("ZrProxy");
 const ZrSign = artifacts.require("ZrSign");
 
 async function initZrSignWithProxy(proxyAdmin, owner) {
@@ -7,16 +7,16 @@ async function initZrSignWithProxy(proxyAdmin, owner) {
   const implContract = new web3.eth.Contract(implInstance.abi);
   const data = implContract.methods.initializeV1().encodeABI();
 
-  let QProxyInstance = await QProxy.new(
+  let ZrProxyInstance = await ZrProxy.new(
     implInstance.address,
     proxyAdmin,
     data,
     { from: owner }
   );
-  let Proxied = await ZrSign.at(QProxyInstance.address);
+  let Proxied = await ZrSign.at(ZrProxyInstance.address);
   return {
     implementation: implInstance,
-    proxy: QProxyInstance,
+    proxy: ZrProxyInstance,
     proxied: Proxied,
   };
 }
