@@ -19,7 +19,7 @@ async function expectRevert(tx, expectedReason, customError, printDebug = false)
 
     // Check for custom errors if specified
     if (customError) {
-      handleCustomError(error, customError);
+      handleCustomError(error, customError, printDebug);
     } else if (expectedReason) {
       // Handle expected revert reason for non-custom errors
       const reasonIncluded = error.message.includes(expectedReason) || (error.reason && error.reason.includes(expectedReason));
@@ -28,7 +28,7 @@ async function expectRevert(tx, expectedReason, customError, printDebug = false)
   }
 }
 
-function handleCustomError(error, customError) {
+function handleCustomError(error, customError, printDebug = false) {
   //Source https://github.com/TomiOhl/custom-error-test-helper/blob/main/src/index.ts
   const errorAbi = customError.instance.abi.find((elem) => elem.type === "error" && elem.name === customError.name);
   expect(errorAbi, `Expected custom error ${customError.name}`).to.exist;
@@ -40,9 +40,18 @@ function handleCustomError(error, customError) {
   expect(JSON.stringify(revertData).toLowerCase(), `Expected custom error ${customError.name} (${errorId})`).to.include(errorId);  // Convert revertData to lowercase in comparison
 
   if (customError.params) {
+
     expect(customError.params.length, "Expected the number of customError.params to match the number of types").to.eq(types.length);
     const decodedValues = defaultAbiCoder.decode(types, hexDataSlice(revertData, 4));
     decodedValues.forEach((elem, index) => {
+      if (printDebug) {
+        console.log(`errorAbi: ${ errorAbi }`)
+        console.log(`errorId: ${ errorId }`)
+        console.log(`decodedValues: ${ decodedValues }`)
+        console.log(`elem: ${ elem.toString() }`)
+        console.log(`index: ${ index.toString() }`)
+        console.log(`customError.params: ${ customError.params }`)
+      }
       // Convert both elements to string and lowercase before comparison
       expect(elem.toString().toLowerCase()).to.eq(customError.params[index].toString().toLowerCase());
     });
