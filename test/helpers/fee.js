@@ -1,3 +1,5 @@
+const { arrayify } = require("@ethersproject/bytes");
+
 async function getBaseFee(instance) {
   //Given
   let baseFee;
@@ -95,7 +97,7 @@ function checkFeeWithdrawEvent(log, to, amount) {
   );
 }
 
-async function calculateTotalFee(payload, baseFee, networkFee) {
+function calculateTotalFee(payload, baseFee, networkFee) {
   const totalNet = calculateNetworkFee(payload, networkFee);
   const totalFee = BigInt(baseFee) + BigInt(totalNet);
   return totalFee.toString();
@@ -110,7 +112,9 @@ async function calculateTotalFeeFromInstance(payload, instance) {
 }
 
 function calculateNetworkFee(payload, networkFee) {
-  return payload.length * networkFee;
+  const bts = arrayify(payload);
+  const totalNetFee = bts.length * networkFee;
+  return totalNetFee;
 }
 
 async function compareFees(baseFee, networkFee, instance) {
