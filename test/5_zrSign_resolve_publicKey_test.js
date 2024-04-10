@@ -19,7 +19,7 @@ contract("ZrSign resolve public key tests", (accounts) => {
     instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
     await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
-    
+
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;
     const caller = owner;
@@ -88,7 +88,11 @@ contract("ZrSign resolve public key tests", (accounts) => {
         owner: regularAddress,
         mpcAddress: fakeMPCAddress,
         caller: ovmAddress,
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [unsupportedWalletTypeId],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve zero address",
@@ -96,7 +100,11 @@ contract("ZrSign resolve public key tests", (accounts) => {
         owner: zeroAddress,
         mpcAddress: fakeMPCAddress,
         caller: ovmAddress,
-        expectedError: "qs::ownerGuard:invalid owner address",
+        customError: {
+          name: "OwnableInvalidOwner",
+          params: [zeroAddress],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve with incorrect public key",
@@ -104,7 +112,11 @@ contract("ZrSign resolve public key tests", (accounts) => {
         owner: regularAddress,
         mpcAddress: "",
         caller: ovmAddress,
-        expectedError: "qs::validatePublicKey:public key has an invalid length",
+        customError: {
+          name: "InvalidPublicKeyLength",
+          params: [5, 0],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve without mpc role",
@@ -112,7 +124,11 @@ contract("ZrSign resolve public key tests", (accounts) => {
         owner: regularAddress,
         mpcAddress: fakeMPCAddress,
         caller: owner,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        customError: {
+          name: "UnauthorizedCaller",
+          params: [owner],
+          instance: undefined
+        }
       },
     ];
 
@@ -149,8 +165,10 @@ contract("ZrSign resolve public key tests", (accounts) => {
           instances.proxied
         );
 
+        c.customError.instance = instances.proxied;
+
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, undefined, c.customError);
         assert.equal(walletsBefore.length, walletsAfter.length);
       });
     }
@@ -160,7 +178,6 @@ contract("ZrSign resolve public key tests", (accounts) => {
       let tx;
       let walletsBefore;
       let walletsAfter;
-      const expectedError = "qs::qKeyRes:incorrect walletIndex";
       //When
       walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
@@ -188,18 +205,23 @@ contract("ZrSign resolve public key tests", (accounts) => {
         regularAddress,
         instances.proxied
       );
-
+      const customError = {
+        name: "IncorrectWalletIndex",
+        params: [walletsAfter.length, nextIndex],
+        instance: instances.proxied
+      }
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
       assert.equal(walletsBefore.length, walletsAfter.length);
     });
+
     it("shoud not resolve public key for chain type twice", async () => {
       //Given
       let tx;
       let walletsBefore;
       let walletsAfter;
       const pki = 0;
-      const expectedError = "qs::qKeyRes:incorrect walletIndex";
+
       //When
       walletsBefore = await helpers.getZrKeys(
         supportedWalletTypeId,
@@ -259,9 +281,13 @@ contract("ZrSign resolve public key tests", (accounts) => {
         regularAddress,
         instances.proxied
       );
-
+      const customError = {
+        name: "IncorrectWalletIndex",
+        params: [walletsAfter.length, pki],
+        instance: instances.proxied
+      }
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
       assert.equal(walletsBefore.length, walletsAfter.length);
     });
   });

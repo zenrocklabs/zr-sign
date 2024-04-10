@@ -25,7 +25,7 @@ contract("ZrSign request signature tests", (accounts) => {
     instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
     await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
-    
+
     const pki = 0;
 
     const wt = helpers.EVM_CHAIN_TYPE;
@@ -52,13 +52,13 @@ contract("ZrSign request signature tests", (accounts) => {
       caller,
       instances.proxied
     );
-    
+
     const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
     const payloadHash = web3.utils.soliditySha3(payload);
     const signature = await web3.eth.sign(payloadHash, ovmAddress);
     let vValue = parseInt(signature.slice(-2), 16); // Convert the last two hex characters to an integer
     if (vValue < 27) {
-        vValue += 27;
+      vValue += 27;
     }
     // Convert vValue back to hex, ensure it is two characters long, and append to the rest of the signature
     const vHex = ("0" + vValue.toString(16)).slice(-2); // Ensures two characters
@@ -267,32 +267,40 @@ contract("ZrSign request signature tests", (accounts) => {
         walletTypeId: unsupportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: web3.utils.toWei("80", "gwei"),
-        networkFee: web3.utils.toWei("4", "wei"),
+        baseFee: baseFee,
+        networkFee: networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [unsupportedWalletTypeId],
+          instance: undefined
+        }
       },
       {
         testName: "be able to request for unsupported chain id",
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: web3.utils.toWei("80", "gwei"),
-        networkFee: web3.utils.toWei("4", "wei"),
+        baseFee: baseFee,
+        networkFee: networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.UNSUPPORTED_CHAIN_ID,
-        expectedError: "qs::chainIdGuard:chainId not supported",
+        customError: {
+          name: "ChainIdNotSupported",
+          params: [supportedWalletTypeId, helpers.UNSUPPORTED_CHAIN_ID],
+          instance: undefined
+        }
       },
       {
         testName: "be able to request with incorrect key index",
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 5,
-        baseFee: web3.utils.toWei("80", "gwei"),
-        networkFee: web3.utils.toWei("4", "wei"),
+        baseFee: baseFee,
+        networkFee: networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
@@ -303,12 +311,27 @@ contract("ZrSign request signature tests", (accounts) => {
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: web3.utils.toWei("80", "gwei"),
+        baseFee: baseFee,
         networkFee: web3.utils.toWei("2", "wei"),
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
-        expectedError: "qs::sigFee:msg.value should be greater",
+        customError: {
+          name: "InsufficientFee",
+          params: [
+            helpers.calculateTotalFee(
+              "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
+              baseFee,
+              networkFee
+            ),
+            helpers.calculateTotalFee(
+              "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
+              baseFee,
+              web3.utils.toWei("2", "wei")
+            )
+          ],
+          instance: undefined
+        }
       },
     ];
 
@@ -355,7 +378,7 @@ contract("ZrSign request signature tests", (accounts) => {
         );
 
         const totalFee = await helpers.calculateTotalFee(
-          payload,
+          payloadHash,
           c.baseFee,
           c.networkFee
         );
@@ -370,8 +393,12 @@ contract("ZrSign request signature tests", (accounts) => {
           instances.proxied
         );
 
+        if (c.customError) {
+          c.customError.instance = instances.proxied;
+        }
+
         //Then
-        await helpers.expectRevert(tx, c.expectedError, undefined);
+        await helpers.expectRevert(tx, c.expectedError, c.customError);
       });
     }
   });

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import "./Proxy.sol";
-import "./ERC1967Upgrade.sol";
+import { Proxy } from "./Proxy.sol";
+import { ERC1967Upgrade } from "./ERC1967Upgrade.sol";
 
 /**
  * @dev This contract implements an upgradeable proxy. It is upgradeable because calls are delegated to an
@@ -18,14 +18,23 @@ contract ERC1967Proxy is Proxy, ERC1967Upgrade {
      * function call, and allows initializating the storage of the proxy like a Solidity constructor.
      */
     constructor(address _logic, bytes memory _data) payable {
-        assert(_IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
+        assert(
+            _IMPLEMENTATION_SLOT ==
+                bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
+        );
         _upgradeToAndCall(_logic, _data, false);
     }
 
     /**
      * @dev Returns the current implementation address.
      */
-    function _implementation() internal view virtual override returns (address impl) {
+    function _implementation()
+        internal
+        view
+        virtual
+        override
+        returns (address impl)
+    {
         return ERC1967Upgrade._getImplementation();
     }
 }

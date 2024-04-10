@@ -53,7 +53,6 @@ contract ZrSign is Sign, IZrSign {
         virtual
         override
         onlyRole(DEFAULT_ADMIN_ROLE)
-        walletTypeGuard(walletTypeId)
     {
         bytes32 chainId = keccak256(abi.encodePacked(caip));
         _chainIdConfig(walletTypeId, chainId, support);

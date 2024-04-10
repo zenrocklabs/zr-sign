@@ -442,7 +442,7 @@ contract("ZrSign integration tests", (accounts) => {
 
     let supportChainTypeNegativeTestCases = [
       {
-        testName: "config chain type from account without role",
+        testName: "config wallet type from account without role",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
         support: true,
         caller: regularAddress,
@@ -457,15 +457,22 @@ contract("ZrSign integration tests", (accounts) => {
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
         support: true,
         caller: owner,
-        expectedError:
-          "qs::supportWalletTypeId:walletTypeId is already supported",
+        customError: {
+          name: "WalletTypeAlreadySupported",
+          params: [helpers.BTC_TESTNET_CHAIN_TYPE_HASH],
+          instance: undefined
+        }
       },
       {
         testName: "config remove support for already non supported wallet type",
         walletType: helpers.BTC_CHAIN_TYPE,
         support: false,
         caller: owner,
-        expectedError: "qs::supportWalletTypeId:walletTypeId is not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [helpers.BTC_CHAIN_TYPE_HASH],
+          instance: undefined
+        }
       },
     ];
 
@@ -689,14 +696,22 @@ contract("ZrSign integration tests", (accounts) => {
         walletTypeId: helpers.UNSUPPORTED_CHAIN_TYPE_HASH,
         caller: regularAddress,
         fee: web3.utils.toWei("80", "gwei"),
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
+          instance: undefined
+        }
       },
       {
         testName: "be able to request with less fee",
         walletTypeId: helpers.EVM_CHAIN_TYPE_HASH,
         caller: regularAddress,
         fee: web3.utils.toWei("30", "gwei"),
-        expectedError: "qs::keyFee:msg.value should be greater",
+        customError: {
+          name: "InsufficientFee",
+          params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
+          instance: undefined
+        }
       },
     ];
 
@@ -720,8 +735,11 @@ contract("ZrSign integration tests", (accounts) => {
           c.caller,
           instances.proxied
         );
+        if (c.customError) {
+          c.customError.instance = instances.proxied;
+        }
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, c.expectedError, c.customError);
         walletsAfter = await helpers.getZrKeys(
           c.walletTypeId,
           c.caller,
@@ -809,13 +827,17 @@ contract("ZrSign integration tests", (accounts) => {
 
     let negativeResolvePublicKeyTestCases = [
       {
-        testName: "be able to resolve for unsupported chain type",
+        testName: "be able to resolve for unsupported wallet type",
         walletType: helpers.UNSUPPORTED_CHAIN_TYPE,
         owner: regularAddress,
         walletIndex: 0,
         mpcAddress: FAKE_BTC_TESTNET_MPC_ADDRESS,
         caller: ovmAddress,
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve zero address",
@@ -824,7 +846,11 @@ contract("ZrSign integration tests", (accounts) => {
         walletIndex: 0,
         mpcAddress: FAKE_EVM_MPC_ADDRESS,
         caller: ovmAddress,
-        expectedError: "qs::ownerGuard:invalid owner address",
+        customError: {
+          name: "OwnableInvalidOwner",
+          params: [zeroAddress],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve with incorrect public key",
@@ -833,7 +859,11 @@ contract("ZrSign integration tests", (accounts) => {
         walletIndex: 0,
         mpcAddress: "",
         caller: ovmAddress,
-        expectedError: "qs::validatePublicKey:public key has an invalid length",
+        customError: {
+          name: "InvalidPublicKeyLength",
+          params: [5, 0],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve without ovm role",
@@ -842,7 +872,11 @@ contract("ZrSign integration tests", (accounts) => {
         walletIndex: 0,
         mpcAddress: FAKE_EVM_MPC_ADDRESS,
         caller: owner,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        customError: {
+          name: "UnauthorizedCaller",
+          params: [owner],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve with inccorect walletIndex",
@@ -850,8 +884,12 @@ contract("ZrSign integration tests", (accounts) => {
         owner: regularAddress,
         walletIndex: 6,
         mpcAddress: FAKE_EVM_MPC_ADDRESS,
-        caller: owner,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        caller: ovmAddress,
+        customError: {
+          name: "IncorrectWalletIndex",
+          params: [1, 6],
+          instance: undefined
+        }
       },
       {
         testName: "be able to resolve with already resolved public key index",
@@ -859,8 +897,12 @@ contract("ZrSign integration tests", (accounts) => {
         owner: regularAddress,
         walletIndex: 0,
         mpcAddress: FAKE_EVM_MPC_ADDRESS,
-        caller: owner,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        caller: ovmAddress,
+        customError: {
+          name: "IncorrectWalletIndex",
+          params: [1, 0],
+          instance: undefined
+        }
       },
     ];
 
@@ -883,6 +925,7 @@ contract("ZrSign integration tests", (accounts) => {
           c.owner,
           instances.proxied
         );
+
         const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
@@ -895,8 +938,13 @@ contract("ZrSign integration tests", (accounts) => {
           c.caller,
           instances.proxied
         );
+
+        if (c.customError) {
+          c.customError.instance = instances.proxied;
+        }
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, c.expectedError, c.customError);
+
         walletsAfter = await helpers.getZrKeys(
           walletTypeId,
           c.owner,
@@ -1006,7 +1054,11 @@ contract("ZrSign integration tests", (accounts) => {
         flag: IS_HASH_MASK,
         broadcast: false,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
+          instance: undefined
+        }
       },
       {
         testName: "be able to request with incorrect key index",
@@ -1032,7 +1084,21 @@ contract("ZrSign integration tests", (accounts) => {
         flag: IS_HASH_MASK,
         broadcast: false,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
-        expectedError: "qs::sigFee:msg.value should be greater",
+        customError: {
+          name: "InsufficientFee",
+          params: [
+            helpers.calculateTotalFee(
+              "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
+              web3.utils.toWei("80", "gwei"),
+              web3.utils.toWei("4", "wei")
+            ),
+            helpers.calculateTotalFee(
+              "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
+              web3.utils.toWei("70", "gwei"),
+              web3.utils.toWei("4", "wei")
+            )
+          ], instance: undefined
+        }
       },
     ];
 
@@ -1085,8 +1151,12 @@ contract("ZrSign integration tests", (accounts) => {
           instances.proxied
         );
 
+        if (c.customError) {
+          c.customError.instance = instances.proxied;
+        }
+
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, c.expectedError, c.customError);
       });
     }
   });
@@ -1150,7 +1220,11 @@ contract("ZrSign integration tests", (accounts) => {
         traceId: BigInt(1),
         broadcast: false,
         caller: regularAddress,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        customError: {
+          name: "UnauthorizedCaller",
+          params: [regularAddress],
+          instance: undefined
+        }
       },
     ];
 
