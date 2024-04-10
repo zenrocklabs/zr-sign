@@ -222,15 +222,6 @@ abstract contract Sign is AccessControl, ISign {
     function zrSignRes(
         SignTypes.SignResParams memory params
     ) external virtual override {
-        bytes memory payload = abi.encode(
-            params.traceId,
-            params.signature,
-            params.broadcast
-        );
-        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
-
-        _mustValidateAuthSignature(payloadHash, params.authSignature);
-
         _resSig(params);
     }
 
@@ -303,13 +294,14 @@ abstract contract Sign is AccessControl, ISign {
         uint256 walletIndex = $.wallets[id].length;
         emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
     }
-    
+
     function _zrKeyRes(
         SignTypes.ZrKeyResParams memory params
     ) internal virtual {
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
+            block.chainid,
             params.walletTypeId,
             params.owner,
             params.walletIndex,
@@ -373,6 +365,16 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     function _resSig(SignTypes.SignResParams memory params) internal virtual {
+        bytes memory payload = abi.encode(
+            block.chainid,
+            params.traceId,
+            params.signature,
+            params.broadcast
+        );
+        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
+
+        _mustValidateAuthSignature(payloadHash, params.authSignature);
+        
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
 

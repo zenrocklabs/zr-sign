@@ -50,8 +50,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
     );
 
 
-
-    const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+    const chainId = await web3.eth.getChainId();
+    const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
     const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
     await helpers.zrKeyRes(
@@ -110,8 +110,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
-
-        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'bytes', 'bool'], [c.traceId, signature, c.broadcast]);
+        const chainId = await web3.eth.getChainId();
+        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
         const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
 
 
@@ -190,8 +190,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payload = `0x${RLP.utils.bytesToHex(payloadBytes)}`;
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
-
-        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'bytes', 'bool'], [c.traceId, signature, c.broadcast]);
+        const chainId = await web3.eth.getChainId();
+        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = await helpers.zrSignRes(
@@ -261,8 +261,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
-
-        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'bytes', 'bool'], [c.traceId, signature, c.broadcast]);
+        const chainId = await web3.eth.getChainId();
+        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = helpers.zrSignRes(
@@ -316,8 +316,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
       const payload = RLP.encode(transaction);
       const payloadHash = web3.utils.soliditySha3(payload);
       const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
-
-      const resPayload = web3.eth.abi.encodeParameters(['uint256', 'bytes', 'bool'], [0, signature, true]);
+      const chainId = await web3.eth.getChainId();
+      const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, 0, signature, true]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload, -4);
 
       tx = helpers.zrSignRes(
