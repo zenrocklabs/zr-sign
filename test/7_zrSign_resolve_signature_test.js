@@ -222,7 +222,11 @@ contract("ZrSign resolve signature tests", (accounts) => {
         traceId: "0",
         broadcast: true,
         caller: regularAddress,
-        expectedError: "qs::onlyMPC:caller not authorized",
+        customError: {
+          name: "UnauthorizedCaller",
+          params: [regularAddress],
+          instance: undefined
+        }
       },
     ];
 
@@ -270,15 +274,21 @@ contract("ZrSign resolve signature tests", (accounts) => {
           instances.proxied
         );
 
+        c.customError.instance = instances.proxied;
+
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, undefined, c.customError);
       });
     }
 
     it(`shoud not be able to resolve signature with invalid signature`, async () => {
       //Given
       let tx;
-      const expectedError = "qs::onlyMPC:invalid signature";
+      const customError = {
+        name: "InvalidSignature",
+        params: [2],
+        instance: instances.proxied
+      }
       //When
       const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
 
@@ -320,7 +330,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
       );
 
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
     });
 
 

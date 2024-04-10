@@ -11,7 +11,6 @@ import { ISign } from "../../interfaces/zr/ISign.sol";
 import { SignTypes } from "../../libraries/zr/SignTypes.sol";
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 
-
 abstract contract Sign is AccessControl, ISign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
     using MessageHashUtils for bytes32;
@@ -28,6 +27,23 @@ abstract contract Sign is AccessControl, ISign {
     uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
+
+    // Error declaration
+    error InsufficientFee(uint256 requiredFee, uint256 providedFee);
+
+    error WalletTypeAlreadySupported(bytes32 walletTypeId);
+    error WalletTypeNotSupported(bytes32 walletTypeId);
+
+    error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
+    error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
+
+    error OwnableInvalidOwner(address owner);
+    error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
+    error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
+    error BroadcastNotAllowed();
+    error InvalidSignature(ECDSA.RecoverError error);
+    error UnauthorizedCaller(address caller);
+    error InvalidPublicKeyLength(uint256 minLength, uint256 actualLength);
 
     struct SignStorage {
         uint256 _baseFee;
@@ -50,12 +66,15 @@ abstract contract Sign is AccessControl, ISign {
 
     //****************************************************************** MODIFIERS ******************************************************************/
 
+    // Modifier that checks if the provided fee is sufficient
     modifier keyFee() {
         SignStorage storage $ = _getSignStorage();
-        require(
-            msg.value >= $._baseFee,
-            "qs::keyFee:msg.value should be greater"
-        );
+        if (msg.value < $._baseFee) {
+            revert InsufficientFee({
+                requiredFee: $._baseFee,
+                providedFee: msg.value
+            });
+        }
         _;
     }
 
@@ -63,32 +82,34 @@ abstract contract Sign is AccessControl, ISign {
         SignStorage storage $ = _getSignStorage();
         uint256 networkFee = payload.length * $._networkFee;
         uint256 totalFee = $._baseFee + networkFee;
-        require(
-            msg.value >= totalFee,
-            "qs::sigFee:msg.value should be greater"
-        );
+        if (msg.value < totalFee) {
+            revert InsufficientFee({
+                requiredFee: totalFee,
+                providedFee: msg.value
+            });
+        }
         _;
     }
 
     modifier walletTypeGuard(bytes32 walletTypeId) {
-        require(
-            getWalletTypeInfo(walletTypeId).isNull() == false,
-            "qs::walletTypeGuard:walletType not supported"
-        );
+        if (getWalletTypeInfo(walletTypeId).isNull()) {
+            revert WalletTypeNotSupported(walletTypeId);
+        }
         _;
     }
 
     modifier chainIdGuard(bytes32 walletTypeId, bytes32 chainId) {
         SignStorage storage $ = _getSignStorage();
-        require(
-            $.supportedChainIds[walletTypeId][chainId] == true,
-            "qs::chainIdGuard:chainId not supported"
-        );
+        if (!isChainIdSupported(walletTypeId, chainId)) {
+            revert ChainIdNotSupported(walletTypeId, chainId);
+        }
         _;
     }
 
     modifier ownerGuard(address owner) {
-        require(owner != address(0), "qs::ownerGuard:invalid owner address");
+        if (owner == address(0)) {
+            revert OwnableInvalidOwner(owner);
+        }
         _;
     }
 
@@ -105,42 +126,13 @@ abstract contract Sign is AccessControl, ISign {
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
     ) external payable keyFee walletTypeGuard(params.walletTypeId) {
-        SignStorage storage $ = _getSignStorage();
-        bytes32 id = _getId(params.walletTypeId, _msgSender());
-        uint256 walletIndex = $.wallets[id].length;
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
+        _zrKeyReq(params);
     }
 
     function zrKeyRes(
         SignTypes.ZrKeyResParams memory params
     ) external walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes memory payload = abi.encode(
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex,
-            params.publicKey
-        );
-
-        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
-        _mustValidateAuthSignature(payloadHash, params.authSignature);
-
-        _validatePublicKey(params.publicKey);
-
-        bytes32 id = _getId(params.walletTypeId, params.owner);
-        require(
-            $.wallets[id].length == params.walletIndex,
-            "qs::qKeyRes:incorrect walletIndex"
-        );
-
-        $.wallets[id].push(params.publicKey);
-        emit ZrKeyResolve(
-            params.walletTypeId,
-            params.owner,
-            $.wallets[id].length - 1,
-            params.publicKey
-        );
+        _zrKeyRes(params);
     }
 
     function zrSignHash(
@@ -152,8 +144,18 @@ abstract contract Sign is AccessControl, ISign {
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
-        require(params.payload.length == 32, "payload must be a single hash.");
-        require(params.broadcast == false, "hash is not broadcastable.");
+        // Check payload length
+        if (params.payload.length != 32) {
+            revert InvalidPayloadLength({
+                expectedLength: 32,
+                actualLength: params.payload.length
+            });
+        }
+
+        // Check broadcast flag
+        if (params.broadcast) {
+            revert BroadcastNotAllowed();
+        }
 
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -177,7 +179,10 @@ abstract contract Sign is AccessControl, ISign {
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
-        require(params.broadcast == false, "data is not broadcastable");
+        // Check broadcast flag
+        if (params.broadcast) {
+            revert BroadcastNotAllowed();
+        }
 
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -214,40 +219,6 @@ abstract contract Sign is AccessControl, ISign {
         _sigReq(sigReqParams);
     }
 
-    function _sigReq(
-        SignTypes.SigReqParams memory params
-    ) internal virtual sigFee(params.payload) {
-        SignStorage storage $ = _getSignStorage();
-
-        _validatePublicKey(
-            _getWalletByIndex(
-                params.walletTypeId,
-                params.owner,
-                params.walletIndex
-            )
-        );
-
-        bytes32 walletId = keccak256(
-            abi.encode(params.walletTypeId, params.owner, params.walletIndex)
-        );
-
-        unchecked {
-            $._traceId = $._traceId + 1;
-        }
-
-        emit ZrSigRequest(
-            $._traceId,
-            walletId,
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex,
-            params.dstChainId,
-            params.payload,
-            params.isHashDataTx,
-            params.broadcast
-        );
-    }
-
     function zrSignRes(
         SignTypes.SignResParams memory params
     ) external virtual override {
@@ -261,28 +232,6 @@ abstract contract Sign is AccessControl, ISign {
         _mustValidateAuthSignature(payloadHash, params.authSignature);
 
         _resSig(params);
-    }
-
-    function _resSig(SignTypes.SignResParams memory params) internal virtual {
-        emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
-    }
-
-    function _mustValidateAuthSignature(
-        bytes32 dataHash,
-        bytes memory signature
-    ) internal virtual {
-        (address authAddress, ECDSA.RecoverError sigErr, ) = dataHash
-            .tryRecover(signature);
-
-        require(
-            sigErr == ECDSA.RecoverError.NoError,
-            "qs::onlyMPC:invalid signature"
-        );
-
-        require(
-            hasRole(MPC_ROLE, authAddress) == true,
-            "qs::onlyMPC:caller not authorized"
-        );
     }
 
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
@@ -346,6 +295,103 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+    function _zrKeyReq(
+        SignTypes.ZrKeyReqParams memory params
+    ) internal virtual {
+        SignStorage storage $ = _getSignStorage();
+        bytes32 id = _getId(params.walletTypeId, _msgSender());
+        uint256 walletIndex = $.wallets[id].length;
+        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
+    }
+    
+    function _zrKeyRes(
+        SignTypes.ZrKeyResParams memory params
+    ) internal virtual {
+        SignStorage storage $ = _getSignStorage();
+
+        bytes memory payload = abi.encode(
+            params.walletTypeId,
+            params.owner,
+            params.walletIndex,
+            params.publicKey
+        );
+
+        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
+        _mustValidateAuthSignature(payloadHash, params.authSignature);
+
+        _validatePublicKey(params.publicKey);
+
+        bytes32 id = _getId(params.walletTypeId, params.owner);
+
+        if ($.wallets[id].length != params.walletIndex) {
+            revert IncorrectWalletIndex({
+                expectedIndex: $.wallets[id].length,
+                providedIndex: params.walletIndex
+            });
+        }
+
+        $.wallets[id].push(params.publicKey);
+        emit ZrKeyResolve(
+            params.walletTypeId,
+            params.owner,
+            $.wallets[id].length - 1,
+            params.publicKey
+        );
+    }
+    function _sigReq(
+        SignTypes.SigReqParams memory params
+    ) internal virtual sigFee(params.payload) {
+        SignStorage storage $ = _getSignStorage();
+
+        _validatePublicKey(
+            _getWalletByIndex(
+                params.walletTypeId,
+                params.owner,
+                params.walletIndex
+            )
+        );
+
+        bytes32 walletId = keccak256(
+            abi.encode(params.walletTypeId, params.owner, params.walletIndex)
+        );
+
+        unchecked {
+            $._traceId = $._traceId + 1;
+        }
+
+        emit ZrSigRequest(
+            $._traceId,
+            walletId,
+            params.walletTypeId,
+            params.owner,
+            params.walletIndex,
+            params.dstChainId,
+            params.payload,
+            params.isHashDataTx,
+            params.broadcast
+        );
+    }
+
+    function _resSig(SignTypes.SignResParams memory params) internal virtual {
+        emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
+    }
+
+    function _mustValidateAuthSignature(
+        bytes32 dataHash,
+        bytes memory signature
+    ) internal virtual {
+        (address authAddress, ECDSA.RecoverError sigErr, ) = dataHash
+            .tryRecover(signature);
+
+        if (sigErr != ECDSA.RecoverError.NoError) {
+            revert InvalidSignature(sigErr);
+        }
+
+        if (!hasRole(MPC_ROLE, authAddress)) {
+            revert UnauthorizedCaller(authAddress);
+        }
+    }
+
     function _walletTypeIdConfig(
         ZrSignTypes.ChainInfo memory c,
         bool support
@@ -353,16 +399,14 @@ abstract contract Sign is AccessControl, ISign {
         SignStorage storage $ = _getSignStorage();
         bytes32 walletTypeId = c.hashChainInfo();
         if (support) {
-            require(
-                getWalletTypeInfo(walletTypeId).isNull(),
-                "qs::supportWalletTypeId:walletTypeId is already supported"
-            );
+            if (getWalletTypeInfo(walletTypeId).isNotNull()) {
+                revert WalletTypeAlreadySupported(walletTypeId);
+            }
             $.supportedWalletTypes[walletTypeId] = c;
         } else {
-            require(
-                $.supportedWalletTypes[walletTypeId].isNotNull(),
-                "qs::supportWalletTypeId:walletTypeId is not supported"
-            );
+            if (getWalletTypeInfo(walletTypeId).isNull()) {
+                revert WalletTypeNotSupported(walletTypeId);
+            }
             delete $.supportedWalletTypes[walletTypeId];
         }
         return walletTypeId;
@@ -372,19 +416,17 @@ abstract contract Sign is AccessControl, ISign {
         bytes32 walletTypeId,
         bytes32 chainId,
         bool support
-    ) internal virtual {
+    ) internal virtual walletTypeGuard(walletTypeId) {
         SignStorage storage $ = _getSignStorage();
         if (support) {
-            require(
-                $.supportedChainIds[walletTypeId][chainId] == false,
-                "qs::chainIdConfig:chainId is already supported"
-            );
+            if (isChainIdSupported(walletTypeId, chainId)) {
+                revert ChainIdAlreadySupported(walletTypeId, chainId);
+            }
             $.supportedChainIds[walletTypeId][chainId] = true;
         } else {
-            require(
-                $.supportedChainIds[walletTypeId][chainId] == true,
-                "qs::chainIdConfig:chainId is not supported"
-            );
+            if (!isChainIdSupported(walletTypeId, chainId)) {
+                revert ChainIdNotSupported(walletTypeId, chainId);
+            }
             delete $.supportedChainIds[walletTypeId][chainId];
         }
     }
@@ -436,9 +478,12 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     function _validatePublicKey(string memory publicKey) internal pure virtual {
-        require(
-            abi.encodePacked(publicKey).length > 4,
-            "qs::validatePublicKey:public key has an invalid length"
-        );
+        uint256 length = abi.encodePacked(publicKey).length;
+        if (length <= 4) {
+            revert InvalidPublicKeyLength({
+                minLength: 5,
+                actualLength: length
+            });
+        }
     }
 }

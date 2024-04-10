@@ -3,18 +3,24 @@
 
 pragma solidity 0.8.20;
 
-import "../IAccessControl.sol";
-import "../../libraries/zr/SignTypes.sol";
-import "../../libraries/zr/ZrSignTypes.sol";
+import { IAccessControl } from "../IAccessControl.sol";
+import { SignTypes } from "../../libraries/zr/SignTypes.sol";
+import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 
 interface ISign is IAccessControl {
-    function zrKeyReq(SignTypes.ZrKeyReqParams calldata params) external payable;
+    function zrKeyReq(
+        SignTypes.ZrKeyReqParams calldata params
+    ) external payable;
 
     function zrKeyRes(SignTypes.ZrKeyResParams calldata params) external;
 
-    function zrSignHash(SignTypes.ZrSignParams calldata params) external payable;
+    function zrSignHash(
+        SignTypes.ZrSignParams calldata params
+    ) external payable;
 
-    function zrSignData(SignTypes.ZrSignParams calldata params) external payable;
+    function zrSignData(
+        SignTypes.ZrSignParams calldata params
+    ) external payable;
 
     function zrSignTx(SignTypes.ZrSignParams calldata params) external payable;
 
@@ -52,6 +58,7 @@ interface ISign is IAccessControl {
         uint256 index
     ) external view returns (string memory);
 
+    // Event declaration
     event ZrKeyRequest(
         bytes32 indexed walletTypeId,
         address indexed owner,
@@ -77,7 +84,11 @@ interface ISign is IAccessControl {
         bool broadcast
     );
 
-    event ZrSigResolve(uint256 indexed traceId, bytes signature, bool broadcast);
+    event ZrSigResolve(
+        uint256 indexed traceId,
+        bytes signature,
+        bool broadcast
+    );
 
     event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
     event NetworkFeeUpdate(

@@ -166,7 +166,12 @@ contract("ZrSign chain config tests", (accounts) => {
       const support = true;
       const caller = owner;
       let tx;
-      const expectedError = `qs::supportWalletTypeId:walletTypeId is already supported`;
+      const customError = {
+        name: "WalletTypeAlreadySupported",
+        params: [helpers.BTC_CHAIN_TYPE_HASH],
+        instance: instances.proxied
+      };
+
       //When
       await helpers.walletTypeIdConfig(
         wt.purpose,
@@ -183,7 +188,7 @@ contract("ZrSign chain config tests", (accounts) => {
         instances.proxied
       );
       //Then
-      await helpers.expectRevert(tx, expectedError, undefined);
+      await helpers.expectRevert(tx, undefined, customError);
     });
 
     it("should not allow remove support for non supported wallet type", async () => {
@@ -192,7 +197,11 @@ contract("ZrSign chain config tests", (accounts) => {
       const support = false;
       const caller = owner;
       let tx;
-      const expectedError = `qs::supportWalletTypeId:walletTypeId is not supported`;
+      const customError = {
+        name: "WalletTypeNotSupported",
+        params: [helpers.BTC_CHAIN_TYPE_HASH],
+        instance: instances.proxied
+      };
       //When
       tx = helpers.walletTypeIdConfig(
         wt.purpose,
@@ -202,7 +211,7 @@ contract("ZrSign chain config tests", (accounts) => {
         instances.proxied
       );
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
     });
   });
 
@@ -406,7 +415,7 @@ contract("ZrSign chain config tests", (accounts) => {
     it("should not allow support for already supported chain id", async () => {
       //Given
       const wt = helpers.EVM_CHAIN_TYPE;
-      const chainId = helpers.ETH_MAINNET_CHAIN_ID;
+      const chainId = helpers.ETH_MAINNET_CAIP;
 
       const walletTypeIdPayload = web3.eth.abi.encodeParameters(
         ["uint256", "uint256"],
@@ -416,7 +425,13 @@ contract("ZrSign chain config tests", (accounts) => {
       const support = true;
       const caller = owner;
       let tx;
-      const expectedError = `qs::chainIdConfig:chainId is already supported`;
+
+      const customError = {
+        name: "ChainIdAlreadySupported",
+        params: [walletTypeId, helpers.ETH_MAINNET_CHAIN_ID],
+        instance: instances.proxied
+      };
+      
       //When
       await helpers.walletTypeIdConfig(
         wt.purpose,
@@ -433,6 +448,7 @@ contract("ZrSign chain config tests", (accounts) => {
         caller,
         instances.proxied
       );
+
       tx = helpers.chainIdConfig(
         walletTypeId,
         chainId,
@@ -440,14 +456,15 @@ contract("ZrSign chain config tests", (accounts) => {
         caller,
         instances.proxied
       );
+
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
     });
 
     it("should not allow remove support for non supported chain id", async () => {
       //Given
       const wt = helpers.EVM_CHAIN_TYPE;
-      const chainId = helpers.ETH_MAINNET_CHAIN_ID;
+      const chainId = helpers.ETH_MAINNET_CAIP;
 
       const walletTypeIdPayload = web3.eth.abi.encodeParameters(
         ["uint256", "uint256"],
@@ -457,7 +474,11 @@ contract("ZrSign chain config tests", (accounts) => {
       const support = true;
       const caller = owner;
       let tx;
-      const expectedError = `qs::chainIdConfig:chainId is not supported`;
+      const customError = {
+        name: "ChainIdNotSupported",
+        params: [walletTypeId, helpers.ETH_MAINNET_CHAIN_ID],
+        instance: instances.proxied
+      };
       //When
       await helpers.walletTypeIdConfig(
         wt.purpose,
@@ -474,7 +495,7 @@ contract("ZrSign chain config tests", (accounts) => {
         instances.proxied
       );
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
     });
 
     it("should not allow support for chain id for non supported wallet type", async () => {
@@ -484,7 +505,11 @@ contract("ZrSign chain config tests", (accounts) => {
       const support = true;
       const caller = owner;
       let tx;
-      const expectedError = `qs::walletTypeGuard:walletType not supported`;
+      const customError = {
+        name: "WalletTypeNotSupported",
+        params: [wtId],
+        instance: instances.proxied
+      };
       //When
       tx = helpers.chainIdConfig(
         wtId,
@@ -494,7 +519,7 @@ contract("ZrSign chain config tests", (accounts) => {
         instances.proxied
       );
       //Then
-      await helpers.expectRevert(tx, expectedError);
+      await helpers.expectRevert(tx, undefined, customError);
     });
   });
 });

@@ -71,14 +71,22 @@ contract("ZrSign request public key tests", (accounts) => {
         fee: web3.utils.toWei("80", "gwei"),
         walletTypeId: unsupportedWalletType,
         caller: regularAddress,
-        expectedError: "qs::walletTypeGuard:walletType not supported",
+        customError: {
+          name: "WalletTypeNotSupported",
+          params: [unsupportedWalletType],
+          instance: undefined
+        }
       },
       {
         testName: "be able to request with less fee",
         fee: web3.utils.toWei("30", "gwei"),
         walletTypeId: supportedWalletType,
         caller: regularAddress,
-        expectedError: "qs::keyFee:msg.value should be greater",
+        customError: {
+          name: "InsufficientFee",
+          params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
+          instance: undefined
+        }
       },
     ];
 
@@ -95,8 +103,10 @@ contract("ZrSign request public key tests", (accounts) => {
           instances.proxied
         );
 
+        c.customError.instance = instances.proxied;
+
         //Then
-        await helpers.expectRevert(tx, c.expectedError);
+        await helpers.expectRevert(tx, undefined, c.customError);
       });
     }
   });
