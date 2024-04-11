@@ -52,8 +52,8 @@ contract("ZrSign request signature tests", (accounts) => {
       caller,
       instances.proxied
     );
-    const chainId = await web3.eth.getChainId();
-    const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+    const chainId = await helpers.getSrcChainId(instances.proxied);
+    const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
     const payloadHash = web3.utils.soliditySha3(payload);
     const signature = await web3.eth.sign(payloadHash, ovmAddress);
     let vValue = parseInt(signature.slice(-2), 16); // Convert the last two hex characters to an integer
