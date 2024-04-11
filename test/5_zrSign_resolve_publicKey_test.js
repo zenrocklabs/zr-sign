@@ -47,7 +47,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
       );
 
       const walletIndex = walletsBefore.length
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, walletIndex, fakeMPCAddress]);
+      const chainId = await web3.eth.getChainId();
+      const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, walletIndex, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = await helpers.zrKeyRes(
@@ -146,7 +147,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         );
 
         const walletIndex = walletsBefore.length
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, walletIndex, c.mpcAddress]);
+        const chainId = await web3.eth.getChainId();
+        const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, walletIndex, c.mpcAddress]);
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
         tx = helpers.zrKeyRes(
@@ -187,7 +189,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
 
       const walletIndex = walletsBefore.length;
       const nextIndex = walletIndex + 1;
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, nextIndex, fakeMPCAddress]);
+      const chainId = await web3.eth.getChainId();
+      const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, nextIndex, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = helpers.zrKeyRes(
@@ -228,8 +231,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         regularAddress,
         instances.proxied
       );
-
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'address', 'uint256', 'string'], [supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+      const chainId = await web3.eth.getChainId();
+      const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = await helpers.zrKeyRes(
