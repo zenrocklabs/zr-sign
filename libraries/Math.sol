@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.20;
 
-import {Panic} from "./Panic.sol";
-import {SafeCast} from "./SafeCast.sol";
+import { Panic } from "./Panic.sol";
+import { SafeCast } from "./SafeCast.sol";
 
 /**
  * @dev Standard math utilities missing in the Solidity language.
@@ -20,7 +20,10 @@ library Math {
     /**
      * @dev Returns the addition of two unsigned integers, with an success flag (no overflow).
      */
-    function tryAdd(uint256 a, uint256 b) internal pure returns (bool success, uint256 result) {
+    function tryAdd(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool success, uint256 result) {
         unchecked {
             uint256 c = a + b;
             if (c < a) return (false, 0);
@@ -31,7 +34,10 @@ library Math {
     /**
      * @dev Returns the subtraction of two unsigned integers, with an success flag (no overflow).
      */
-    function trySub(uint256 a, uint256 b) internal pure returns (bool success, uint256 result) {
+    function trySub(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool success, uint256 result) {
         unchecked {
             if (b > a) return (false, 0);
             return (true, a - b);
@@ -41,7 +47,10 @@ library Math {
     /**
      * @dev Returns the multiplication of two unsigned integers, with an success flag (no overflow).
      */
-    function tryMul(uint256 a, uint256 b) internal pure returns (bool success, uint256 result) {
+    function tryMul(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool success, uint256 result) {
         unchecked {
             // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
             // benefit is lost if 'b' is also tested.
@@ -56,7 +65,10 @@ library Math {
     /**
      * @dev Returns the division of two unsigned integers, with a success flag (no division by zero).
      */
-    function tryDiv(uint256 a, uint256 b) internal pure returns (bool success, uint256 result) {
+    function tryDiv(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool success, uint256 result) {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a / b);
@@ -66,7 +78,10 @@ library Math {
     /**
      * @dev Returns the remainder of dividing two unsigned integers, with a success flag (no division by zero).
      */
-    function tryMod(uint256 a, uint256 b) internal pure returns (bool success, uint256 result) {
+    function tryMod(
+        uint256 a,
+        uint256 b
+    ) internal pure returns (bool success, uint256 result) {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a % b);
@@ -125,7 +140,11 @@ library Math {
      * Original credit to Remco Bloemen under MIT license (https://xn--2-umb.com/21/muldiv) with further edits by
      * Uniswap Labs also under MIT license.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator) internal pure returns (uint256 result) {
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         unchecked {
             // 512-bit multiply [prod1 prod0] = x * y. Compute the product mod 2²⁵⁶ and mod 2²⁵⁶ - 1, then use
             // use the Chinese Remainder Theorem to reconstruct the 512 bit result. The result is stored in two 256
@@ -147,7 +166,11 @@ library Math {
 
             // Make sure the result is less than 2²⁵⁶. Also prevents denominator == 0.
             if (denominator <= prod1) {
-                Panic.panic(denominator == 0 ? Panic.DIVISION_BY_ZERO : Panic.UNDER_OVERFLOW);
+                Panic.panic(
+                    denominator == 0
+                        ? Panic.DIVISION_BY_ZERO
+                        : Panic.UNDER_OVERFLOW
+                );
             }
 
             ///////////////////////////////////////////////
@@ -209,8 +232,17 @@ library Math {
     /**
      * @dev Calculates x * y / denominator with full precision, following the selected rounding direction.
      */
-    function mulDiv(uint256 x, uint256 y, uint256 denominator, Rounding rounding) internal pure returns (uint256) {
-        return mulDiv(x, y, denominator) + SafeCast.toUint(unsignedRoundsUp(rounding) && mulmod(x, y, denominator) > 0);
+    function mulDiv(
+        uint256 x,
+        uint256 y,
+        uint256 denominator,
+        Rounding rounding
+    ) internal pure returns (uint256) {
+        return
+            mulDiv(x, y, denominator) +
+            SafeCast.toUint(
+                unsignedRoundsUp(rounding) && mulmod(x, y, denominator) > 0
+            );
     }
 
     /**
@@ -285,7 +317,11 @@ library Math {
      * the underlying function will succeed given the lack of a revert, but the result may be incorrectly
      * interpreted as 0.
      */
-    function modExp(uint256 b, uint256 e, uint256 m) internal view returns (uint256) {
+    function modExp(
+        uint256 b,
+        uint256 e,
+        uint256 m
+    ) internal view returns (uint256) {
         (bool success, uint256 result) = tryModExp(b, e, m);
         if (!success) {
             Panic.panic(Panic.DIVISION_BY_ZERO);
@@ -303,7 +339,11 @@ library Math {
      * https://eips.ethereum.org/EIPS/eip-198[EIP-198]. Otherwise, the underlying function will succeed given the lack
      * of a revert, but the result may be incorrectly interpreted as 0.
      */
-    function tryModExp(uint256 b, uint256 e, uint256 m) internal view returns (bool success, uint256 result) {
+    function tryModExp(
+        uint256 b,
+        uint256 e,
+        uint256 m
+    ) internal view returns (bool success, uint256 result) {
         if (m == 0) return (false, 0);
         /// @solidity memory-safe-assembly
         assembly {
@@ -333,7 +373,11 @@ library Math {
     /**
      * @dev Variant of {modExp} that supports inputs of arbitrary length.
      */
-    function modExp(bytes memory b, bytes memory e, bytes memory m) internal view returns (bytes memory) {
+    function modExp(
+        bytes memory b,
+        bytes memory e,
+        bytes memory m
+    ) internal view returns (bytes memory) {
         (bool success, bytes memory result) = tryModExp(b, e, m);
         if (!success) {
             Panic.panic(Panic.DIVISION_BY_ZERO);
@@ -360,7 +404,14 @@ library Math {
         assembly {
             let dataPtr := add(result, 0x20)
             // Write result on top of args to avoid allocating extra memory.
-            success := staticcall(gas(), 0x05, dataPtr, mload(result), dataPtr, mLen)
+            success := staticcall(
+                gas(),
+                0x05,
+                dataPtr,
+                mload(result),
+                dataPtr,
+                mLen
+            )
             // Overwrite the length.
             // result.length > returndatasize() is guaranteed because returndatasize() == m.length
             mstore(result, mLen)
@@ -497,10 +548,17 @@ library Math {
     /**
      * @dev Calculates sqrt(a), following the selected rounding direction.
      */
-    function sqrt(uint256 a, Rounding rounding) internal pure returns (uint256) {
+    function sqrt(
+        uint256 a,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = sqrt(a);
-            return result + SafeCast.toUint(unsignedRoundsUp(rounding) && result * result < a);
+            return
+                result +
+                SafeCast.toUint(
+                    unsignedRoundsUp(rounding) && result * result < a
+                );
         }
     }
 
@@ -549,10 +607,17 @@ library Math {
      * @dev Return the log in base 2, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log2(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log2(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log2(value);
-            return result + SafeCast.toUint(unsignedRoundsUp(rounding) && 1 << result < value);
+            return
+                result +
+                SafeCast.toUint(
+                    unsignedRoundsUp(rounding) && 1 << result < value
+                );
         }
     }
 
@@ -598,10 +663,17 @@ library Math {
      * @dev Return the log in base 10, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log10(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log10(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log10(value);
-            return result + SafeCast.toUint(unsignedRoundsUp(rounding) && 10 ** result < value);
+            return
+                result +
+                SafeCast.toUint(
+                    unsignedRoundsUp(rounding) && 10 ** result < value
+                );
         }
     }
 
@@ -640,10 +712,17 @@ library Math {
      * @dev Return the log in base 256, following the selected rounding direction, of a positive value.
      * Returns 0 if given 0.
      */
-    function log256(uint256 value, Rounding rounding) internal pure returns (uint256) {
+    function log256(
+        uint256 value,
+        Rounding rounding
+    ) internal pure returns (uint256) {
         unchecked {
             uint256 result = log256(value);
-            return result + SafeCast.toUint(unsignedRoundsUp(rounding) && 1 << (result << 3) < value);
+            return
+                result +
+                SafeCast.toUint(
+                    unsignedRoundsUp(rounding) && 1 << (result << 3) < value
+                );
         }
     }
 

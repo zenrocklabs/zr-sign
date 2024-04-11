@@ -74,7 +74,7 @@ abstract contract Initializable {
     }
 
     // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.Initializable")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant INITIALIZABLE_STORAGE =
+    bytes32 private constant INITIALIZABLE_STORAGE_LOCATION =
         0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00;
 
     /**
@@ -227,7 +227,7 @@ abstract contract Initializable {
         returns (InitializableStorage storage $)
     {
         assembly {
-            $.slot := INITIALIZABLE_STORAGE
+            $.slot := INITIALIZABLE_STORAGE_LOCATION
         }
     }
 }

@@ -3,21 +3,24 @@
 
 pragma solidity 0.8.20;
 
-import { AccessControl } from "../AccessControl.sol";
-import { ECDSA } from "../../libraries/ECDSA.sol";
-import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol";
+// Importing necessary modules from local and external sources
+import { AccessControl } from "../AccessControl.sol"; // Access control functionalities for role management
+import { ECDSA } from "../../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
+import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
 
-import { ISign } from "../../interfaces/zr/ISign.sol";
-import { SignTypes } from "../../libraries/zr/SignTypes.sol";
-import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
+import { ISign } from "../../interfaces/zr/ISign.sol"; // Interface for the Sign contract
+import { SignTypes } from "../../libraries/zr/SignTypes.sol"; // Definitions of various types used within the Sign contract
+import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
+// Abstract contract for signing functionalities, inheriting from AccessControl for role management
 abstract contract Sign is AccessControl, ISign {
-    using ZrSignTypes for ZrSignTypes.ChainInfo;
-    using MessageHashUtils for bytes32;
-    using ECDSA for bytes32;
+    using ZrSignTypes for ZrSignTypes.ChainInfo; // Attach methods from ZrSignTypes to ChainInfo type
+    using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
+    using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
 
+    // Constant variable for Multi-Party Computation role hash, computed as keccak256 hash of the string "zenrock.role.mpc"
     bytes32 public constant MPC_ROLE =
-        0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14; //keccak256("zenrock.role.mpc");
+        0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14;
 
     bytes32 public constant SRC_WALLET_TYPE_ID =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a; // keccak256(abi.encode(ChainInfo{purpose:44 coinType: 60}));
@@ -66,7 +69,7 @@ abstract contract Sign is AccessControl, ISign {
 
     //****************************************************************** MODIFIERS ******************************************************************/
 
-    // Modifier that checks if the provided fee is sufficient
+    // Modifier to ensure the provided fee covers the base fee required by the contract
     modifier keyFee() {
         SignStorage storage $ = _getSignStorage();
         if (msg.value < $._baseFee) {
@@ -78,6 +81,7 @@ abstract contract Sign is AccessControl, ISign {
         _;
     }
 
+    // Modifier to calculate and enforce a dynamic fee based on payload size and network conditions
     modifier sigFee(bytes memory payload) {
         SignStorage storage $ = _getSignStorage();
         uint256 networkFee = payload.length * $._networkFee;
@@ -91,6 +95,7 @@ abstract contract Sign is AccessControl, ISign {
         _;
     }
 
+    // Modifier to ensure the specified wallet type is supported by the contract
     modifier walletTypeGuard(bytes32 walletTypeId) {
         if (getWalletTypeInfo(walletTypeId).isNull()) {
             revert WalletTypeNotSupported(walletTypeId);
@@ -98,6 +103,7 @@ abstract contract Sign is AccessControl, ISign {
         _;
     }
 
+    // Modifier to check if a specific chain ID is supported for a given wallet type
     modifier chainIdGuard(bytes32 walletTypeId, bytes32 chainId) {
         SignStorage storage $ = _getSignStorage();
         if (!isChainIdSupported(walletTypeId, chainId)) {
@@ -106,6 +112,7 @@ abstract contract Sign is AccessControl, ISign {
         _;
     }
 
+    // Modifier to ensure the owner address provided is valid and not zero
     modifier ownerGuard(address owner) {
         if (owner == address(0)) {
             revert OwnableInvalidOwner(owner);
@@ -123,24 +130,47 @@ abstract contract Sign is AccessControl, ISign {
 
     //****************************************************************** EXTERNAL FUNCTIONS ******************************************************************/
 
+    /**
+     * @dev See the internal function `_zrKeyReq` for the core implementation details of key request handling.
+     * This reference is provided to highlight where the detailed logic and state modifications occur following the
+     * initial validations and preparations made in this public-facing function.
+     */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
     ) external payable keyFee walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
+    /**
+     * @dev See the internal function `_zrKeyRes` for the core implementation details of key response handling.
+     * This reference is provided to highlight where the detailed logic and state modifications occur following the
+     * initial validations and preparations made in this public-facing function.
+     */
     function zrKeyRes(
         SignTypes.ZrKeyResParams memory params
     ) external walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
         _zrKeyRes(params);
     }
 
+    /**
+     * @dev External function that handles the hashing and signing of parameters specific to the Zenrock protocol.
+     * This function validates the payload length, ensuring it meets the required specifications for processing.
+     * It also enforces wallet type and chain ID constraints to ensure that the operation adheres to the specified
+     * requirements and security standards.
+     *
+     * @param params Struct containing all necessary parameters for the signing operation. This includes the wallet type ID,
+     * destination chain ID, and the payload which should be exactly 32 bytes in length, among other relevant data.
+     *
+     * @notice This function is guarded by `walletTypeGuard` and `chainIdGuard` modifiers to ensure that the operation
+     * is performed only if the wallet type is supported and the destination chain ID is valid, respectively. These checks
+     * are crucial for maintaining operational integrity and security. The function reverts if the payload length is incorrect,
+     * ensuring that only properly formatted requests are processed.
+     */
     function zrSignHash(
         SignTypes.ZrSignParams memory params
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -170,12 +200,24 @@ abstract contract Sign is AccessControl, ISign {
         _sigReq(sigReqParams);
     }
 
+    /**
+     * @dev External function to handle signing data operations. This function ensures the operation is
+     * compatible with the wallet type and the destination chain ID. It specifically prohibits the broadcasting
+     * of the data being signed, focusing solely on signing operations without dissemination.
+     *
+     * @param params Struct containing all necessary parameters for the data signing operation. This includes
+     * wallet type ID, destination chain ID, and payload, among others. The function also checks if broadcasting
+     * is attempted and reverts if so.
+     *
+     * @notice This function employs `walletTypeGuard` and `chainIdGuard` modifiers to ensure that the operation
+     * conforms to valid and supported wallet types and chain IDs. It is critical that the broadcast flag is not
+     * set, as broadcasting is not allowed in this function.
+     */
     function zrSignData(
         SignTypes.ZrSignParams memory params
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -197,12 +239,25 @@ abstract contract Sign is AccessControl, ISign {
         _sigReq(sigReqParams);
     }
 
+    /**
+     * @dev External function designed for signing transactions. Similar to `zrSignData`, this function ensures
+     * compatibility with the wallet type and destination chain ID but also prepares the parameters for a transaction
+     * signing request. It allows for the optional broadcasting of the signed transaction depending on the
+     * `broadcast` flag.
+     *
+     * @param params Struct containing all necessary parameters for the transaction signing operation. These parameters
+     * are converted into `SigReqParams` format and include the wallet type ID, destination chain ID, payload,
+     * and owner information, tailored for transaction-specific requirements.
+     *
+     * @notice Uses `walletTypeGuard` and `chainIdGuard` modifiers to ensure operations are performed only with valid
+     * wallet types and on supported chains. This function handles the creation of a signing request and processes
+     * broadcasting based on the provided flags.
+     */
     function zrSignTx(
         SignTypes.ZrSignParams memory params
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -219,29 +274,61 @@ abstract contract Sign is AccessControl, ISign {
         _sigReq(sigReqParams);
     }
 
+    /**
+     * @dev See the internal function `_sigRes` for the core implementation details of sig response handling.
+     * This reference is provided to highlight where the detailed logic.
+     */
     function zrSignRes(
         SignTypes.SignResParams memory params
     ) external virtual override {
-        _resSig(params);
+        _sigRes(params);
     }
 
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
+
+    /**
+     * @dev Retrieves the current trace ID from the contract's storage. The trace ID is typically used to
+     * track and manage signature or key request sequences within the contract.
+     *
+     * @return uint256 The current trace ID stored in the contract.
+     */
     function getTraceId() public view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
         return $._traceId;
     }
 
+    /**
+     * @dev Returns the base fee required for initiating any signing or key generation request. This fee
+     * is set and stored within the contract's storage and may be updated by authorized roles.
+     *
+     * @return uint256 The base fee amount required for operations, retrieved from contract storage.
+     */
     function getBaseFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
         return $._baseFee;
     }
 
+    /**
+     * @dev Fetches the network fee associated with operations within the contract. This fee can vary based
+     * on network conditions and is stored in the contract's storage.
+     *
+     * @return uint256 The current network fee, which adjusts based on payload sizes or network congestion.
+     */
     function getNetworkFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
 
         return $._networkFee;
     }
 
+    /**
+     * @dev Retrieves a list of all keys associated with a specific wallet type and owner. This function is
+     * useful for external parties or contract interactions that need to audit or verify the keys held by a particular
+     * user or operation.
+     *
+     * @param walletTypeId The type ID of the wallet for which keys are being requested.
+     * @param owner The address of the wallet owner.
+     * @return string[] An array of keys for the specified wallet type and owner.
+     */
     function getZrKeys(
         bytes32 walletTypeId,
         address owner
@@ -249,6 +336,15 @@ abstract contract Sign is AccessControl, ISign {
         return _getWallets(walletTypeId, owner);
     }
 
+    /**
+     * @dev Fetches a specific key from a wallet based on the wallet type, owner, and index. This is used to
+     * retrieve detailed information about individual keys when needed.
+     *
+     * @param walletTypeId The type ID of the wallet which the key belongs to.
+     * @param owner The address of the owner of the wallet.
+     * @param index The index of the key within the wallet to retrieve.
+     * @return string The key at the specified index for the given wallet type and owner.
+     */
     function getZrKey(
         bytes32 walletTypeId,
         address owner,
@@ -257,12 +353,24 @@ abstract contract Sign is AccessControl, ISign {
         return _getWalletByIndex(walletTypeId, owner, index);
     }
 
+    /**
+     * @dev Returns the version of the contract as a uint256. This is typically used to manage upgrades
+     * and ensure compatibility with interfaces or dependent contracts.
+     *
+     * @return uint256 The current version number of the contract.
+     */
     function version() external view virtual override returns (uint256) {
         return _getInitializedVersion();
     }
 
     //****************************************************************** VIEW PUBLIC FUNCTIONS ******************************************************************/
 
+    /**
+     * @dev Returns the version of the contract as a uint256. This is typically used to manage upgrades
+     * and ensure compatibility with interfaces or dependent contracts.
+     *
+     * @return uint256 The current version number of the contract.
+     */
     function getWalletTypeInfo(
         bytes32 walletTypeId
     ) public view virtual returns (ZrSignTypes.ChainInfo memory) {
@@ -270,6 +378,13 @@ abstract contract Sign is AccessControl, ISign {
         return $.supportedWalletTypes[walletTypeId];
     }
 
+    /**
+     * @dev Checks if a wallet type is supported by the contract. This function is critical for validation
+     * processes that require confirmation of supported wallet types before proceeding with operations.
+     *
+     * @param walletTypeId The identifier for the wallet type being checked.
+     * @return bool True if the wallet type is supported, false otherwise.
+     */
     function isWalletTypeSupported(
         bytes32 walletTypeId
     ) public view virtual override returns (bool) {
@@ -277,6 +392,15 @@ abstract contract Sign is AccessControl, ISign {
         return $.supportedWalletTypes[walletTypeId].isNotNull();
     }
 
+    /**
+     * @dev Determines whether a specific chain ID is supported for a given wallet type. This check
+     * is essential for operations that must validate the compatibility of wallet types with specific
+     * blockchain networks.
+     *
+     * @param walletTypeId The wallet type identifier for which the chain ID support is being checked.
+     * @param chainId The chain ID being checked for support under the specified wallet type.
+     * @return bool True if the chain ID is supported for the given wallet type, false otherwise.
+     */
     function isChainIdSupported(
         bytes32 walletTypeId,
         bytes32 chainId
@@ -286,6 +410,18 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+
+    /**
+     * @dev Internal function that logs a key request event. This function is called as part of the key request flow,
+     * typically from a public or external function that processes the initial key request. It handles the internal
+     * registration of the request by assigning a unique ID and emits a relevant event.
+     *
+     * @param params Struct containing all necessary parameters for the key request. This includes the type of wallet,
+     * the sender's address, and other contextual information necessary to process the request.
+     *
+     * @notice This function should only be called after all preconditions, such as fee verification and authorization checks,
+     * have been met.
+     */
     function _zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
     ) internal virtual {
@@ -295,6 +431,17 @@ abstract contract Sign is AccessControl, ISign {
         emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
     }
 
+    /**
+     * @dev Internal function that processes the response for a key request. It is used to validate the authenticity and
+     * integrity of the key response through signature verification and then updates the contract state with the new key
+     * information. It is called by an external method that receives the key generation results.
+     *
+     * @param params Struct containing response parameters, including the wallet type, owner address, wallet index, public key,
+     * and the authorization signature proving the key's legitimacy.
+     *
+     * @notice This function performs crucial validations such as signature authenticity and public key integrity. It ensures
+     * that the wallet index is correct, preventing unauthorized key updates.
+     */
     function _zrKeyRes(
         SignTypes.ZrKeyResParams memory params
     ) internal virtual {
@@ -330,6 +477,19 @@ abstract contract Sign is AccessControl, ISign {
             params.publicKey
         );
     }
+
+    /**
+     * @dev Internal function to process a signature request. This function validates the public key of the wallet,
+     * increments a trace ID for tracking, and logs the initiation of the signature request. It's designed to be
+     * called from a public or external function that handles the initial user request for signing.
+     *
+     * @param params Struct containing the parameters necessary for the signature request. This includes the wallet type ID,
+     * the owner's address, and the wallet index which are used to compute the wallet ID and validate the public key.
+     * The `payload` within params is used to calculate the fee.
+     *
+     * @notice This function also applies the `sigFee` modifier to ensure that the appropriate fees are paid with the request.
+     * Ensure that all public keys and wallet indices are validated prior to calling this function.
+     */
     function _sigReq(
         SignTypes.SigReqParams memory params
     ) internal virtual sigFee(params.payload) {
@@ -364,7 +524,19 @@ abstract contract Sign is AccessControl, ISign {
         );
     }
 
-    function _resSig(SignTypes.SignResParams memory params) internal virtual {
+    /**
+     * @dev Internal function to finalize the signature response. This function checks the authenticity of the
+     * authorization signature against the combined payload and logs the resolution of the signature operation.
+     * It is typically called by an external function responsible for receiving and processing the signature
+     * response from a signer.
+     *
+     * @param params Struct containing the response parameters, including the trace ID, the signature itself, and a broadcast flag
+     * indicating whether the signature should be broadcasted. These parameters are encoded and hashed to validate the auth signature.
+     *
+     * @notice This function validates the authorization signature to ensure it matches the expected payload hash.
+     * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
+     */
+    function _sigRes(SignTypes.SignResParams memory params) internal virtual {
         bytes memory payload = abi.encode(
             block.chainid,
             params.traceId,
@@ -374,10 +546,24 @@ abstract contract Sign is AccessControl, ISign {
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
 
         _mustValidateAuthSignature(payloadHash, params.authSignature);
-        
+
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
 
+    /**
+     * @dev Internal function to validate an authorization signature against a given data hash. This function is critical
+     * for ensuring the integrity and authenticity of actions within the contract that require verified approval,
+     * typically those involving key or signature operations. It uses ECDSA for signature recovery and validation.
+     *
+     * @param dataHash The keccak256 hash of the data for which the signature is being verified. This data hash
+     * should encapsulate all relevant information that the signature purports to authorize.
+     * @param signature The digital signature provided for verification against the data hash. It must be produced by
+     * the appropriate private key corresponding to the public key that is expected to authorize the action.
+     *
+     * @notice If the signature does not correctly match the expected address derived from the data hash,
+     * or if any error occurs in the recovery process, this function reverts the transaction. This ensures that
+     * only valid, verifiable actions are processed.
+     */
     function _mustValidateAuthSignature(
         bytes32 dataHash,
         bytes memory signature
@@ -394,6 +580,16 @@ abstract contract Sign is AccessControl, ISign {
         }
     }
 
+    /**
+     * @dev Configures support for a specific wallet type by hashing its information and updating the storage.
+     * This function allows for the addition or removal of wallet types in the contract's supported list.
+     *
+     * @param c The chain information struct that describes the wallet type.
+     * @param support Boolean flag indicating whether to support (true) or remove support (false) for the wallet type.
+     * @return bytes32 The wallet type ID generated from the chain information hash.
+     *
+     * @notice This function can revert if attempting to add a wallet type that is already supported.
+     */
     function _walletTypeIdConfig(
         ZrSignTypes.ChainInfo memory c,
         bool support
@@ -414,6 +610,17 @@ abstract contract Sign is AccessControl, ISign {
         return walletTypeId;
     }
 
+    /**
+     * @dev Configures support for a specific chain ID for a given wallet type. This function is used to manage
+     * which chain IDs are supported for each wallet type, allowing for dynamic adjustments.
+     *
+     * @param walletTypeId The identifier for the wallet type.
+     * @param chainId The chain ID to configure support for.
+     * @param support Boolean indicating whether to add (true) or remove (false) support for the chain ID.
+     *
+     * @notice This function is protected by `walletTypeGuard` to ensure the wallet type is supported.
+     * It can revert if attempting to add a chain ID that is already supported for the wallet type.
+     */
     function _chainIdConfig(
         bytes32 walletTypeId,
         bytes32 chainId,
@@ -433,12 +640,28 @@ abstract contract Sign is AccessControl, ISign {
         }
     }
 
+    /**
+     * @dev Sets the base fee for operations within the contract. This fee is required for key or signature requests
+     * and can be updated to reflect changes in operational or network costs.
+     *
+     * @param newBaseFee The new base fee to set.
+     *
+     * @notice Emits a `BaseFeeUpdate` event indicating the change from the old base fee to the new base fee.
+     */
     function _setupBaseFee(uint256 newBaseFee) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit BaseFeeUpdate($._baseFee, newBaseFee);
         $._baseFee = newBaseFee;
     }
 
+    /**
+     * @dev Sets the network fee associated with operations within the contract. This fee can be adjusted to
+     * accommodate varying network conditions and costs.
+     *
+     * @param newNetworkFee The new network fee to set.
+     *
+     * @notice Emits a `NetworkFeeUpdate` event indicating the change from the old network fee to the new network fee.
+     */
     function _setupNetworkFee(uint256 newNetworkFee) internal virtual {
         SignStorage storage $ = _getSignStorage();
         emit NetworkFeeUpdate($._networkFee, newNetworkFee);
@@ -446,6 +669,16 @@ abstract contract Sign is AccessControl, ISign {
     }
 
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
+
+    /**
+     * @dev Retrieves a specific wallet by its index from the storage. This is used to access detailed information
+     * about individual wallets under a particular wallet type and owner.
+     *
+     * @param walletTypeId The identifier for the wallet type.
+     * @param owner The owner's address whose wallet is being accessed.
+     * @param index The index of the wallet in the list of wallets owned by the specified owner.
+     * @return string The wallet information at the specified index.
+     */
     function _getWalletByIndex(
         bytes32 walletTypeId,
         address owner,
@@ -457,6 +690,14 @@ abstract contract Sign is AccessControl, ISign {
         return $.wallets[id][index];
     }
 
+    /**
+     * @dev Retrieves all wallets associated with a given wallet type and owner. This function is useful for
+     * operations that need to interact with or display all wallets owned by a particular user under a specific wallet type.
+     *
+     * @param walletTypeId The identifier for the wallet type.
+     * @param owner The owner's address whose wallets are being retrieved.
+     * @return string[] An array of all wallets associated with the given wallet type and owner.
+     */
     function _getWallets(
         bytes32 walletTypeId,
         address owner
@@ -469,6 +710,14 @@ abstract contract Sign is AccessControl, ISign {
 
     //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
 
+    /**
+     * @dev Generates a unique identifier for a wallet based on the wallet type and owner. This ID is used to
+     * index and retrieve wallet-related data in storage.
+     *
+     * @param walletTypeId The identifier for the wallet type.
+     * @param owner The owner's address for which the ID is being generated.
+     * @return id bytes32 A unique identifier derived from the chain ID, contract address, wallet type, and owner's address.
+     */
     function _getId(
         bytes32 walletTypeId,
         address owner
@@ -479,6 +728,14 @@ abstract contract Sign is AccessControl, ISign {
             );
     }
 
+    /**
+     * @dev Validates the public key by checking its length. This function ensures that the public key meets
+     * the minimum length requirement, providing basic validation that is crucial for security.
+     *
+     * @param publicKey The public key to validate.
+     *
+     * @notice Reverts if the public key length is not sufficient, indicating an invalid or malformed key.
+     */
     function _validatePublicKey(string memory publicKey) internal pure virtual {
         uint256 length = abi.encodePacked(publicKey).length;
         if (length <= 4) {

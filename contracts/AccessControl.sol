@@ -3,10 +3,9 @@
 
 pragma solidity 0.8.20;
 
-import "../interfaces/IAccessControl.sol";
-import "./Context.sol";
-import "../libraries/Strings.sol";
-import "./ERC165.sol";
+import { IAccessControl } from "../interfaces/IAccessControl.sol";
+import { Context } from "./Context.sol";
+import { ERC165 } from "./ERC165.sol";
 
 /**
  * @dev Contract module that allows children to implement role-based access
@@ -60,7 +59,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
     }
 
     // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.AccessControl")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant AccessControlStorageLocation =
+    bytes32 private constant ACCESS_CONTROL_STORAGE_LOCATION =
         0x02dd7bc7dec4dceedda775e58dd541e08a116c6c53815c0bd028192f7b626800;
 
     function _getAccessControlStorage()
@@ -69,7 +68,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
         returns (AccessControlStorage storage $)
     {
         assembly {
-            $.slot := AccessControlStorageLocation
+            $.slot := ACCESS_CONTROL_STORAGE_LOCATION
         }
     }
 
