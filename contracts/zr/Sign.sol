@@ -140,7 +140,6 @@ abstract contract Sign is AccessControl, ISign {
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -175,7 +174,6 @@ abstract contract Sign is AccessControl, ISign {
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -202,7 +200,6 @@ abstract contract Sign is AccessControl, ISign {
     )
         external
         payable
-        sigFee(params.payload)
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -330,6 +327,7 @@ abstract contract Sign is AccessControl, ISign {
             params.publicKey
         );
     }
+    
     function _sigReq(
         SignTypes.SigReqParams memory params
     ) internal virtual sigFee(params.payload) {
