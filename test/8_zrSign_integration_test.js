@@ -790,8 +790,8 @@ contract("ZrSign integration tests", (accounts) => {
           instances.proxied
         );
 
-        const chainId = await web3.eth.getChainId();
-        const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey]);
+        const chainId = await helpers.getSrcChainId(instances.proxied);
+        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey]);
         const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
         tx = await helpers.zrKeyRes(
@@ -926,8 +926,8 @@ contract("ZrSign integration tests", (accounts) => {
           c.owner,
           instances.proxied
         );
-        const chainId = await web3.eth.getChainId();
-        const payload = web3.eth.abi.encodeParameters(['uint256', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
+        const chainId = await helpers.getSrcChainId(instances.proxied);
+        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
         tx = helpers.zrKeyRes(
@@ -1192,8 +1192,8 @@ contract("ZrSign integration tests", (accounts) => {
           FAKE_EVM_MPC_ADDRESS
         );
 
-        const chainId = await web3.eth.getChainId();
-        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, event.args.traceId, signature, event.args.broadcast]);
+        const chainId = await helpers.getSrcChainId(instances.proxied);
+        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, event.args.traceId, signature, event.args.broadcast]);
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = await helpers.zrSignRes(
@@ -1268,8 +1268,8 @@ contract("ZrSign integration tests", (accounts) => {
           FAKE_EVM_MPC_ADDRESS
         );
         const evBefore = await instances.proxied.getPastEvents("ZrSigResolve");
-        const chainId = await web3.eth.getChainId();
-        const resPayload = web3.eth.abi.encodeParameters(['uint256', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
+        const chainId = await helpers.getSrcChainId(instances.proxied);
+        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = helpers.zrSignRes(

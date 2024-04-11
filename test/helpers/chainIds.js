@@ -23,6 +23,23 @@ const POLYGON_MUMBAI_CAIP = "eip155:80001";
 const POLYGON_MUMBAI_CHAIN_ID =
   "0xa24f2e4ffab961d4f74844398efaab23f70f2830a83e1ea4f58097ea0408d254"; //keccak256(abi.encodePacked("eip155:80001"));
 
+async function getSrcWalletTypeId(instance) {
+  //Given
+  let res;
+  //When
+  res = instance.SRC_WALLET_TYPE_ID.call();
+  //Then
+  return res;
+}
+
+async function getSrcChainId(instance) {
+  //Given
+  let res;
+  //When
+  res = instance.SRC_CHAIN_ID.call();
+  //Then
+  return res;
+}
 module.exports = {
   UNSUPPORTED_CHAIN_ID,
   BTC_TESTNET_CAIP,
@@ -35,4 +52,6 @@ module.exports = {
   ETH_SEPOLIA_CHAIN_ID,
   POLYGON_MUMBAI_CAIP,
   POLYGON_MUMBAI_CHAIN_ID,
+  getSrcWalletTypeId,
+  getSrcChainId
 };

@@ -448,7 +448,7 @@ abstract contract Sign is AccessControl, ISign {
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
-            block.chainid,
+            SRC_CHAIN_ID,
             params.walletTypeId,
             params.owner,
             params.walletIndex,
@@ -538,7 +538,7 @@ abstract contract Sign is AccessControl, ISign {
      */
     function _sigRes(SignTypes.SignResParams memory params) internal virtual {
         bytes memory payload = abi.encode(
-            block.chainid,
+            SRC_CHAIN_ID,
             params.traceId,
             params.signature,
             params.broadcast
