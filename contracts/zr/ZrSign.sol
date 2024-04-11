@@ -10,16 +10,25 @@ import { IZrSign } from "../../interfaces/zr/IZrSign.sol";
 contract ZrSign is Sign, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
 
-    bytes32 public constant TOKENOMICS_ROLE = 0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
+    bytes32 public constant TOKENOMICS_ROLE =
+        0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
 
     //****************************************************************** CONSTRUCTOR FUNCTION ******************************************************************/
 
+    /**
+     * @dev Constructor for ZrSign. Disables initializers to prevent re-initialization in upgradeable contract scenarios.
+     * This is crucial to ensure the contract's integrity and security when deployed as part of an upgradeable suite.
+     */
     constructor() {
         _disableInitializers();
     }
 
     //****************************************************************** INIT FUNCTIONS ******************************************************************/
 
+    /**
+     * @dev Initializer for version 1 of the contract. Sets up initial state and roles as required.
+     * This function should only be called once during the initial setup of the contract following a proxy deployment.
+     */
     function initializeV1() external initializer {
         __ZrSign_init();
     }
@@ -33,44 +42,73 @@ contract ZrSign is Sign, IZrSign {
     function __ZrSign_init_unchained() internal onlyInitializing {}
 
     //****************************************************************** EXTERNAL FUNCTIONS ******************************************************************/
-
+    /**
+     * @dev Configures support for specific wallet types based on their purpose and coin type.
+     * This function is restricted to administrators and logs the configuration event.
+     *
+     * @param purpose The intended use or category of the wallet type.
+     * @param coinType The specific coin or token type associated with the wallet.
+     * @param support Boolean indicating whether to add or remove support.
+     */
     function walletTypeIdConfig(
         uint256 purpose,
         uint256 coinType,
         bool support
     ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
-        ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(purpose, coinType);
+        ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(
+            purpose,
+            coinType
+        );
         bytes32 walletTypeId = _walletTypeIdConfig(c, support);
         emit WalletTypeIdSupport(purpose, coinType, walletTypeId, support);
     }
 
+    /**
+     * @dev Manages the support for specific chain IDs, allowing the contract to adapt to new blockchain
+     * networks or remove support as needed. Modifications are logged for transparency.
+     *
+     * @param walletTypeId The identifier for the wallet type associated with this chain ID.
+     * @param caip The blockchain identifier (CAIP standard) to configure.
+     * @param support Boolean indicating whether to add or remove support.
+     */
     function chainIdConfig(
         bytes32 walletTypeId,
         string memory caip,
         bool support
-    )
-        external
-        virtual
-        override
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         bytes32 chainId = keccak256(abi.encodePacked(caip));
         _chainIdConfig(walletTypeId, chainId, support);
         emit ChainIdSupport(walletTypeId, chainId, caip, support);
     }
 
+    /**
+     * @dev Sets the base fee required for initiating operations within the contract. This function is
+     * restricted to roles managing tokenomics to adjust economic parameters as necessary.
+     *
+     * @param newBaseFee The new base fee to be set for contract operations.
+     */
     function setupBaseFee(
         uint256 newBaseFee
     ) external virtual override onlyRole(TOKENOMICS_ROLE) {
         _setupBaseFee(newBaseFee);
     }
 
+    /**
+     * @dev Sets the network fee associated with the processing of operations, reflecting changes in network
+     * conditions or operational costs.
+     *
+     * @param newNetworkFee The new network fee to be set.
+     */
     function setupNetworkFee(
         uint256 newNetworkFee
     ) external virtual override onlyRole(TOKENOMICS_ROLE) {
         _setupNetworkFee(newNetworkFee);
     }
 
+    /**
+     * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
+     * roles designated with financial management responsibilities.
+     */
     function withdrawFees()
         external
         payable
