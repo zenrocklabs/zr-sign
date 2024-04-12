@@ -15,9 +15,17 @@ contract("ZrSign request public key tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress
+    );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(
+      networkFee,
+      tokenomicsAddress,
+      instances.proxied
+    );
 
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;
@@ -74,8 +82,8 @@ contract("ZrSign request public key tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [unsupportedWalletType],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with less fee",
@@ -84,9 +92,12 @@ contract("ZrSign request public key tests", (accounts) => {
         caller: regularAddress,
         customError: {
           name: "InsufficientFee",
-          params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
-          instance: undefined
-        }
+          params: [
+            web3.utils.toWei("80", "gwei"),
+            web3.utils.toWei("30", "gwei"),
+          ],
+          instance: undefined,
+        },
       },
     ];
 

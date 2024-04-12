@@ -18,9 +18,18 @@ contract("ZrSign resolve signature tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress,
+      ovmAddress
+    );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(
+      networkFee,
+      tokenomicsAddress,
+      instances.proxied
+    );
 
     const pki = 0;
 
@@ -49,9 +58,11 @@ contract("ZrSign resolve signature tests", (accounts) => {
       instances.proxied
     );
 
-
     const chainId = await helpers.getSrcChainId(instances.proxied);
-    const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+    const payload = web3.eth.abi.encodeParameters(
+      ["bytes32", "bytes32", "address", "uint256", "string"],
+      [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]
+    );
     const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
     await helpers.zrKeyRes(
@@ -111,9 +122,14 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
-        const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
-
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, c.traceId, signature, c.broadcast]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          ovmAddress,
+          resPayload
+        );
 
         tx = await helpers.zrSignRes(
           c.traceId,
@@ -191,8 +207,14 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
-        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, c.traceId, signature, c.broadcast]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          c.caller,
+          resPayload
+        );
 
         tx = await helpers.zrSignRes(
           c.traceId,
@@ -225,8 +247,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [regularAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
@@ -262,8 +284,14 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payloadHash = web3.utils.soliditySha3(payload);
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
-        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, c.traceId, signature, c.broadcast]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          c.caller,
+          resPayload
+        );
 
         tx = helpers.zrSignRes(
           c.traceId,
@@ -287,8 +315,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
       const customError = {
         name: "InvalidSignature",
         params: [2],
-        instance: instances.proxied
-      }
+        instance: instances.proxied,
+      };
       //When
       const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
 
@@ -317,8 +345,15 @@ contract("ZrSign resolve signature tests", (accounts) => {
       const payloadHash = web3.utils.soliditySha3(payload);
       const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
       const chainId = await helpers.getSrcChainId(instances.proxied);
-      const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, 0, signature, true]);
-      const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload, -4);
+      const resPayload = web3.eth.abi.encodeParameters(
+        ["bytes32", "uint256", "bytes", "bool"],
+        [chainId, 0, signature, true]
+      );
+      const authSignature = await helpers.getAuthSignature(
+        ovmAddress,
+        resPayload,
+        -4
+      );
 
       tx = helpers.zrSignRes(
         0,
@@ -332,8 +367,5 @@ contract("ZrSign resolve signature tests", (accounts) => {
       //Then
       await helpers.expectRevert(tx, undefined, customError);
     });
-
-
   });
-
 });

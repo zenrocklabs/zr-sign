@@ -10,7 +10,11 @@ contract("ZrSign fee tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress
+    );
   });
 
   describe("positive tests", async () => {
@@ -87,7 +91,7 @@ contract("ZrSign fee tests", (accounts) => {
       const customError = {
         name: "AccessControlUnauthorizedAccount",
         params: [regularAddress, role],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
 
       tx = helpers.setupBaseFee(
@@ -112,7 +116,7 @@ contract("ZrSign fee tests", (accounts) => {
       const customError = {
         name: "AccessControlUnauthorizedAccount",
         params: [regularAddress, role],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
 
       tx = helpers.setupNetworkFee(

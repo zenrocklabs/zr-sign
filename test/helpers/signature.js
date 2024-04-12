@@ -6,13 +6,19 @@ async function zrSignHash(
   msgValue,
   caller,
   instance,
-  broadcast = false,
+  broadcast = false
 ) {
   //Given
   let tx;
 
   //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  const params = {
+    walletTypeId: walletTypeId,
+    walletIndex: walletIndex,
+    dstChainId: dstChainId,
+    payload: payload,
+    broadcast: broadcast,
+  };
   tx = await instance.zrSignHash(params, {
     from: caller,
     value: msgValue,
@@ -30,12 +36,18 @@ async function zrSignData(
   msgValue,
   caller,
   instance,
-  broadcast = false,
+  broadcast = false
 ) {
   //Given
   let tx;
   //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  const params = {
+    walletTypeId: walletTypeId,
+    walletIndex: walletIndex,
+    dstChainId: dstChainId,
+    payload: payload,
+    broadcast: broadcast,
+  };
   tx = await instance.zrSignData(params, {
     from: caller,
     value: msgValue,
@@ -57,7 +69,13 @@ async function zrSignTx(
   //Given
   let tx;
   //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  const params = {
+    walletTypeId: walletTypeId,
+    walletIndex: walletIndex,
+    dstChainId: dstChainId,
+    payload: payload,
+    broadcast: broadcast,
+  };
   tx = await instance.zrSignTx(params, {
     from: caller,
     value: msgValue,
@@ -81,14 +99,11 @@ async function zrSignRes(
     traceId: traceId,
     signature: signature,
     broadcast: broadcast,
-    authSignature: authSignature
+    authSignature: authSignature,
   };
 
   //When
-  tx = instance.zrSignRes(
-    params,
-    { from: caller }
-  );
+  tx = instance.zrSignRes(params, { from: caller });
   //Then
   return tx;
 }
@@ -151,12 +166,7 @@ function checkZrSigRequestEvent(
   );
 }
 
-function checkZrSigResolveEvent(
-  log,
-  traceId,
-  signature,
-  broadcast
-) {
+function checkZrSigResolveEvent(log, traceId, signature, broadcast) {
   assert.equal(
     log.event,
     "ZrSigResolve",

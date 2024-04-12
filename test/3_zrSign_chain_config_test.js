@@ -138,7 +138,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "AccessControlUnauthorizedAccount",
         params: [regularAddress, defaultAdminRole],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       supportedBefore = await helpers.isWalletTypeSupported(
         walletTypeId,
@@ -169,7 +169,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "WalletTypeAlreadySupported",
         params: [helpers.BTC_CHAIN_TYPE_HASH],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
 
       //When
@@ -200,7 +200,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "WalletTypeNotSupported",
         params: [helpers.BTC_CHAIN_TYPE_HASH],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       //When
       tx = helpers.walletTypeIdConfig(
@@ -380,7 +380,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "AccessControlUnauthorizedAccount",
         params: [regularAddress, defaultAdminRole],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       await helpers.walletTypeIdConfig(
         wt.purpose,
@@ -429,9 +429,9 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "ChainIdAlreadySupported",
         params: [walletTypeId, helpers.ETH_MAINNET_CHAIN_ID],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
-      
+
       //When
       await helpers.walletTypeIdConfig(
         wt.purpose,
@@ -477,7 +477,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "ChainIdNotSupported",
         params: [walletTypeId, helpers.ETH_MAINNET_CHAIN_ID],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       //When
       await helpers.walletTypeIdConfig(
@@ -508,7 +508,7 @@ contract("ZrSign chain config tests", (accounts) => {
       const customError = {
         name: "WalletTypeNotSupported",
         params: [wtId],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       //When
       tx = helpers.chainIdConfig(

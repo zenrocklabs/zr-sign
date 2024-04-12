@@ -53,7 +53,13 @@ async function zrKeyRes(
   //Given
   let tx;
   //When
-  const params = { walletTypeId: walletTypeId, owner: owner, walletIndex: walletIndex, publicKey: publicKey, authSignature: signature };
+  const params = {
+    walletTypeId: walletTypeId,
+    owner: owner,
+    walletIndex: walletIndex,
+    publicKey: publicKey,
+    authSignature: signature,
+  };
   tx = instance.zrKeyRes(params, {
     from: caller,
   });

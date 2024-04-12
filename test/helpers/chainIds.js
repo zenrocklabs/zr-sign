@@ -53,5 +53,5 @@ module.exports = {
   POLYGON_MUMBAI_CAIP,
   POLYGON_MUMBAI_CHAIN_ID,
   getSrcWalletTypeId,
-  getSrcChainId
+  getSrcChainId,
 };

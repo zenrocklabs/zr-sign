@@ -29,7 +29,7 @@ async function initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddr, mpcAddr) {
     const tokenomicsRole = await Proxied.TOKENOMICS_ROLE.call();
     await Proxied.grantRole(tokenomicsRole, tokenomicsAddr);
   }
-  
+
   return {
     implementation: implInstance,
     proxy: ZrProxyInstance,

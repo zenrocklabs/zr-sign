@@ -27,9 +27,11 @@ library MessageHashUtils {
      *
      * See {ECDSA-recover}.
      */
-    function toEthSignedMessageHash(
-        bytes32 messageHash
-    ) internal pure returns (bytes32 digest) {
+    function toEthSignedMessageHash(bytes32 messageHash)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, "\x19Ethereum Signed Message:\n32") // 32 is the bytes-length of messageHash
@@ -48,9 +50,11 @@ library MessageHashUtils {
      *
      * See {ECDSA-recover}.
      */
-    function toEthSignedMessageHash(
-        bytes memory message
-    ) internal pure returns (bytes32) {
+    function toEthSignedMessageHash(bytes memory message)
+        internal
+        pure
+        returns (bytes32)
+    {
         return
             keccak256(
                 bytes.concat(
@@ -86,10 +90,11 @@ library MessageHashUtils {
      *
      * See {ECDSA-recover}.
      */
-    function toTypedDataHash(
-        bytes32 domainSeparator,
-        bytes32 structHash
-    ) internal pure returns (bytes32 digest) {
+    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash)
+        internal
+        pure
+        returns (bytes32 digest)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let ptr := mload(0x40)

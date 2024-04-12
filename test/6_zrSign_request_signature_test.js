@@ -22,9 +22,18 @@ contract("ZrSign request signature tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress,
+      ovmAddress
+    );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(
+      networkFee,
+      tokenomicsAddress,
+      instances.proxied
+    );
 
     const pki = 0;
 
@@ -53,7 +62,10 @@ contract("ZrSign request signature tests", (accounts) => {
       instances.proxied
     );
     const chainId = await helpers.getSrcChainId(instances.proxied);
-    const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+    const payload = web3.eth.abi.encodeParameters(
+      ["bytes32", "bytes32", "address", "uint256", "string"],
+      [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]
+    );
     const payloadHash = web3.utils.soliditySha3(payload);
     const signature = await web3.eth.sign(payloadHash, ovmAddress);
     let vValue = parseInt(signature.slice(-2), 16); // Convert the last two hex characters to an integer
@@ -275,8 +287,8 @@ contract("ZrSign request signature tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [unsupportedWalletTypeId],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request for unsupported chain id",
@@ -291,8 +303,8 @@ contract("ZrSign request signature tests", (accounts) => {
         customError: {
           name: "ChainIdNotSupported",
           params: [supportedWalletTypeId, helpers.UNSUPPORTED_CHAIN_ID],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with incorrect key index",
@@ -328,10 +340,10 @@ contract("ZrSign request signature tests", (accounts) => {
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               baseFee,
               web3.utils.toWei("2", "wei")
-            )
+            ),
           ],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
