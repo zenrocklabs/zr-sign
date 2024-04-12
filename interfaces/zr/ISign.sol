@@ -8,19 +8,19 @@ import { SignTypes } from "../../libraries/zr/SignTypes.sol";
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 
 interface ISign is IAccessControl {
-    function zrKeyReq(
-        SignTypes.ZrKeyReqParams calldata params
-    ) external payable;
+    function zrKeyReq(SignTypes.ZrKeyReqParams calldata params)
+        external
+        payable;
 
     function zrKeyRes(SignTypes.ZrKeyResParams calldata params) external;
 
-    function zrSignHash(
-        SignTypes.ZrSignParams calldata params
-    ) external payable;
+    function zrSignHash(SignTypes.ZrSignParams calldata params)
+        external
+        payable;
 
-    function zrSignData(
-        SignTypes.ZrSignParams calldata params
-    ) external payable;
+    function zrSignData(SignTypes.ZrSignParams calldata params)
+        external
+        payable;
 
     function zrSignTx(SignTypes.ZrSignParams calldata params) external payable;
 
@@ -28,14 +28,15 @@ interface ISign is IAccessControl {
 
     function version() external view returns (uint256);
 
-    function isWalletTypeSupported(
-        bytes32 walletTypeId
-    ) external view returns (bool);
+    function isWalletTypeSupported(bytes32 walletTypeId)
+        external
+        view
+        returns (bool);
 
-    function isChainIdSupported(
-        bytes32 walletTypeId,
-        bytes32 chainId
-    ) external view returns (bool);
+    function isChainIdSupported(bytes32 walletTypeId, bytes32 chainId)
+        external
+        view
+        returns (bool);
 
     function getTraceId() external view returns (uint256);
 
@@ -43,14 +44,15 @@ interface ISign is IAccessControl {
 
     function getNetworkFee() external view returns (uint256);
 
-    function getWalletTypeInfo(
-        bytes32 walletTypeId
-    ) external view returns (ZrSignTypes.ChainInfo memory);
+    function getWalletTypeInfo(bytes32 walletTypeId)
+        external
+        view
+        returns (ZrSignTypes.ChainInfo memory);
 
-    function getZrKeys(
-        bytes32 walletTypeId,
-        address owner
-    ) external view returns (string[] memory);
+    function getZrKeys(bytes32 walletTypeId, address owner)
+        external
+        view
+        returns (string[] memory);
 
     function getZrKey(
         bytes32 walletTypeId,

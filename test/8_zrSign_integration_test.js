@@ -20,7 +20,11 @@ contract("ZrSign integration tests", (accounts) => {
   let instances;
 
   before(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress
+    );
   });
 
   describe("setup fee", async () => {
@@ -211,7 +215,7 @@ contract("ZrSign integration tests", (accounts) => {
       const customError = {
         name: "AccessControlBadConfirmation",
         params: [],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       let hasRoleBefore;
       let hasRoleAfter;
@@ -306,7 +310,7 @@ contract("ZrSign integration tests", (accounts) => {
         const customError = {
           name: "AccessControlUnauthorizedAccount",
           params: [c.caller, c.adminRole],
-          instance: instances.proxied
+          instance: instances.proxied,
         };
 
         let hasRoleBefore;
@@ -449,8 +453,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "AccessControlUnauthorizedAccount",
           params: [regularAddress, helpers.DEFAULT_ADMIN_ROLE],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "config support for already supported wallet type",
@@ -460,8 +464,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeAlreadySupported",
           params: [helpers.BTC_TESTNET_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "config remove support for already non supported wallet type",
@@ -471,8 +475,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.BTC_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
@@ -699,8 +703,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with less fee",
@@ -709,9 +713,12 @@ contract("ZrSign integration tests", (accounts) => {
         fee: web3.utils.toWei("30", "gwei"),
         customError: {
           name: "InsufficientFee",
-          params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
-          instance: undefined
-        }
+          params: [
+            web3.utils.toWei("80", "gwei"),
+            web3.utils.toWei("30", "gwei"),
+          ],
+          instance: undefined,
+        },
       },
     ];
 
@@ -791,8 +798,14 @@ contract("ZrSign integration tests", (accounts) => {
         );
 
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey]);
-        const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
+        const payload = web3.eth.abi.encodeParameters(
+          ["bytes32", "bytes32", "address", "uint256", "string"],
+          [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          ovmAddress,
+          payload
+        );
 
         tx = await helpers.zrKeyRes(
           walletTypeId,
@@ -837,8 +850,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve zero address",
@@ -850,8 +863,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "OwnableInvalidOwner",
           params: [zeroAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with incorrect public key",
@@ -863,8 +876,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "InvalidPublicKeyLength",
           params: [5, 0],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve without ovm role",
@@ -876,8 +889,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [owner],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with inccorect walletIndex",
@@ -889,8 +902,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "IncorrectWalletIndex",
           params: [1, 6],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with already resolved public key index",
@@ -902,8 +915,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "IncorrectWalletIndex",
           params: [1, 0],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
@@ -927,7 +940,10 @@ contract("ZrSign integration tests", (accounts) => {
           instances.proxied
         );
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
+        const payload = web3.eth.abi.encodeParameters(
+          ["bytes32", "bytes32", "address", "uint256", "string"],
+          [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress]
+        );
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
         tx = helpers.zrKeyRes(
@@ -1058,8 +1074,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with incorrect key index",
@@ -1097,9 +1113,10 @@ contract("ZrSign integration tests", (accounts) => {
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               web3.utils.toWei("70", "gwei"),
               web3.utils.toWei("4", "wei")
-            )
-          ], instance: undefined
-        }
+            ),
+          ],
+          instance: undefined,
+        },
       },
     ];
 
@@ -1193,8 +1210,14 @@ contract("ZrSign integration tests", (accounts) => {
         );
 
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, event.args.traceId, signature, event.args.broadcast]);
-        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, event.args.traceId, signature, event.args.broadcast]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          c.caller,
+          resPayload
+        );
 
         tx = await helpers.zrSignRes(
           event.args.traceId.toString(),
@@ -1225,8 +1248,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [regularAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
@@ -1269,8 +1292,14 @@ contract("ZrSign integration tests", (accounts) => {
         );
         const evBefore = await instances.proxied.getPastEvents("ZrSigResolve");
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
-        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, c.traceId, signature, c.broadcast]
+        );
+        const authSignature = await helpers.getAuthSignature(
+          c.caller,
+          resPayload
+        );
 
         tx = helpers.zrSignRes(
           c.traceId,

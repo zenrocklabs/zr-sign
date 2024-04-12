@@ -16,9 +16,18 @@ contract("ZrSign resolve public key tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress,
+      ovmAddress
+    );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
+    await helpers.setupNetworkFee(
+      networkFee,
+      tokenomicsAddress,
+      instances.proxied
+    );
 
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;
@@ -46,9 +55,18 @@ contract("ZrSign resolve public key tests", (accounts) => {
         instances.proxied
       );
 
-      const walletIndex = walletsBefore.length
+      const walletIndex = walletsBefore.length;
       const chainId = await helpers.getSrcChainId(instances.proxied);
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, walletIndex, fakeMPCAddress]);
+      const payload = web3.eth.abi.encodeParameters(
+        ["bytes32", "bytes32", "address", "uint256", "string"],
+        [
+          chainId,
+          supportedWalletTypeId,
+          regularAddress,
+          walletIndex,
+          fakeMPCAddress,
+        ]
+      );
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = await helpers.zrKeyRes(
@@ -92,8 +110,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [unsupportedWalletTypeId],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve zero address",
@@ -104,8 +122,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         customError: {
           name: "OwnableInvalidOwner",
           params: [zeroAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with incorrect public key",
@@ -116,8 +134,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         customError: {
           name: "InvalidPublicKeyLength",
           params: [5, 0],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve without mpc role",
@@ -128,8 +146,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [owner],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
@@ -146,9 +164,18 @@ contract("ZrSign resolve public key tests", (accounts) => {
           instances.proxied
         );
 
-        const walletIndex = walletsBefore.length
+        const walletIndex = walletsBefore.length;
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, walletIndex, c.mpcAddress]);
+        const payload = web3.eth.abi.encodeParameters(
+          ["bytes32", "bytes32", "address", "uint256", "string"],
+          [
+            chainId,
+            supportedWalletTypeId,
+            regularAddress,
+            walletIndex,
+            c.mpcAddress,
+          ]
+        );
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
         tx = helpers.zrKeyRes(
@@ -190,7 +217,16 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const walletIndex = walletsBefore.length;
       const nextIndex = walletIndex + 1;
       const chainId = await helpers.getSrcChainId(instances.proxied);
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, nextIndex, fakeMPCAddress]);
+      const payload = web3.eth.abi.encodeParameters(
+        ["bytes32", "bytes32", "address", "uint256", "string"],
+        [
+          chainId,
+          supportedWalletTypeId,
+          regularAddress,
+          nextIndex,
+          fakeMPCAddress,
+        ]
+      );
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = helpers.zrKeyRes(
@@ -211,8 +247,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const customError = {
         name: "IncorrectWalletIndex",
         params: [walletsAfter.length, nextIndex],
-        instance: instances.proxied
-      }
+        instance: instances.proxied,
+      };
       //Then
       await helpers.expectRevert(tx, undefined, customError);
       assert.equal(walletsBefore.length, walletsAfter.length);
@@ -232,7 +268,10 @@ contract("ZrSign resolve public key tests", (accounts) => {
         instances.proxied
       );
       const chainId = await helpers.getSrcChainId(instances.proxied);
-      const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+      const payload = web3.eth.abi.encodeParameters(
+        ["bytes32", "bytes32", "address", "uint256", "string"],
+        [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]
+      );
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = await helpers.zrKeyRes(
@@ -287,8 +326,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const customError = {
         name: "IncorrectWalletIndex",
         params: [walletsAfter.length, pki],
-        instance: instances.proxied
-      }
+        instance: instances.proxied,
+      };
       //Then
       await helpers.expectRevert(tx, undefined, customError);
       assert.equal(walletsBefore.length, walletsAfter.length);

@@ -45,39 +45,51 @@ library SignTXTypes {
         DynamicFeeGasParameters gasParameters; // Gas-related parameters for the transaction
     }
 
-    function encodeUnsignedLegacyTx(
-        UnsignedLegacyTx memory self
-    ) public pure returns (bytes memory) {
+    function encodeUnsignedLegacyTx(UnsignedLegacyTx memory self)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(self);
     }
 
-    function decodeUnsignedLegacyTx(
-        bytes memory data
-    ) public pure returns (UnsignedLegacyTx memory) {
+    function decodeUnsignedLegacyTx(bytes memory data)
+        public
+        pure
+        returns (UnsignedLegacyTx memory)
+    {
         return abi.decode(data, (UnsignedLegacyTx));
     }
 
-    function encodeUnsignedAccessListTx(
-        UnsignedAccessListTx memory self
-    ) public pure returns (bytes memory) {
+    function encodeUnsignedAccessListTx(UnsignedAccessListTx memory self)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(self);
     }
 
-    function decodeUnsignedAccessListTx(
-        bytes memory data
-    ) public pure returns (UnsignedAccessListTx memory) {
+    function decodeUnsignedAccessListTx(bytes memory data)
+        public
+        pure
+        returns (UnsignedAccessListTx memory)
+    {
         return abi.decode(data, (UnsignedAccessListTx));
     }
 
-    function encodeUnsignedDynamicFeeTx(
-        UnsignedDynamicFeeTx memory self
-    ) public pure returns (bytes memory) {
+    function encodeUnsignedDynamicFeeTx(UnsignedDynamicFeeTx memory self)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(self);
     }
 
-    function decodeUnsignedDynamicFeeTx(
-        bytes memory data
-    ) public pure returns (UnsignedDynamicFeeTx memory) {
+    function decodeUnsignedDynamicFeeTx(bytes memory data)
+        public
+        pure
+        returns (UnsignedDynamicFeeTx memory)
+    {
         return abi.decode(data, (UnsignedDynamicFeeTx));
     }
 }

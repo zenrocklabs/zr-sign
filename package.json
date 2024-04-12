@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "setup": "npm install",
-    "fmt": "prettier --write './**/*.sol' './**/*.js' './**/*.ts' './**/*.json' './**/*.md'",
     "ganache": "ganache-cli --accounts=50 --deterministic --defaultBalanceEther=1000000",
     "compile": "truffle compile",
-    "solhint": "solhint 'contracts/**/*.sol'",
     "slither": "slither --solc-disable-warnings --exclude-dependencies .",
     "test": "truffle test --network development",
+    "coverage": "truffle run coverage",
+    "fmt": "prettier --write './**/*.sol' './**/*.js' './**/*.ts' './**/*.json' './**/*.md'",
+    "lint": "eslint --ext '.js,.ts' './**/*.{j,t}s'",
+    "solhint": "solhint 'contracts/**/*.sol'",
+    "precommit": "yarn fmt && yarn lint && yarn solhint",
     "migrate": "truffle migrate --reset"
   },
   "repository": {
@@ -36,6 +39,7 @@
     "prettier-plugin-solidity": "1.0.0-alpha.54",
     "rlp": "^3.0.0",
     "solhint": "^3.3.7",
+    "solidity-coverage": "^0.8.12",
     "truffle": "^5.1.35",
     "truffle-plugin-verify": "^0.6.5",
     "web3": "^1.8.1",

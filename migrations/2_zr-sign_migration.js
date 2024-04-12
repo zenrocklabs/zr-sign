@@ -106,17 +106,13 @@ module.exports = function (deployer, network, accounts) {
     tx = await proxied.chainIdConfig(evmWalletTypeId, "eip155:80001", true);
     console.log("Chain id configuration for Mumbai was successful ", tx.tx);
 
-    console.log(
-      `Asigning role to MPC wallet to ${accounts[8]} ...`
-    );
+    console.log(`Asigning role to MPC wallet to ${accounts[8]} ...`);
     const mpcAddress = accounts[8];
     const mpcRole = await proxied.MPC_ROLE.call();
     tx = await proxied.grantRole(mpcRole, mpcAddress);
     console.log("Role was assigned successfully ", tx.tx);
 
-    console.log(
-      `Asigning role to TOKENOMICS wallet to ${accounts[7]} ...`
-    );
+    console.log(`Asigning role to TOKENOMICS wallet to ${accounts[7]} ...`);
     const tokenomicsAddress = accounts[7];
     const tokenomicsRole = await proxied.TOKENOMICS_ROLE.call();
     tx = await proxied.grantRole(tokenomicsRole, tokenomicsAddress);
@@ -125,7 +121,7 @@ module.exports = function (deployer, network, accounts) {
     console.log("Starting base fee setup to 21 000 wei ...");
     tx = await proxied.setupBaseFee(21000, { from: tokenomicsAddress });
     console.log("Base fee setup transaction was successful ", tx.tx);
-    
+
     console.log("Starting network fee setup to 4 wei ...");
     tx = await proxied.setupNetworkFee(4, { from: tokenomicsAddress });
     console.log("Network fee setup transaction was successful ", tx.tx);
