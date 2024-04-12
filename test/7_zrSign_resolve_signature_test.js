@@ -22,21 +22,17 @@ contract("ZrSign resolve signature tests", (accounts) => {
       proxyAdmin,
       owner,
       tokenomicsAddress,
-      ovmAddress
+      ovmAddress,
     );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(
-      networkFee,
-      tokenomicsAddress,
-      instances.proxied
-    );
+    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
 
     const pki = 0;
 
     const wt = helpers.EVM_CHAIN_TYPE;
     const walletTypeIdPayload = web3.eth.abi.encodeParameters(
       ["uint256", "uint256"],
-      [wt.purpose, wt.coinType]
+      [wt.purpose, wt.coinType],
     );
     const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
 
@@ -48,20 +44,20 @@ contract("ZrSign resolve signature tests", (accounts) => {
       wt.coinType,
       support,
       caller,
-      instances.proxied
+      instances.proxied,
     );
     await helpers.chainIdConfig(
       walletTypeId,
       helpers.ETH_GOERLI_CAIP,
       support,
       caller,
-      instances.proxied
+      instances.proxied,
     );
 
     const chainId = await helpers.getSrcChainId(instances.proxied);
     const payload = web3.eth.abi.encodeParameters(
       ["bytes32", "bytes32", "address", "uint256", "string"],
-      [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]
+      [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress],
     );
     const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
@@ -72,12 +68,12 @@ contract("ZrSign resolve signature tests", (accounts) => {
       fakeMPCAddress,
       authSignature,
       ovmAddress,
-      instances.proxied
+      instances.proxied,
     );
   });
 
   describe("positive tests", async () => {
-    let positivePayloadHashTests = [
+    const positivePayloadHashTests = [
       {
         testName: "resolve signature for payload hash without broadcast",
         walletTypeId: supportedWalletTypeId,
@@ -89,12 +85,12 @@ contract("ZrSign resolve signature tests", (accounts) => {
         caller: ovmAddress,
       },
     ];
-    for (let c of positivePayloadHashTests) {
+    for (const c of positivePayloadHashTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
 
-        //When
+        // When
         const nonce = await web3.eth.getTransactionCount(c.owner, "latest"); // nonce starts counting from 0
 
         const t = {
@@ -102,7 +98,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -124,12 +120,9 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast]
+          [chainId, c.traceId, signature, c.broadcast],
         );
-        const authSignature = await helpers.getAuthSignature(
-          ovmAddress,
-          resPayload
-        );
+        const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
 
         tx = await helpers.zrSignRes(
           c.traceId,
@@ -137,20 +130,20 @@ contract("ZrSign resolve signature tests", (accounts) => {
           c.broadcast,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           c.traceId,
           signature,
-          c.broadcast
+          c.broadcast,
         );
       });
     }
 
-    let positivePayloadTests = [
+    const positivePayloadTests = [
       {
         testName: "resolve signature for payload hash without broadcast",
         walletTypeId: supportedWalletTypeId,
@@ -173,12 +166,12 @@ contract("ZrSign resolve signature tests", (accounts) => {
       },
     ];
 
-    for (let c of positivePayloadTests) {
+    for (const c of positivePayloadTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
 
-        //When
+        // When
         const nonce = await web3.eth.getTransactionCount(c.owner, "latest"); // nonce starts counting from 0
 
         const t = {
@@ -186,7 +179,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -209,12 +202,9 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast]
+          [chainId, c.traceId, signature, c.broadcast],
         );
-        const authSignature = await helpers.getAuthSignature(
-          c.caller,
-          resPayload
-        );
+        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = await helpers.zrSignRes(
           c.traceId,
@@ -222,23 +212,23 @@ contract("ZrSign resolve signature tests", (accounts) => {
           c.broadcast,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           c.traceId,
           signature,
-          c.broadcast
+          c.broadcast,
         );
       });
     }
   });
 
   describe("negative tests", async () => {
-    let negativeTests = [
+    const negativeTests = [
       {
         testName: "be able to resolve without ovm role",
         traceId: "0",
@@ -252,11 +242,11 @@ contract("ZrSign resolve signature tests", (accounts) => {
       },
     ];
 
-    for (let c of negativeTests) {
+    for (const c of negativeTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
-        //When
+        // When
         const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
 
         const t = {
@@ -264,7 +254,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -286,12 +276,9 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast]
+          [chainId, c.traceId, signature, c.broadcast],
         );
-        const authSignature = await helpers.getAuthSignature(
-          c.caller,
-          resPayload
-        );
+        const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = helpers.zrSignRes(
           c.traceId,
@@ -299,25 +286,25 @@ contract("ZrSign resolve signature tests", (accounts) => {
           c.broadcast,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
         c.customError.instance = instances.proxied;
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, undefined, c.customError);
       });
     }
 
     it(`shoud not be able to resolve signature with invalid signature`, async () => {
-      //Given
+      // Given
       let tx;
       const customError = {
         name: "InvalidSignature",
         params: [2],
         instance: instances.proxied,
       };
-      //When
+      // When
       const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
 
       const t = {
@@ -325,7 +312,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
         value: 100,
         gas: 30000,
         maxFeePerGas: 1000000108,
-        nonce: nonce,
+        nonce,
         data: "0x",
       };
 
@@ -347,13 +334,9 @@ contract("ZrSign resolve signature tests", (accounts) => {
       const chainId = await helpers.getSrcChainId(instances.proxied);
       const resPayload = web3.eth.abi.encodeParameters(
         ["bytes32", "uint256", "bytes", "bool"],
-        [chainId, 0, signature, true]
+        [chainId, 0, signature, true],
       );
-      const authSignature = await helpers.getAuthSignature(
-        ovmAddress,
-        resPayload,
-        -4
-      );
+      const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload, -4);
 
       tx = helpers.zrSignRes(
         0,
@@ -361,10 +344,10 @@ contract("ZrSign resolve signature tests", (accounts) => {
         true,
         authSignature,
         regularAddress,
-        instances.proxied
+        instances.proxied,
       );
 
-      //Then
+      // Then
       await helpers.expectRevert(tx, undefined, customError);
     });
   });

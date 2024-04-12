@@ -29,42 +29,30 @@ module.exports = function (deployer, network, accounts) {
       throw new Error("PROXY_ADMIN_ADDRESS  must be provided in config.js");
     }
 
-    if (
-      proxyAdminAddress.toString().toLowerCase() ===
-      accounts[0].toString().toLowerCase()
-    ) {
+    if (proxyAdminAddress.toString().toLowerCase() === accounts[0].toString().toLowerCase()) {
       throw new Error(
-        "PROXY_ADMIN_ADDRESS  must be different than deployer address please change PROXY_ADMIN_ADDRESS in config.js"
+        "PROXY_ADMIN_ADDRESS  must be different than deployer address please change PROXY_ADMIN_ADDRESS in config.js",
       );
     }
 
     console.log();
     console.log("Deploying SignTypes library contract...");
-    let SignTypesInstance = await deployer.deploy(SignTypes);
-    console.log(
-      "Deployed SignTypes library contract at",
-      SignTypesInstance.address
-    );
+    const SignTypesInstance = await deployer.deploy(SignTypes);
+    console.log("Deployed SignTypes library contract at", SignTypesInstance.address);
 
     console.log("link sign-types library contract...");
     deployer.link(SignTypes, [ZrSign]);
 
     console.log("Deploying ZrSignTypes library contract...");
-    let ZrSignTypesInstance = await deployer.deploy(ZrSignTypes);
-    console.log(
-      "Deployed ZrSignTypes library contract at",
-      ZrSignTypesInstance.address
-    );
+    const ZrSignTypesInstance = await deployer.deploy(ZrSignTypes);
+    console.log("Deployed ZrSignTypes library contract at", ZrSignTypesInstance.address);
 
     console.log("link zr-sign-types library contract...");
     deployer.link(ZrSignTypes, [ZrSign]);
 
     console.log("Deploying zr-sign implementation contract...");
-    let ZrSignInstance = await deployer.deploy(ZrSign);
-    console.log(
-      "Deployed zr-sign implementation contract at",
-      ZrSignInstance.address
-    );
+    const ZrSignInstance = await deployer.deploy(ZrSign);
+    console.log("Deployed zr-sign implementation contract at", ZrSignInstance.address);
 
     console.log();
 
@@ -77,20 +65,17 @@ module.exports = function (deployer, network, accounts) {
     console.log();
 
     console.log("Deploying  zr-sign proxy contract...");
-    let ZrSignProxyInstance = await deployer.deploy(
+    const ZrSignProxyInstance = await deployer.deploy(
       ZrProxy,
       ZrSignInstance.address,
       proxyAdminAddress,
-      data
+      data,
     );
-    console.log(
-      "Deployed zr-sign proxy contract at",
-      ZrSignProxyInstance.address
-    );
+    console.log("Deployed zr-sign proxy contract at", ZrSignProxyInstance.address);
 
     console.log();
     console.log("Starting configuration ...");
-    let proxied = await ZrSign.at(ZrSignProxyInstance.address);
+    const proxied = await ZrSign.at(ZrSignProxyInstance.address);
 
     console.log("Starting wallet type configuration for EVM...");
     let tx = await proxied.walletTypeIdConfig(44, 60, true);
@@ -119,11 +104,15 @@ module.exports = function (deployer, network, accounts) {
     console.log("Role was assigned successfully ", tx.tx);
 
     console.log("Starting base fee setup to 21 000 wei ...");
-    tx = await proxied.setupBaseFee(21000, { from: tokenomicsAddress });
+    tx = await proxied.setupBaseFee(21000, {
+      from: tokenomicsAddress,
+    });
     console.log("Base fee setup transaction was successful ", tx.tx);
 
     console.log("Starting network fee setup to 4 wei ...");
-    tx = await proxied.setupNetworkFee(4, { from: tokenomicsAddress });
+    tx = await proxied.setupNetworkFee(4, {
+      from: tokenomicsAddress,
+    });
     console.log("Network fee setup transaction was successful ", tx.tx);
   });
 };

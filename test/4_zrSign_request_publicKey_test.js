@@ -15,17 +15,9 @@ contract("ZrSign request public key tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(
-      proxyAdmin,
-      owner,
-      tokenomicsAddress
-    );
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
-    await helpers.setupNetworkFee(
-      networkFee,
-      tokenomicsAddress,
-      instances.proxied
-    );
+    await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
 
     const wt = helpers.EVM_CHAIN_TYPE;
     const support = true;
@@ -35,45 +27,41 @@ contract("ZrSign request public key tests", (accounts) => {
       wt.coinType,
       support,
       caller,
-      instances.proxied
+      instances.proxied,
     );
   });
 
   describe("positive tests", async () => {
     it("shoud request public key", async () => {
-      //Given
+      // Given
       let tx;
       let baseFee;
       let wallets;
 
-      //When
-      wallets = await helpers.getZrKeys(
-        supportedWalletType,
-        regularAddress,
-        instances.proxied
-      );
+      // When
+      wallets = await helpers.getZrKeys(supportedWalletType, regularAddress, instances.proxied);
 
       baseFee = await helpers.getBaseFee(instances.proxied);
       tx = await helpers.zrKeyReq(
         supportedWalletType,
         baseFee,
         regularAddress,
-        instances.proxied
+        instances.proxied,
       );
 
-      //Then
+      // Then
       await helpers.expectTXSuccess(tx);
       await helpers.checkZrKeyReqEvent(
         tx.receipt.logs[0],
         supportedWalletType,
         regularAddress,
-        wallets.length
+        wallets.length,
       );
     });
   });
 
   describe("negative tests", async () => {
-    let negativeTests = [
+    const negativeTests = [
       {
         testName: "be able to request for unsupported wallet type",
         fee: web3.utils.toWei("80", "gwei"),
@@ -92,31 +80,23 @@ contract("ZrSign request public key tests", (accounts) => {
         caller: regularAddress,
         customError: {
           name: "InsufficientFee",
-          params: [
-            web3.utils.toWei("80", "gwei"),
-            web3.utils.toWei("30", "gwei"),
-          ],
+          params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
           instance: undefined,
         },
       },
     ];
 
-    for (let c of negativeTests) {
+    for (const c of negativeTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
 
-        //When
-        tx = helpers.zrKeyReq(
-          c.walletTypeId,
-          c.fee,
-          c.caller,
-          instances.proxied
-        );
+        // When
+        tx = helpers.zrKeyReq(c.walletTypeId, c.fee, c.caller, instances.proxied);
 
         c.customError.instance = instances.proxied;
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, undefined, c.customError);
       });
     }

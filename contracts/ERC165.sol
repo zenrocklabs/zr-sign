@@ -26,12 +26,7 @@ abstract contract ERC165 is Initializable, IERC165 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        virtual
-        view
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public virtual view returns (bool) {
         return interfaceId == type(IERC165).interfaceId;
     }
 }

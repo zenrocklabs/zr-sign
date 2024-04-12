@@ -9,27 +9,15 @@ library ZrSignTypes {
         uint256 coinType; //60 for EVM //0 for BTC // 1 for BTC testnet
     }
 
-    function encodeChainInfo(ChainInfo memory self)
-        public
-        pure
-        returns (bytes memory)
-    {
+    function encodeChainInfo(ChainInfo memory self) public pure returns (bytes memory) {
         return abi.encode(self);
     }
 
-    function decodeChainInfo(bytes memory data)
-        public
-        pure
-        returns (ChainInfo memory)
-    {
+    function decodeChainInfo(bytes memory data) public pure returns (ChainInfo memory) {
         return abi.decode(data, (ChainInfo));
     }
 
-    function hashChainInfo(ChainInfo memory self)
-        public
-        pure
-        returns (bytes32)
-    {
+    function hashChainInfo(ChainInfo memory self) public pure returns (bytes32) {
         return keccak256(encodeChainInfo(self));
     }
 

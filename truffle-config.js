@@ -140,7 +140,7 @@ function infuraProvider(network) {
     }
     return new HDWalletProvider(
       config.MNEMONIC,
-      `https://${network}.infura.io/v3/${config.INFURA_KEY}`
+      `https://${network}.infura.io/v3/${config.INFURA_KEY}`,
     );
   };
 }
