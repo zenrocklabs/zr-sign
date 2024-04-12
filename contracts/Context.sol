@@ -19,15 +19,15 @@ abstract contract Context is Initializable {
 
     function __Context_init_unchained() internal onlyInitializing {}
 
-    function _msgSender() internal view virtual returns (address) {
+    function _msgSender() internal virtual view returns (address) {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes calldata) {
+    function _msgData() internal virtual view returns (bytes calldata) {
         return msg.data;
     }
 
-    function _contextSuffixLength() internal view virtual returns (uint256) {
+    function _contextSuffixLength() internal virtual view returns (uint256) {
         return 0;
     }
 }

@@ -22,12 +22,11 @@ abstract contract ERC165 is Initializable, IERC165 {
     function __ERC165_init() internal onlyInitializing {}
 
     function __ERC165_init_unchained() internal onlyInitializing {}
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public virtual view returns (bool) {
         return interfaceId == type(IERC165).interfaceId;
     }
 }

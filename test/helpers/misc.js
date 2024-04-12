@@ -22,38 +22,57 @@ async function expectRevert(tx, expectedReason, customError, printDebug = false)
       handleCustomError(error, customError, printDebug);
     } else if (expectedReason) {
       // Handle expected revert reason for non-custom errors
-      const reasonIncluded = error.message.includes(expectedReason) || (error.reason && error.reason.includes(expectedReason));
-      assert.isTrue(reasonIncluded, `Expected revert reason not found. Expected: "${expectedReason}", got: "${error.message}"`);
+      const reasonIncluded =
+        error.message.includes(expectedReason) ||
+        (error.reason && error.reason.includes(expectedReason));
+      assert.isTrue(
+        reasonIncluded,
+        `Expected revert reason not found. Expected: "${expectedReason}", got: "${error.message}"`,
+      );
     }
   }
 }
 
 function handleCustomError(error, customError, printDebug = false) {
-  //Source https://github.com/TomiOhl/custom-error-test-helper/blob/main/src/index.ts
-  const errorAbi = customError.instance.abi.find((elem) => elem.type === "error" && elem.name === customError.name);
+  // Source https://github.com/TomiOhl/custom-error-test-helper/blob/main/src/index.ts
+  const errorAbi = customError.instance.abi.find(
+    (elem) => elem.type === "error" && elem.name === customError.name,
+  );
   expect(errorAbi, `Expected custom error ${customError.name}`).to.exist;
 
   const types = errorAbi.inputs.map((elem) => elem.type);
   const revertData = typeof error.data === "string" ? error.data : error.data.result;
 
-  const errorId = keccak256(["string"], [`${customError.name}(${types ? types.toString() : ""})`]).substring(0, 10).toLowerCase();  // Convert errorId to lowercase
-  expect(JSON.stringify(revertData).toLowerCase(), `Expected custom error ${customError.name} (${errorId})`).to.include(errorId);  // Convert revertData to lowercase in comparison
+  const errorId = keccak256(
+    ["string"],
+    [`${customError.name}(${types ? types.toString() : ""})`],
+  )
+    .substring(0, 10)
+    .toLowerCase(); // Convert errorId to lowercase
+  expect(
+    JSON.stringify(revertData).toLowerCase(),
+    `Expected custom error ${customError.name} (${errorId})`,
+  ).to.include(errorId); // Convert revertData to lowercase in comparison
 
   if (customError.params) {
-
-    expect(customError.params.length, "Expected the number of customError.params to match the number of types").to.eq(types.length);
+    expect(
+      customError.params.length,
+      "Expected the number of customError.params to match the number of types",
+    ).to.eq(types.length);
     const decodedValues = defaultAbiCoder.decode(types, hexDataSlice(revertData, 4));
     decodedValues.forEach((elem, index) => {
       if (printDebug) {
-        console.log(`errorAbi: ${ errorAbi }`)
-        console.log(`errorId: ${ errorId }`)
-        console.log(`decodedValues: ${ decodedValues }`)
-        console.log(`elem: ${ elem.toString() }`)
-        console.log(`index: ${ index.toString() }`)
-        console.log(`customError.params: ${ customError.params }`)
+        console.log(`errorAbi: ${errorAbi}`);
+        console.log(`errorId: ${errorId}`);
+        console.log(`decodedValues: ${decodedValues}`);
+        console.log(`elem: ${elem.toString()}`);
+        console.log(`index: ${index.toString()}`);
+        console.log(`customError.params: ${customError.params}`);
       }
       // Convert both elements to string and lowercase before comparison
-      expect(elem.toString().toLowerCase()).to.eq(customError.params[index].toString().toLowerCase());
+      expect(elem.toString().toLowerCase()).to.eq(
+        customError.params[index].toString().toLowerCase(),
+      );
     });
   }
 }
@@ -66,24 +85,20 @@ function checkLog(log, expectedLog, expectedArgs) {
   assert.equal(
     log.event,
     expectedLog,
-    `Transaction: ${tx.receipt.logs[0].transactionHash} emitted wrong event`
+    `Transaction: ${tx.receipt.logs[0].transactionHash} emitted wrong event`,
   );
   for (let i = 0; i < log.args.__length__; i++) {
     assert.equal(
       log.args[i].toString(),
       expectedArgs[i].toString(),
-      `Wrong old fee update at transaction: ${tx.receipt.logs[0].transactionHash}`
+      `Wrong old fee update at transaction: ${tx.receipt.logs[0].transactionHash}`,
     );
   }
 }
 
 function verifyUpgradeEvent(e, implAddress) {
   assert.equal(e.event, "Upgraded", "wrong Upgrade event");
-  assert.equal(
-    e.args.implementation,
-    implAddress,
-    "wrong implementation address"
-  );
+  assert.equal(e.args.implementation, implAddress, "wrong implementation address");
 }
 
 async function getAuthSignature(signer, payload, vOff = -2) {
@@ -104,5 +119,5 @@ module.exports = {
   verifyUpgradeEvent,
   expectTXSuccess,
   checkLog,
-  getAuthSignature
+  getAuthSignature,
 };

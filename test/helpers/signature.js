@@ -8,17 +8,23 @@ async function zrSignHash(
   instance,
   broadcast = false,
 ) {
-  //Given
+  // Given
   let tx;
 
-  //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  // When
+  const params = {
+    walletTypeId,
+    walletIndex,
+    dstChainId,
+    payload,
+    broadcast,
+  };
   tx = await instance.zrSignHash(params, {
     from: caller,
     value: msgValue,
   });
 
-  //Then
+  // Then
   return tx;
 }
 
@@ -32,15 +38,21 @@ async function zrSignData(
   instance,
   broadcast = false,
 ) {
-  //Given
+  // Given
   let tx;
-  //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  // When
+  const params = {
+    walletTypeId,
+    walletIndex,
+    dstChainId,
+    payload,
+    broadcast,
+  };
   tx = await instance.zrSignData(params, {
     from: caller,
     value: msgValue,
   });
-  //Then
+  // Then
   return tx;
 }
 
@@ -52,44 +64,40 @@ async function zrSignTx(
   broadcast,
   msgValue,
   caller,
-  instance
+  instance,
 ) {
-  //Given
+  // Given
   let tx;
-  //When
-  const params = { walletTypeId: walletTypeId, walletIndex: walletIndex, dstChainId: dstChainId, payload: payload, broadcast: broadcast };
+  // When
+  const params = {
+    walletTypeId,
+    walletIndex,
+    dstChainId,
+    payload,
+    broadcast,
+  };
   tx = await instance.zrSignTx(params, {
     from: caller,
     value: msgValue,
   });
-  //Then
+  // Then
   return tx;
 }
 
-async function zrSignRes(
-  traceId,
-  signature,
-  broadcast,
-  authSignature,
-  caller,
-  instance
-) {
-  //Given
+async function zrSignRes(traceId, signature, broadcast, authSignature, caller, instance) {
+  // Given
   let tx;
 
   const params = {
-    traceId: traceId,
-    signature: signature,
-    broadcast: broadcast,
-    authSignature: authSignature
+    traceId,
+    signature,
+    broadcast,
+    authSignature,
   };
 
-  //When
-  tx = instance.zrSignRes(
-    params,
-    { from: caller }
-  );
-  //Then
+  // When
+  tx = instance.zrSignRes(params, { from: caller });
+  // Then
   return tx;
 }
 
@@ -102,80 +110,75 @@ function checkZrSigRequestEvent(
   dstChainId,
   payload,
   isHashDataTx,
-  broadcast = false
+  broadcast = false,
 ) {
   assert.equal(
     log.event,
     "ZrSigRequest",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.traceId.toString(),
     traceId.toString(),
-    `Wrong traceId event argument at transaction: ${log.transactionHash}`
+    `Wrong traceId event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.walletTypeId,
     walletTypeId,
-    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`
+    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.owner,
     caller,
-    `Wrong caller event argument at transaction: ${log.transactionHash}`
+    `Wrong caller event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.walletIndex.toString(),
     walletIndex.toString(),
-    `Wrong wallet index event argument at transaction: ${log.transactionHash}`
+    `Wrong wallet index event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     web3.utils.sha3(log.args.dstChainId),
     web3.utils.sha3(dstChainId),
-    `Wrong destination chain id event argument at transaction: ${log.transactionHash}`
+    `Wrong destination chain id event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.payload,
     payload,
-    `Wrong payload event argument at transaction: ${log.transactionHash}`
+    `Wrong payload event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.isHashDataTx,
     isHashDataTx,
-    `Wrong is hash event argument at transaction: ${log.transactionHash}`
+    `Wrong is hash event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.broadcast,
     broadcast,
-    `Wrong broadcast event argument at transaction: ${log.transactionHash}`
+    `Wrong broadcast event argument at transaction: ${log.transactionHash}`,
   );
 }
 
-function checkZrSigResolveEvent(
-  log,
-  traceId,
-  signature,
-  broadcast
-) {
+function checkZrSigResolveEvent(log, traceId, signature, broadcast) {
   assert.equal(
     log.event,
     "ZrSigResolve",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.traceId.toString(),
     traceId.toString(),
-    `Wrong trace id event argument at transaction: ${log.transactionHash}`
+    `Wrong trace id event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.signature,
     signature,
-    `Wrong signature event argument at transaction: ${log.transactionHash}`
+    `Wrong signature event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.broadcast.toString(),
     broadcast.toString(),
-    `Wrong destination chain id event argument at transaction: ${log.transactionHash}`
+    `Wrong destination chain id event argument at transaction: ${log.transactionHash}`,
   );
 }
 
