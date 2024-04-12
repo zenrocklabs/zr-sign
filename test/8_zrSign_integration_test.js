@@ -24,7 +24,7 @@ contract("ZrSign integration tests", (accounts) => {
   });
 
   describe("setup fee", async () => {
-    let positiveSetupBaseFeeTests = [
+    const positiveSetupBaseFeeTests = [
       {
         testName: "setup base fee",
         baseFee: web3.utils.toWei("30", "gwei"),
@@ -37,30 +37,30 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of positiveSetupBaseFeeTests) {
+    for (const c of positiveSetupBaseFeeTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let oldFee;
         let updatedFee;
         let tx;
 
-        //When
+        // When
         oldFee = await helpers.getBaseFee(instances.proxied);
         tx = await helpers.setupBaseFee(c.baseFee, c.caller, instances.proxied);
         updatedFee = await helpers.getBaseFee(instances.proxied);
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkBaseFeeEvent(tx.receipt.logs[0], oldFee, c.baseFee);
         assert.equal(
           updatedFee,
           c.baseFee,
-          `Contract state not updated correctly. Transaction: ${tx.tx}`
+          `Contract state not updated correctly. Transaction: ${tx.tx}`,
         );
       });
     }
 
-    let positiveSetupNetworkFeeTests = [
+    const positiveSetupNetworkFeeTests = [
       {
         testName: "setup network fee",
         networkFee: web3.utils.toWei("6", "wei"),
@@ -73,39 +73,31 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of positiveSetupNetworkFeeTests) {
+    for (const c of positiveSetupNetworkFeeTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let oldFee;
         let updatedFee;
         let tx;
 
-        //When
+        // When
         oldFee = await helpers.getNetworkFee(instances.proxied);
-        tx = await helpers.setupNetworkFee(
-          c.networkFee,
-          c.caller,
-          instances.proxied
-        );
+        tx = await helpers.setupNetworkFee(c.networkFee, c.caller, instances.proxied);
         updatedFee = await helpers.getNetworkFee(instances.proxied);
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkNetworkFeeEvent(
-          tx.receipt.logs[0],
-          oldFee,
-          c.networkFee
-        );
+        await helpers.checkNetworkFeeEvent(tx.receipt.logs[0], oldFee, c.networkFee);
         assert.equal(
           updatedFee,
           c.networkFee,
-          `Contract state not updated correctly. Transaction: ${tx.tx}`
+          `Contract state not updated correctly. Transaction: ${tx.tx}`,
         );
       });
     }
   });
 
   describe("access control", async () => {
-    let positiveAccessControlTests = [
+    const positiveAccessControlTests = [
       {
         testName: "grant OVM address to OVM role",
         role: helpers.MPC_ROLE,
@@ -126,164 +118,137 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of positiveAccessControlTests) {
+    for (const c of positiveAccessControlTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let hasRoleBefore;
         let hasRoleAfter;
         let tx;
 
-        //When
-        hasRoleBefore = await helpers.hasRole(
-          c.role,
-          c.account,
-          instances.proxied
-        );
-        tx = await helpers.grantRole(
-          c.role,
-          c.account,
-          c.caller,
-          instances.proxied
-        );
-        hasRoleAfter = await helpers.hasRole(
-          c.role,
-          c.account,
-          instances.proxied
-        );
+        // When
+        hasRoleBefore = await helpers.hasRole(c.role, c.account, instances.proxied);
+        tx = await helpers.grantRole(c.role, c.account, c.caller, instances.proxied);
+        hasRoleAfter = await helpers.hasRole(c.role, c.account, instances.proxied);
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
-        await helpers.checkGrandRoleEvent(
-          tx.receipt.logs[0],
-          c.role,
-          c.account,
-          c.caller
-        );
+        await helpers.checkGrandRoleEvent(tx.receipt.logs[0], c.role, c.account, c.caller);
         assert.notEqual(
           hasRoleBefore,
           hasRoleAfter,
-          `Contract state not updated correctly. Role ${c.role} was not assigned to account ${c.account}. Transaction: ${tx.tx}`
+          `Contract state not updated correctly. Role ${c.role} was not assigned to account ${c.account}. Transaction: ${tx.tx}`,
         );
       });
     }
 
     it("should revoke regular address OVM role", async () => {
-      //Given
+      // Given
       let hasRoleBefore;
       let hasRoleAfter;
       let tx;
 
-      //When
+      // When
       hasRoleBefore = await helpers.hasRole(
         helpers.MPC_ROLE,
         regularAddress,
-        instances.proxied
+        instances.proxied,
       );
-      tx = await helpers.revokeRole(
-        helpers.MPC_ROLE,
-        regularAddress,
-        owner,
-        instances.proxied
-      );
-      hasRoleAfter = await helpers.hasRole(
-        helpers.MPC_ROLE,
-        regularAddress,
-        instances.proxied
-      );
+      tx = await helpers.revokeRole(helpers.MPC_ROLE, regularAddress, owner, instances.proxied);
+      hasRoleAfter = await helpers.hasRole(helpers.MPC_ROLE, regularAddress, instances.proxied);
 
-      //Then
+      // Then
       await helpers.expectTXSuccess(tx);
       await helpers.checkRevokeRoleEvent(
         tx.receipt.logs[0],
         helpers.MPC_ROLE,
         regularAddress,
-        owner
+        owner,
       );
       assert.notEqual(
         hasRoleBefore,
         hasRoleAfter,
-        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was not revoked from account ${regularAddress}. Transaction: ${tx.tx}`
+        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was not revoked from account ${regularAddress}. Transaction: ${tx.tx}`,
       );
     });
 
     it("should not renounce OVM role if account not sender", async () => {
-      //Given
+      // Given
       const customError = {
         name: "AccessControlBadConfirmation",
         params: [],
-        instance: instances.proxied
+        instance: instances.proxied,
       };
       let hasRoleBefore;
       let hasRoleAfter;
       let tx;
 
-      //When
+      // When
       hasRoleBefore = await helpers.hasRole(
         helpers.MPC_ROLE,
         regularAddress1,
-        instances.proxied
+        instances.proxied,
       );
       tx = helpers.renounceRole(
         helpers.MPC_ROLE,
         regularAddress1,
         regularAddress,
-        instances.proxied
+        instances.proxied,
       );
       hasRoleAfter = await helpers.hasRole(
         helpers.MPC_ROLE,
         regularAddress1,
-        instances.proxied
+        instances.proxied,
       );
 
-      //Then
+      // Then
       await helpers.expectRevert(tx, undefined, customError);
       assert.equal(
         hasRoleBefore,
         hasRoleAfter,
-        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was revoked from account ${regularAddress}. Transaction: ${tx.tx}`
+        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was revoked from account ${regularAddress}. Transaction: ${tx.tx}`,
       );
     });
 
     it("should renounce OVM role", async () => {
-      //Given
+      // Given
       let hasRoleBefore;
       let hasRoleAfter;
       let tx;
 
-      //When
+      // When
       hasRoleBefore = await helpers.hasRole(
         helpers.MPC_ROLE,
         regularAddress1,
-        instances.proxied
+        instances.proxied,
       );
       tx = await helpers.renounceRole(
         helpers.MPC_ROLE,
         regularAddress1,
         regularAddress1,
-        instances.proxied
+        instances.proxied,
       );
       hasRoleAfter = await helpers.hasRole(
         helpers.MPC_ROLE,
         regularAddress1,
-        instances.proxied
+        instances.proxied,
       );
 
-      //Then
+      // Then
       await helpers.expectTXSuccess(tx);
       await helpers.checkRevokeRoleEvent(
         tx.receipt.logs[0],
         helpers.MPC_ROLE,
         regularAddress1,
-        regularAddress1
+        regularAddress1,
       );
       assert.notEqual(
         hasRoleBefore,
         hasRoleAfter,
-        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was not revoked from account ${regularAddress}. Transaction: ${tx.tx}`
+        `Contract state not updated correctly. Role ${helpers.MPC_ROLE} was not revoked from account ${regularAddress}. Transaction: ${tx.tx}`,
       );
     });
 
-    let negativeAccessControlTests = [
+    const negativeAccessControlTests = [
       {
         testName: "grant role if has not admin role",
         adminRole: helpers.DEFAULT_ADMIN_ROLE,
@@ -300,45 +265,37 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of negativeAccessControlTests) {
+    for (const c of negativeAccessControlTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         const customError = {
           name: "AccessControlUnauthorizedAccount",
           params: [c.caller, c.adminRole],
-          instance: instances.proxied
+          instance: instances.proxied,
         };
 
         let hasRoleBefore;
         let hasRoleAfter;
         let tx;
 
-        //When
-        hasRoleBefore = await helpers.hasRole(
-          c.role,
-          c.account,
-          instances.proxied
-        );
+        // When
+        hasRoleBefore = await helpers.hasRole(c.role, c.account, instances.proxied);
         tx = helpers.grantRole(c.role, c.account, c.caller, instances.proxied);
-        hasRoleAfter = await helpers.hasRole(
-          c.role,
-          c.account,
-          instances.proxied
-        );
+        hasRoleAfter = await helpers.hasRole(c.role, c.account, instances.proxied);
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, undefined, customError);
         assert.equal(
           hasRoleBefore,
           hasRoleAfter,
-          `Contract state not updated correctly. Role ${c.role} was assigned to account ${c.account}. Transaction: ${tx.tx}`
+          `Contract state not updated correctly. Role ${c.role} was assigned to account ${c.account}. Transaction: ${tx.tx}`,
         );
       });
     }
   });
 
   describe("wallet type config tests", async () => {
-    let supportChainTypePositiveTestCases = [
+    const supportChainTypePositiveTestCases = [
       {
         testName: "support BTC wallet type chain type",
         walletType: helpers.BTC_CHAIN_TYPE,
@@ -359,41 +316,37 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of supportChainTypePositiveTestCases) {
+    for (const c of supportChainTypePositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [c.walletType.purpose, c.walletType.coinType]
+          [c.walletType.purpose, c.walletType.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
         let tx;
-        //When
+        // When
         tx = await helpers.walletTypeIdConfig(
           c.walletType.purpose,
           c.walletType.coinType,
           c.support,
           c.caller,
-          instances.proxied
-        );
-        //Then
-        await helpers.expectTXSuccess(tx);
-        await helpers.assertWalletTypeSupport(
-          walletTypeId,
           instances.proxied,
-          c.support
         );
+        // Then
+        await helpers.expectTXSuccess(tx);
+        await helpers.assertWalletTypeSupport(walletTypeId, instances.proxied, c.support);
         await helpers.checkWalletTypeConfigEvent(
           tx.receipt.logs[0],
           c.walletType.purpose,
           c.walletType.coinType,
           walletTypeId,
-          c.support
+          c.support,
         );
       });
     }
 
-    let removeSupportChainTypePositiveTestCases = [
+    const removeSupportChainTypePositiveTestCases = [
       {
         testName: "remove support BTC_MAINNET wallet type",
         walletType: helpers.BTC_CHAIN_TYPE,
@@ -402,45 +355,39 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of removeSupportChainTypePositiveTestCases) {
+    for (const c of removeSupportChainTypePositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [c.walletType.purpose, c.walletType.coinType]
+          [c.walletType.purpose, c.walletType.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
-        //When
-        supportedBefore = await helpers.isWalletTypeSupported(
-          walletTypeId,
-          instances.proxied
-        );
+        // When
+        supportedBefore = await helpers.isWalletTypeSupported(walletTypeId, instances.proxied);
         tx = await helpers.walletTypeIdConfig(
           c.walletType.purpose,
           c.walletType.coinType,
           c.support,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        supportedAfter = await helpers.isWalletTypeSupported(
-          walletTypeId,
-          instances.proxied
-        );
-        //Then
+        supportedAfter = await helpers.isWalletTypeSupported(walletTypeId, instances.proxied);
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.assertWalletTypeSupport(walletTypeId, instances.proxied);
         await helpers.checkWalletTypeConfigEvent(
           tx.receipt.logs[0],
           c.walletType.purpose,
           c.walletType.coinType,
-          walletTypeId
+          walletTypeId,
         );
         assert.notEqual(supportedBefore, supportedAfter);
       });
     }
 
-    let supportChainTypeNegativeTestCases = [
+    const supportChainTypeNegativeTestCases = [
       {
         testName: "config wallet type from account without role",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
@@ -449,8 +396,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "AccessControlUnauthorizedAccount",
           params: [regularAddress, helpers.DEFAULT_ADMIN_ROLE],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "config support for already supported wallet type",
@@ -460,8 +407,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeAlreadySupported",
           params: [helpers.BTC_TESTNET_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "config remove support for already non supported wallet type",
@@ -471,50 +418,44 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.BTC_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of supportChainTypeNegativeTestCases) {
+    for (const c of supportChainTypeNegativeTestCases) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [c.walletType.purpose, c.walletType.coinType]
+          [c.walletType.purpose, c.walletType.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
         let tx;
         let supportedBefore;
         let supportedAfter;
-        //When
-        supportedBefore = await helpers.isWalletTypeSupported(
-          walletTypeId,
-          instances.proxied
-        );
+        // When
+        supportedBefore = await helpers.isWalletTypeSupported(walletTypeId, instances.proxied);
         tx = helpers.walletTypeIdConfig(
           c.walletType.purpose,
           c.walletType.coinType,
           c.support,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        //Then
+        // Then
         if (c.customError) {
           c.customError.instance = instances.proxied;
         }
         await helpers.expectRevert(tx, c.expectedError, c.customError);
-        supportedAfter = await helpers.isWalletTypeSupported(
-          walletTypeId,
-          instances.proxied
-        );
+        supportedAfter = await helpers.isWalletTypeSupported(walletTypeId, instances.proxied);
         assert.equal(supportedBefore, supportedAfter);
       });
     }
   });
 
   describe("chain id config tests", async () => {
-    let supportChainIdPositiveTestCases = [
+    const supportChainIdPositiveTestCases = [
       {
         testName: "support BTC Testnet chain id",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
@@ -549,42 +490,42 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of supportChainIdPositiveTestCases) {
+    for (const c of supportChainIdPositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [c.walletType.purpose, c.walletType.coinType]
+          [c.walletType.purpose, c.walletType.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
         let tx;
-        //When
+        // When
         tx = await helpers.chainIdConfig(
           walletTypeId,
           c.caip,
           c.support,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.assertChainIdSupport(
           walletTypeId,
           c.chainId,
           instances.proxied,
-          c.support
+          c.support,
         );
         await helpers.checkChainIdConfigEvent(
           tx.receipt.logs[0],
           walletTypeId,
           c.chainId,
           c.caip,
-          c.support
+          c.support,
         );
       });
     }
 
-    let removeSupportChainIdPositiveTestCases = [
+    const removeSupportChainIdPositiveTestCases = [
       {
         testName: "remove support BTC Testnet chain id",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
@@ -603,44 +544,44 @@ contract("ZrSign integration tests", (accounts) => {
       },
     ];
 
-    for (let c of removeSupportChainIdPositiveTestCases) {
+    for (const c of removeSupportChainIdPositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [c.walletType.purpose, c.walletType.coinType]
+          [c.walletType.purpose, c.walletType.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
         let tx;
-        //When
+        // When
         tx = await helpers.chainIdConfig(
           walletTypeId,
           c.caip,
           c.support,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.assertChainIdSupport(
           walletTypeId,
           c.chainId,
           instances.proxied,
-          c.support
+          c.support,
         );
         await helpers.checkChainIdConfigEvent(
           tx.receipt.logs[0],
           walletTypeId,
           c.chainId,
           c.caip,
-          c.support
+          c.support,
         );
       });
     }
   });
 
   describe("request public key", async () => {
-    let requestPublicKeyPositiveTestCases = [
+    const requestPublicKeyPositiveTestCases = [
       {
         testName: "request public key for BTC TESTNET",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
@@ -657,40 +598,31 @@ contract("ZrSign integration tests", (accounts) => {
 
     for (const c of requestPublicKeyPositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const wt = c.walletType;
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [wt.purpose, wt.coinType]
+          [wt.purpose, wt.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
         let wallets;
         let tx;
-        //When
-        wallets = await helpers.getZrKeys(
-          walletTypeId,
-          c.caller,
-          instances.proxied
-        );
+        // When
+        wallets = await helpers.getZrKeys(walletTypeId, c.caller, instances.proxied);
 
-        tx = await helpers.zrKeyReq(
-          walletTypeId,
-          c.fee,
-          c.caller,
-          instances.proxied
-        );
-        //Then
+        tx = await helpers.zrKeyReq(walletTypeId, c.fee, c.caller, instances.proxied);
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrKeyReqEvent(
           tx.receipt.logs[0],
           walletTypeId,
           regularAddress,
-          wallets.length
+          wallets.length,
         );
       });
     }
 
-    let negativeRequestPublicKeyTestCases = [
+    const negativeRequestPublicKeyTestCases = [
       {
         testName: "be able to request for unsupported walletType",
         walletTypeId: helpers.UNSUPPORTED_CHAIN_TYPE_HASH,
@@ -699,8 +631,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with less fee",
@@ -710,48 +642,35 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "InsufficientFee",
           params: [web3.utils.toWei("80", "gwei"), web3.utils.toWei("30", "gwei")],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of negativeRequestPublicKeyTestCases) {
+    for (const c of negativeRequestPublicKeyTestCases) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
         let walletsBefore;
         let walletsAfter;
 
-        //When
-        walletsBefore = await helpers.getZrKeys(
-          c.walletTypeId,
-          c.caller,
-          instances.proxied
-        );
+        // When
+        walletsBefore = await helpers.getZrKeys(c.walletTypeId, c.caller, instances.proxied);
 
-        tx = helpers.zrKeyReq(
-          c.walletTypeId,
-          c.fee,
-          c.caller,
-          instances.proxied
-        );
+        tx = helpers.zrKeyReq(c.walletTypeId, c.fee, c.caller, instances.proxied);
         if (c.customError) {
           c.customError.instance = instances.proxied;
         }
-        //Then
+        // Then
         await helpers.expectRevert(tx, c.expectedError, c.customError);
-        walletsAfter = await helpers.getZrKeys(
-          c.walletTypeId,
-          c.caller,
-          instances.proxied
-        );
+        walletsAfter = await helpers.getZrKeys(c.walletTypeId, c.caller, instances.proxied);
         assert.deepEqual(walletsAfter, walletsBefore);
       });
     }
   });
 
   describe("resolve public key", async () => {
-    let resolvePublicKeyPositiveTestCases = [
+    const resolvePublicKeyPositiveTestCases = [
       {
         testName: "resolve public key for BTC TESTNET",
         walletType: helpers.BTC_TESTNET_CHAIN_TYPE,
@@ -772,26 +691,25 @@ contract("ZrSign integration tests", (accounts) => {
 
     for (const c of resolvePublicKeyPositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const wt = c.walletType;
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [wt.purpose, wt.coinType]
+          [wt.purpose, wt.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
 
         let walletsBefore;
         let walletsAfter;
         let tx;
-        //When
-        walletsBefore = await helpers.getZrKeys(
-          walletTypeId,
-          c.owner,
-          instances.proxied
-        );
+        // When
+        walletsBefore = await helpers.getZrKeys(walletTypeId, c.owner, instances.proxied);
 
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey]);
+        const payload = web3.eth.abi.encodeParameters(
+          ["bytes32", "bytes32", "address", "uint256", "string"],
+          [chainId, walletTypeId, c.owner, c.walletIndex, c.publicKey],
+        );
         const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
         tx = await helpers.zrKeyRes(
@@ -801,14 +719,10 @@ contract("ZrSign integration tests", (accounts) => {
           c.publicKey,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
-        walletsAfter = await helpers.getZrKeys(
-          walletTypeId,
-          c.owner,
-          instances.proxied
-        );
-        //Then
+        walletsAfter = await helpers.getZrKeys(walletTypeId, c.owner, instances.proxied);
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrKeyResEvent(
           tx.receipt.logs[0],
@@ -816,17 +730,17 @@ contract("ZrSign integration tests", (accounts) => {
           walletsBefore.length,
           c.owner,
           c.publicKey,
-          c.caller
+          c.caller,
         );
         assert.equal(
           walletsAfter.length,
           walletsBefore.length + 1,
-          `public key not accepted by the contract at transaction: ${tx.tx}`
+          `public key not accepted by the contract at transaction: ${tx.tx}`,
         );
       });
     }
 
-    let negativeResolvePublicKeyTestCases = [
+    const negativeResolvePublicKeyTestCases = [
       {
         testName: "be able to resolve for unsupported wallet type",
         walletType: helpers.UNSUPPORTED_CHAIN_TYPE,
@@ -837,8 +751,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve zero address",
@@ -850,8 +764,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "OwnableInvalidOwner",
           params: [zeroAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with incorrect public key",
@@ -863,8 +777,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "InvalidPublicKeyLength",
           params: [5, 0],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve without ovm role",
@@ -876,8 +790,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [owner],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with inccorect walletIndex",
@@ -889,8 +803,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "IncorrectWalletIndex",
           params: [1, 6],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to resolve with already resolved public key index",
@@ -902,32 +816,31 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "IncorrectWalletIndex",
           params: [1, 0],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of negativeResolvePublicKeyTestCases) {
+    for (const c of negativeResolvePublicKeyTestCases) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         const wt = c.walletType;
         const walletTypeIdPayload = web3.eth.abi.encodeParameters(
           ["uint256", "uint256"],
-          [wt.purpose, wt.coinType]
+          [wt.purpose, wt.coinType],
         );
         const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
 
         let tx;
         let walletsBefore;
         let walletsAfter;
-        //When
-        walletsBefore = await helpers.getZrKeys(
-          walletTypeId,
-          c.owner,
-          instances.proxied
-        );
+        // When
+        walletsBefore = await helpers.getZrKeys(walletTypeId, c.owner, instances.proxied);
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress]);
+        const payload = web3.eth.abi.encodeParameters(
+          ["bytes32", "bytes32", "address", "uint256", "string"],
+          [chainId, walletTypeId, c.owner, c.walletIndex, c.mpcAddress],
+        );
         const authSignature = await helpers.getAuthSignature(c.caller, payload);
 
         tx = helpers.zrKeyRes(
@@ -937,27 +850,23 @@ contract("ZrSign integration tests", (accounts) => {
           c.mpcAddress,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
         if (c.customError) {
           c.customError.instance = instances.proxied;
         }
-        //Then
+        // Then
         await helpers.expectRevert(tx, c.expectedError, c.customError);
 
-        walletsAfter = await helpers.getZrKeys(
-          walletTypeId,
-          c.owner,
-          instances.proxied
-        );
+        walletsAfter = await helpers.getZrKeys(walletTypeId, c.owner, instances.proxied);
         assert.equal(walletsBefore.length, walletsAfter.length);
       });
     }
   });
 
   describe("request signature for hash", async () => {
-    let requestSignaturePositiveTestCases = [
+    const requestSignaturePositiveTestCases = [
       {
         testName: "request signature for payload hash without broadcast",
         walletTypeId: helpers.EVM_CHAIN_TYPE_HASH,
@@ -973,20 +882,17 @@ contract("ZrSign integration tests", (accounts) => {
     ];
     for (const c of requestSignaturePositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
-        //When
-        const nonce = await web3.eth.getTransactionCount(
-          regularAddress,
-          "latest"
-        ); // nonce starts counting from 0
+        // When
+        const nonce = await web3.eth.getTransactionCount(regularAddress, "latest"); // nonce starts counting from 0
 
         const t = {
           to: owner,
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -1008,13 +914,13 @@ contract("ZrSign integration tests", (accounts) => {
         const feesAreValid = await helpers.compareFees(
           c.baseFee,
           c.networkFee,
-          instances.proxied
+          instances.proxied,
         );
         assert.isTrue(feesAreValid, "Invalid fee calculation");
 
         const totalFee = await helpers.calculateTotalFeeFromInstance(
           payloadHash,
-          instances.proxied
+          instances.proxied,
         );
 
         tx = await helpers.zrSignHash(
@@ -1024,10 +930,10 @@ contract("ZrSign integration tests", (accounts) => {
           payloadHash,
           totalFee,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
@@ -1038,12 +944,12 @@ contract("ZrSign integration tests", (accounts) => {
           c.dstChainId,
           payloadHash,
           c.flag,
-          c.broadcast
+          c.broadcast,
         );
       });
     }
 
-    let negativeRequestSignatureTests = [
+    const negativeRequestSignatureTests = [
       {
         testName: "be able to request for unsupported wallet type id",
         walletTypeId: helpers.UNSUPPORTED_CHAIN_TYPE_HASH,
@@ -1058,8 +964,8 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "WalletTypeNotSupported",
           params: [helpers.UNSUPPORTED_CHAIN_TYPE_HASH],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with incorrect key index",
@@ -1091,35 +997,33 @@ contract("ZrSign integration tests", (accounts) => {
             helpers.calculateTotalFee(
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               web3.utils.toWei("80", "gwei"),
-              web3.utils.toWei("4", "wei")
+              web3.utils.toWei("4", "wei"),
             ),
             helpers.calculateTotalFee(
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               web3.utils.toWei("70", "gwei"),
-              web3.utils.toWei("4", "wei")
-            )
-          ], instance: undefined
-        }
+              web3.utils.toWei("4", "wei"),
+            ),
+          ],
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of negativeRequestSignatureTests) {
+    for (const c of negativeRequestSignatureTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
 
-        //When
-        const nonce = await web3.eth.getTransactionCount(
-          regularAddress,
-          "latest"
-        ); // nonce starts counting from 0
+        // When
+        const nonce = await web3.eth.getTransactionCount(regularAddress, "latest"); // nonce starts counting from 0
 
         const t = {
           to: owner,
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -1137,11 +1041,7 @@ contract("ZrSign integration tests", (accounts) => {
 
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
-        const totalFee = await helpers.calculateTotalFee(
-          payloadHash,
-          c.baseFee,
-          c.networkFee
-        );
+        const totalFee = await helpers.calculateTotalFee(payloadHash, c.baseFee, c.networkFee);
         tx = helpers.zrSignHash(
           c.walletTypeId,
           c.walletIndex,
@@ -1149,21 +1049,21 @@ contract("ZrSign integration tests", (accounts) => {
           payloadHash,
           totalFee,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
         if (c.customError) {
           c.customError.instance = instances.proxied;
         }
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, c.expectedError, c.customError);
       });
     }
   });
 
   describe("resolve signature", async () => {
-    let resolveSignaturePositiveTestCases = [
+    const resolveSignaturePositiveTestCases = [
       {
         testName: "resolve signature for payload hash without broadcast",
         traceId: 1,
@@ -1173,27 +1073,27 @@ contract("ZrSign integration tests", (accounts) => {
 
     for (const c of resolveSignaturePositiveTestCases) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         const filter = {
           traceId: c.traceId,
         };
 
         let tx;
-        //When
+        // When
         const ev = await instances.proxied.getPastEvents("ZrSigRequest", {
-          filter: filter,
+          filter,
           fromBlock: 0,
           toBlock: "latest",
         });
         const event = ev[0];
         const payloadHash = event.args.payload;
-        const signature = await web3.eth.sign(
-          payloadHash,
-          FAKE_EVM_MPC_ADDRESS
-        );
+        const signature = await web3.eth.sign(payloadHash, FAKE_EVM_MPC_ADDRESS);
 
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, event.args.traceId, signature, event.args.broadcast]);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, event.args.traceId, signature, event.args.broadcast],
+        );
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = await helpers.zrSignRes(
@@ -1202,21 +1102,21 @@ contract("ZrSign integration tests", (accounts) => {
           event.args.broadcast,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
           event.args.traceId,
           signature,
-          event.args.broadcast
+          event.args.broadcast,
         );
       });
     }
 
-    let negativeResolveSignatureTests = [
+    const negativeResolveSignatureTests = [
       {
         testName: "be able to resolve without ovm role",
         traceId: BigInt(1),
@@ -1225,27 +1125,24 @@ contract("ZrSign integration tests", (accounts) => {
         customError: {
           name: "UnauthorizedCaller",
           params: [regularAddress],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of negativeResolveSignatureTests) {
+    for (const c of negativeResolveSignatureTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
-        //When
-        const nonce = await web3.eth.getTransactionCount(
-          regularAddress,
-          "latest"
-        ); // nonce starts counting from 0
+        // When
+        const nonce = await web3.eth.getTransactionCount(regularAddress, "latest"); // nonce starts counting from 0
 
         const t = {
           to: owner,
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -1263,13 +1160,13 @@ contract("ZrSign integration tests", (accounts) => {
 
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
-        const signature = await web3.eth.sign(
-          payloadHash,
-          FAKE_EVM_MPC_ADDRESS
-        );
+        const signature = await web3.eth.sign(payloadHash, FAKE_EVM_MPC_ADDRESS);
         const evBefore = await instances.proxied.getPastEvents("ZrSigResolve");
         const chainId = await helpers.getSrcChainId(instances.proxied);
-        const resPayload = web3.eth.abi.encodeParameters(['bytes32', 'uint256', 'bytes', 'bool'], [chainId, c.traceId, signature, c.broadcast]);
+        const resPayload = web3.eth.abi.encodeParameters(
+          ["bytes32", "uint256", "bytes", "bool"],
+          [chainId, c.traceId, signature, c.broadcast],
+        );
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = helpers.zrSignRes(
@@ -1278,17 +1175,13 @@ contract("ZrSign integration tests", (accounts) => {
           c.broadcast,
           authSignature,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, c.expectedError);
         const evAfter = await instances.proxied.getPastEvents("ZrSigResolve");
-        assert.deepEqual(
-          evAfter,
-          evBefore,
-          "resolve signature event was emiited"
-        );
+        assert.deepEqual(evAfter, evBefore, "resolve signature event was emiited");
       });
     }
   });

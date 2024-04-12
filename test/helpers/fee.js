@@ -1,20 +1,20 @@
 const { arrayify } = require("@ethersproject/bytes");
 
 async function getBaseFee(instance) {
-  //Given
+  // Given
   let baseFee;
-  //When
+  // When
   baseFee = instance.getBaseFee.call();
-  //Then
+  // Then
   return baseFee;
 }
 
 async function setupBaseFee(newBaseFee, caller, instance) {
-  //Given
+  // Given
   let tx;
-  //When
+  // When
   tx = instance.setupBaseFee(newBaseFee, { from: caller });
-  //Then
+  // Then
   return tx;
 }
 
@@ -22,33 +22,35 @@ function checkBaseFeeEvent(log, oldBaseFee, newBaseFee) {
   assert.equal(
     log.event,
     "BaseFeeUpdate",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.oldBaseFee.toString(),
     oldBaseFee.toString(),
-    `Wrong old base fee update event argument at transaction: ${log.transactionHash}`
+    `Wrong old base fee update event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.newBaseFee,
     newBaseFee,
-    `Wrong new base fee update event argument at transaction: ${log.transactionHash}`
+    `Wrong new base fee update event argument at transaction: ${log.transactionHash}`,
   );
 }
 async function getNetworkFee(instance) {
-  //Given
+  // Given
   let netwrokFee;
-  //When
+  // When
   netwrokFee = instance.getNetworkFee.call();
-  //Then
+  // Then
   return netwrokFee;
 }
 async function setupNetworkFee(newNetworkFee, caller, instance) {
-  //Given
+  // Given
   let tx;
-  //When
-  tx = instance.setupNetworkFee(newNetworkFee, { from: caller });
-  //Then
+  // When
+  tx = instance.setupNetworkFee(newNetworkFee, {
+    from: caller,
+  });
+  // Then
   return tx;
 }
 
@@ -56,26 +58,26 @@ function checkNetworkFeeEvent(log, oldNetworkFee, newNetworkFee) {
   assert.equal(
     log.event,
     "NetworkFeeUpdate",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.oldNetworkFee.toString(),
     oldNetworkFee.toString(),
-    `Wrong old network fee update event argument at transaction: ${log.transactionHash}`
+    `Wrong old network fee update event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.newNetworkFee,
     newNetworkFee,
-    `Wrong new network fee update event argument at transaction: ${log.transactionHash}`
+    `Wrong new network fee update event argument at transaction: ${log.transactionHash}`,
   );
 }
 
 async function withdrawFees(caller, instance) {
-  //Given
+  // Given
   let tx;
-  //When
+  // When
   tx = instance.withdrawFees(newFee, { from: caller });
-  //Then
+  // Then
   return tx;
 }
 
@@ -83,17 +85,17 @@ function checkFeeWithdrawEvent(log, to, amount) {
   assert.equal(
     log.event,
     "Withdraw",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.to,
     to,
-    `Wrong withdraw fee to event argument at transaction: ${log.transactionHash}`
+    `Wrong withdraw fee to event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.amount.toString(),
     amount.toString(),
-    `Wrong withdraw fee amount event argument at transaction: ${log.transactionHash}`
+    `Wrong withdraw fee amount event argument at transaction: ${log.transactionHash}`,
   );
 }
 

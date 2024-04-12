@@ -117,7 +117,7 @@ module.exports = {
   //     currency: "USD",
   //   },
   // },
-  plugins: ["truffle-plugin-verify"],
+  plugins: ["solidity-coverage", "truffle-plugin-verify"],
   api_keys: {
     etherscan: config.ETHERSCAN_KEY,
     optimistic_etherscan: config.OPTIMISM_KEY,
@@ -140,7 +140,7 @@ function infuraProvider(network) {
     }
     return new HDWalletProvider(
       config.MNEMONIC,
-      `https://${network}.infura.io/v3/${config.INFURA_KEY}`
+      `https://${network}.infura.io/v3/${config.INFURA_KEY}`,
     );
   };
 }

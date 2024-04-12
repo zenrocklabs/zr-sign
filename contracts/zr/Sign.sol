@@ -5,6 +5,7 @@ pragma solidity 0.8.20;
 
 // Importing necessary modules from local and external sources
 import { AccessControl } from "../AccessControl.sol"; // Access control functionalities for role management
+import { Pausable } from "../Pausable.sol"; // Pausable control functionalities
 import { ECDSA } from "../../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
 import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
 
@@ -13,7 +14,7 @@ import { SignTypes } from "../../libraries/zr/SignTypes.sol"; // Definitions of 
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
 // Abstract contract for signing functionalities, inheriting from AccessControl for role management
-abstract contract Sign is AccessControl, ISign {
+abstract contract Sign is AccessControl, Pausable, ISign {
     using ZrSignTypes for ZrSignTypes.ChainInfo; // Attach methods from ZrSignTypes to ChainInfo type
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
@@ -73,10 +74,7 @@ abstract contract Sign is AccessControl, ISign {
     modifier keyFee() {
         SignStorage storage $ = _getSignStorage();
         if (msg.value < $._baseFee) {
-            revert InsufficientFee({
-                requiredFee: $._baseFee,
-                providedFee: msg.value
-            });
+            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
         }
         _;
     }
@@ -87,10 +85,7 @@ abstract contract Sign is AccessControl, ISign {
         uint256 networkFee = payload.length * $._networkFee;
         uint256 totalFee = $._baseFee + networkFee;
         if (msg.value < totalFee) {
-            revert InsufficientFee({
-                requiredFee: totalFee,
-                providedFee: msg.value
-            });
+            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
         _;
     }
@@ -123,6 +118,7 @@ abstract contract Sign is AccessControl, ISign {
     //****************************************************************** INIT FUNCTIONS ******************************************************************/
 
     function __Sign_init() internal onlyInitializing {
+        __Pausable_init_unchained();
         __Sign_init_unchained();
     }
 
@@ -278,9 +274,7 @@ abstract contract Sign is AccessControl, ISign {
      * @dev See the internal function `_sigRes` for the core implementation details of sig response handling.
      * This reference is provided to highlight where the detailed logic.
      */
-    function zrSignRes(
-        SignTypes.SignResParams memory params
-    ) external virtual override {
+    function zrSignRes(SignTypes.SignResParams memory params) external virtual override {
         _sigRes(params);
     }
 
@@ -373,7 +367,7 @@ abstract contract Sign is AccessControl, ISign {
      */
     function getWalletTypeInfo(
         bytes32 walletTypeId
-    ) public view virtual returns (ZrSignTypes.ChainInfo memory) {
+    ) public view virtual override returns (ZrSignTypes.ChainInfo memory) {
         SignStorage storage $ = _getSignStorage();
         return $.supportedWalletTypes[walletTypeId];
     }
@@ -422,9 +416,7 @@ abstract contract Sign is AccessControl, ISign {
      * @notice This function should only be called after all preconditions, such as fee verification and authorization checks,
      * have been met.
      */
-    function _zrKeyReq(
-        SignTypes.ZrKeyReqParams memory params
-    ) internal virtual {
+    function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
         bytes32 id = _getId(params.walletTypeId, _msgSender());
         uint256 walletIndex = $.wallets[id].length;
@@ -442,9 +434,7 @@ abstract contract Sign is AccessControl, ISign {
      * @notice This function performs crucial validations such as signature authenticity and public key integrity. It ensures
      * that the wallet index is correct, preventing unauthorized key updates.
      */
-    function _zrKeyRes(
-        SignTypes.ZrKeyResParams memory params
-    ) internal virtual {
+    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual {
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -492,15 +482,11 @@ abstract contract Sign is AccessControl, ISign {
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
-    ) internal virtual sigFee(params.payload) {
+    ) internal virtual sigFee(params.payload) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         _validatePublicKey(
-            _getWalletByIndex(
-                params.walletTypeId,
-                params.owner,
-                params.walletIndex
-            )
+            _getWalletByIndex(params.walletTypeId, params.owner, params.walletIndex)
         );
 
         bytes32 walletId = keccak256(
@@ -568,8 +554,7 @@ abstract contract Sign is AccessControl, ISign {
         bytes32 dataHash,
         bytes memory signature
     ) internal virtual {
-        (address authAddress, ECDSA.RecoverError sigErr, ) = dataHash
-            .tryRecover(signature);
+        (address authAddress, ECDSA.RecoverError sigErr, ) = dataHash.tryRecover(signature);
 
         if (sigErr != ECDSA.RecoverError.NoError) {
             revert InvalidSignature(sigErr);
@@ -722,10 +707,7 @@ abstract contract Sign is AccessControl, ISign {
         bytes32 walletTypeId,
         address owner
     ) internal view virtual returns (bytes32 id) {
-        return
-            keccak256(
-                abi.encode(block.chainid, address(this), walletTypeId, owner)
-            );
+        return keccak256(abi.encode(block.chainid, address(this), walletTypeId, owner));
     }
 
     /**
@@ -739,10 +721,7 @@ abstract contract Sign is AccessControl, ISign {
     function _validatePublicKey(string memory publicKey) internal pure virtual {
         uint256 length = abi.encodePacked(publicKey).length;
         if (length <= 4) {
-            revert InvalidPublicKeyLength({
-                minLength: 5,
-                actualLength: length
-            });
+            revert InvalidPublicKeyLength({ minLength: 5, actualLength: length });
         }
     }
 }

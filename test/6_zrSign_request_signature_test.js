@@ -22,7 +22,12 @@ contract("ZrSign request signature tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress, ovmAddress);
+    instances = await helpers.initZrSignWithProxy(
+      proxyAdmin,
+      owner,
+      tokenomicsAddress,
+      ovmAddress,
+    );
     await helpers.setupBaseFee(baseFee, tokenomicsAddress, instances.proxied);
     await helpers.setupNetworkFee(networkFee, tokenomicsAddress, instances.proxied);
 
@@ -31,7 +36,7 @@ contract("ZrSign request signature tests", (accounts) => {
     const wt = helpers.EVM_CHAIN_TYPE;
     const walletTypeIdPayload = web3.eth.abi.encodeParameters(
       ["uint256", "uint256"],
-      [wt.purpose, wt.coinType]
+      [wt.purpose, wt.coinType],
     );
     const walletTypeId = web3.utils.keccak256(walletTypeIdPayload);
 
@@ -43,17 +48,20 @@ contract("ZrSign request signature tests", (accounts) => {
       wt.coinType,
       support,
       caller,
-      instances.proxied
+      instances.proxied,
     );
     await helpers.chainIdConfig(
       walletTypeId,
       helpers.ETH_GOERLI_CAIP,
       support,
       caller,
-      instances.proxied
+      instances.proxied,
     );
     const chainId = await helpers.getSrcChainId(instances.proxied);
-    const payload = web3.eth.abi.encodeParameters(['bytes32', 'bytes32', 'address', 'uint256', 'string'], [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress]);
+    const payload = web3.eth.abi.encodeParameters(
+      ["bytes32", "bytes32", "address", "uint256", "string"],
+      [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress],
+    );
     const payloadHash = web3.utils.soliditySha3(payload);
     const signature = await web3.eth.sign(payloadHash, ovmAddress);
     let vValue = parseInt(signature.slice(-2), 16); // Convert the last two hex characters to an integer
@@ -71,12 +79,12 @@ contract("ZrSign request signature tests", (accounts) => {
       fakeMPCAddress,
       authSignature,
       ovmAddress,
-      instances.proxied
+      instances.proxied,
     );
   });
 
   describe("positive tests", async () => {
-    let positivePayloadHashTests = [
+    const positivePayloadHashTests = [
       {
         testName: "request signature for payload hash",
         walletTypeId: supportedWalletTypeId,
@@ -91,11 +99,11 @@ contract("ZrSign request signature tests", (accounts) => {
       },
     ];
 
-    for (let c of positivePayloadHashTests) {
+    for (const c of positivePayloadHashTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
-        //When
+        // When
         const nonce = await web3.eth.getTransactionCount(c.caller, "latest"); // nonce starts counting from 0
 
         const t = {
@@ -103,7 +111,7 @@ contract("ZrSign request signature tests", (accounts) => {
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -126,13 +134,13 @@ contract("ZrSign request signature tests", (accounts) => {
         const feesAreValid = await helpers.compareFees(
           c.baseFee,
           c.networkFee,
-          instances.proxied
+          instances.proxied,
         );
         assert.isTrue(feesAreValid, "Invalid fee calculation");
 
         const totalFee = await helpers.calculateTotalFeeFromInstance(
           payloadHash,
-          instances.proxied
+          instances.proxied,
         );
 
         tx = await helpers.zrSignHash(
@@ -142,10 +150,10 @@ contract("ZrSign request signature tests", (accounts) => {
           payloadHash,
           totalFee,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
@@ -156,12 +164,12 @@ contract("ZrSign request signature tests", (accounts) => {
           c.dstChainId,
           payloadHash,
           c.flag,
-          c.broadcast
+          c.broadcast,
         );
       });
     }
 
-    let positivePayloadTXTests = [
+    const positivePayloadTXTests = [
       {
         testName: "request signature for payload without broadcast",
         walletTypeId: supportedWalletTypeId,
@@ -188,11 +196,11 @@ contract("ZrSign request signature tests", (accounts) => {
       },
     ];
 
-    for (let c of positivePayloadTXTests) {
+    for (const c of positivePayloadTXTests) {
       it(`shoud ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
-        //When
+        // When
         const nonce = await web3.eth.getTransactionCount(c.caller, "latest"); // nonce starts counting from 0
 
         const t = {
@@ -200,7 +208,7 @@ contract("ZrSign request signature tests", (accounts) => {
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -223,13 +231,13 @@ contract("ZrSign request signature tests", (accounts) => {
         const feesAreValid = await helpers.compareFees(
           c.baseFee,
           c.networkFee,
-          instances.proxied
+          instances.proxied,
         );
         assert.isTrue(feesAreValid, "Invalid fee calculation");
 
         const totalFee = await helpers.calculateTotalFeeFromInstance(
           payload,
-          instances.proxied
+          instances.proxied,
         );
 
         tx = await helpers.zrSignTx(
@@ -240,10 +248,10 @@ contract("ZrSign request signature tests", (accounts) => {
           c.broadcast,
           totalFee,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
-        //Then
+        // Then
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigRequestEvent(
           tx.receipt.logs[0],
@@ -254,53 +262,53 @@ contract("ZrSign request signature tests", (accounts) => {
           c.dstChainId,
           payload,
           c.flag,
-          c.broadcast
+          c.broadcast,
         );
       });
     }
   });
 
   describe("negative tests", async () => {
-    let negativeTests = [
+    const negativeTests = [
       {
         testName: "be able to request for unsupported wallet type",
         walletTypeId: unsupportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: baseFee,
-        networkFee: networkFee,
+        baseFee,
+        networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
         customError: {
           name: "WalletTypeNotSupported",
           params: [unsupportedWalletTypeId],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request for unsupported chain id",
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: baseFee,
-        networkFee: networkFee,
+        baseFee,
+        networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.UNSUPPORTED_CHAIN_ID,
         customError: {
           name: "ChainIdNotSupported",
           params: [supportedWalletTypeId, helpers.UNSUPPORTED_CHAIN_ID],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
       {
         testName: "be able to request with incorrect key index",
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 5,
-        baseFee: baseFee,
-        networkFee: networkFee,
+        baseFee,
+        networkFee,
         caller: regularAddress,
         flag: IS_HASH_MASK,
         dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
@@ -311,7 +319,7 @@ contract("ZrSign request signature tests", (accounts) => {
         walletTypeId: supportedWalletTypeId,
         traceId: BigInt(1),
         walletIndex: 0,
-        baseFee: baseFee,
+        baseFee,
         networkFee: web3.utils.toWei("2", "wei"),
         caller: regularAddress,
         flag: IS_HASH_MASK,
@@ -322,37 +330,34 @@ contract("ZrSign request signature tests", (accounts) => {
             helpers.calculateTotalFee(
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               baseFee,
-              networkFee
+              networkFee,
             ),
             helpers.calculateTotalFee(
               "0xfd8eacaaa8baced8e10178879afa9da8064b4137cb794601906932078f3e86c5",
               baseFee,
-              web3.utils.toWei("2", "wei")
-            )
+              web3.utils.toWei("2", "wei"),
+            ),
           ],
-          instance: undefined
-        }
+          instance: undefined,
+        },
       },
     ];
 
-    for (let c of negativeTests) {
+    for (const c of negativeTests) {
       it(`shoud not ${c.testName}`, async () => {
-        //Given
+        // Given
         let tx;
         let wallets;
 
-        //When
-        const nonce = await web3.eth.getTransactionCount(
-          regularAddress,
-          "latest"
-        ); // nonce starts counting from 0
+        // When
+        const nonce = await web3.eth.getTransactionCount(regularAddress, "latest"); // nonce starts counting from 0
 
         const t = {
           to: owner,
           value: 100,
           gas: 30000,
           maxFeePerGas: 1000000108,
-          nonce: nonce,
+          nonce,
           data: "0x",
         };
 
@@ -371,17 +376,9 @@ contract("ZrSign request signature tests", (accounts) => {
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
 
-        wallets = await helpers.getZrKeys(
-          c.walletTypeId,
-          c.caller,
-          instances.proxied
-        );
+        wallets = await helpers.getZrKeys(c.walletTypeId, c.caller, instances.proxied);
 
-        const totalFee = await helpers.calculateTotalFee(
-          payloadHash,
-          c.baseFee,
-          c.networkFee
-        );
+        const totalFee = await helpers.calculateTotalFee(payloadHash, c.baseFee, c.networkFee);
 
         tx = helpers.zrSignHash(
           c.walletTypeId,
@@ -390,14 +387,14 @@ contract("ZrSign request signature tests", (accounts) => {
           payloadHash,
           totalFee,
           c.caller,
-          instances.proxied
+          instances.proxied,
         );
 
         if (c.customError) {
           c.customError.instance = instances.proxied;
         }
 
-        //Then
+        // Then
         await helpers.expectRevert(tx, c.expectedError, c.customError);
       });
     }
