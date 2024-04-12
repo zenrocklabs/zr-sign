@@ -12,6 +12,9 @@ contract ZrSign is Sign, IZrSign {
 
     bytes32 public constant TOKENOMICS_ROLE =
         0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
+        
+    bytes32 public constant PAUSER_ROLE =
+        0x8ab6d0465f335f1458251c44a70aa92d9297798531f73d2c8a32b5bd379821b8; //keccak256("zenrock.role.pauser");
 
     //****************************************************************** CONSTRUCTOR FUNCTION ******************************************************************/
 
@@ -55,10 +58,7 @@ contract ZrSign is Sign, IZrSign {
         uint256 coinType,
         bool support
     ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
-        ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(
-            purpose,
-            coinType
-        );
+        ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(purpose, coinType);
         bytes32 walletTypeId = _walletTypeIdConfig(c, support);
         emit WalletTypeIdSupport(purpose, coinType, walletTypeId, support);
     }
@@ -109,16 +109,18 @@ contract ZrSign is Sign, IZrSign {
      * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
      * roles designated with financial management responsibilities.
      */
-    function withdrawFees()
-        external
-        payable
-        virtual
-        override
-        onlyRole(TOKENOMICS_ROLE)
-    {
+    function withdrawFees() external payable virtual override onlyRole(TOKENOMICS_ROLE) {
         address payable sender = payable(_msgSender());
         uint256 amount = address(this).balance;
         sender.transfer(amount);
         emit FeeWithdraw(sender, amount);
+    }
+
+    function pause() external virtual onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function uppause() external virtual onlyRole(PAUSER_ROLE) {
+        _unpause();
     }
 }
