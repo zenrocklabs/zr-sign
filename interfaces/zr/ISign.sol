@@ -8,19 +8,13 @@ import { SignTypes } from "../../libraries/zr/SignTypes.sol";
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 
 interface ISign is IAccessControl {
-    function zrKeyReq(SignTypes.ZrKeyReqParams calldata params)
-        external
-        payable;
+    function zrKeyReq(SignTypes.ZrKeyReqParams calldata params) external payable;
 
     function zrKeyRes(SignTypes.ZrKeyResParams calldata params) external;
 
-    function zrSignHash(SignTypes.ZrSignParams calldata params)
-        external
-        payable;
+    function zrSignHash(SignTypes.ZrSignParams calldata params) external payable;
 
-    function zrSignData(SignTypes.ZrSignParams calldata params)
-        external
-        payable;
+    function zrSignData(SignTypes.ZrSignParams calldata params) external payable;
 
     function zrSignTx(SignTypes.ZrSignParams calldata params) external payable;
 
@@ -28,10 +22,7 @@ interface ISign is IAccessControl {
 
     function version() external view returns (uint256);
 
-    function isWalletTypeSupported(bytes32 walletTypeId)
-        external
-        view
-        returns (bool);
+    function isWalletTypeSupported(bytes32 walletTypeId) external view returns (bool);
 
     function isChainIdSupported(bytes32 walletTypeId, bytes32 chainId)
         external
@@ -86,15 +77,8 @@ interface ISign is IAccessControl {
         bool broadcast
     );
 
-    event ZrSigResolve(
-        uint256 indexed traceId,
-        bytes signature,
-        bool broadcast
-    );
+    event ZrSigResolve(uint256 indexed traceId, bytes signature, bool broadcast);
 
     event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
-    event NetworkFeeUpdate(
-        uint256 indexed oldNetworkFee,
-        uint256 indexed newNetworkFee
-    );
+    event NetworkFeeUpdate(uint256 indexed oldNetworkFee, uint256 indexed newNetworkFee);
 }

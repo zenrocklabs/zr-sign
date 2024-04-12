@@ -48,9 +48,7 @@ abstract contract ERC1967Upgrade {
             Address.isContract(newImplementation),
             "ERC1967: new implementation is not a contract"
         );
-        StorageSlot
-            .getAddressSlot(_IMPLEMENTATION_SLOT)
-            .value = newImplementation;
+        StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value = newImplementation;
     }
 
     /**
@@ -103,10 +101,7 @@ abstract contract ERC1967Upgrade {
      * @dev Stores a new address in the EIP1967 admin slot.
      */
     function _setAdmin(address newAdmin) private {
-        require(
-            newAdmin != address(0),
-            "ERC1967: new admin is the zero address"
-        );
+        require(newAdmin != address(0), "ERC1967: new admin is the zero address");
         StorageSlot.getAddressSlot(_ADMIN_SLOT).value = newAdmin;
     }
 
@@ -143,10 +138,7 @@ abstract contract ERC1967Upgrade {
      * @dev Stores a new beacon in the EIP1967 beacon slot.
      */
     function _setBeacon(address newBeacon) private {
-        require(
-            Address.isContract(newBeacon),
-            "ERC1967: new beacon is not a contract"
-        );
+        require(Address.isContract(newBeacon), "ERC1967: new beacon is not a contract");
         require(
             Address.isContract(IBeacon(newBeacon).implementation()),
             "ERC1967: beacon implementation is not a contract"
@@ -168,10 +160,7 @@ abstract contract ERC1967Upgrade {
         _setBeacon(newBeacon);
         emit BeaconUpgraded(newBeacon);
         if (data.length > 0 || forceCall) {
-            Address.functionDelegateCall(
-                IBeacon(newBeacon).implementation(),
-                data
-            );
+            Address.functionDelegateCall(IBeacon(newBeacon).implementation(), data);
         }
     }
 }

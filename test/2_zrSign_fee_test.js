@@ -10,83 +10,67 @@ contract("ZrSign fee tests", (accounts) => {
   let instances;
 
   beforeEach(async () => {
-    instances = await helpers.initZrSignWithProxy(
-      proxyAdmin,
-      owner,
-      tokenomicsAddress
-    );
+    instances = await helpers.initZrSignWithProxy(proxyAdmin, owner, tokenomicsAddress);
   });
 
   describe("positive tests", async () => {
     it("shoud setup base fee", async () => {
-      //Given
+      // Given
       let oldBaseFee;
       let updatedBaseFee;
-      let expectedBaseFee = web3.utils.toWei("80", "gwei");
+      const expectedBaseFee = web3.utils.toWei("80", "gwei");
       let tx;
 
-      //When
+      // When
       oldBaseFee = await helpers.getBaseFee(instances.proxied);
-      tx = await helpers.setupBaseFee(
-        expectedBaseFee,
-        tokenomicsAddress,
-        instances.proxied
-      );
+      tx = await helpers.setupBaseFee(expectedBaseFee, tokenomicsAddress, instances.proxied);
       updatedBaseFee = await helpers.getBaseFee(instances.proxied);
 
-      //Then
+      // Then
       await helpers.expectTXSuccess(tx);
-      await helpers.checkBaseFeeEvent(
-        tx.receipt.logs[0],
-        oldBaseFee,
-        expectedBaseFee
-      );
+      await helpers.checkBaseFeeEvent(tx.receipt.logs[0], oldBaseFee, expectedBaseFee);
       assert.equal(
         updatedBaseFee,
         expectedBaseFee,
-        `Contract state not updated correctly. Transaction: ${tx.tx}`
+        `Contract state not updated correctly. Transaction: ${tx.tx}`,
       );
     });
     it("shoud setup network fee", async () => {
-      //Given
+      // Given
       let oldNetworkFee;
       let updatedNetworkFee;
-      let expectedNetworkFee = web3.utils.toWei("4", "wei");
+      const expectedNetworkFee = web3.utils.toWei("4", "wei");
       let tx;
 
-      //When
+      // When
       oldNetworkFee = await helpers.getNetworkFee(instances.proxied);
       tx = await helpers.setupNetworkFee(
         expectedNetworkFee,
         tokenomicsAddress,
-        instances.proxied
+        instances.proxied,
       );
       updatedNetworkFee = await helpers.getNetworkFee(instances.proxied);
 
-      //Then
+      // Then
       await helpers.expectTXSuccess(tx);
-      await helpers.checkNetworkFeeEvent(
-        tx.receipt.logs[0],
-        oldNetworkFee,
-        expectedNetworkFee
-      );
+      await helpers.checkNetworkFeeEvent(tx.receipt.logs[0], oldNetworkFee, expectedNetworkFee);
       assert.equal(
         updatedNetworkFee,
         expectedNetworkFee,
-        `Contract state not updated correctly. Transaction: ${tx.tx}`
+        `Contract state not updated correctly. Transaction: ${tx.tx}`,
       );
     });
   });
 
   describe("negative tests", async () => {
     it("shoud not setup base fee without role", async () => {
-      //Given
+      // Given
       let tx;
-      let expectedBaseFee = web3.utils.toWei("80", "gwei");
+      const expectedBaseFee = web3.utils.toWei("80", "gwei");
       let role;
       let expectedError;
 
-      //When
+      // When
       role = await instances.proxied.TOKENOMICS_ROLE.call();
       const customError = {
         name: "AccessControlUnauthorizedAccount",
@@ -94,24 +78,20 @@ contract("ZrSign fee tests", (accounts) => {
         instance: instances.proxied,
       };
 
-      tx = helpers.setupBaseFee(
-        expectedBaseFee,
-        regularAddress,
-        instances.proxied
-      );
+      tx = helpers.setupBaseFee(expectedBaseFee, regularAddress, instances.proxied);
 
-      //Then
+      // Then
 
       await helpers.expectRevert(tx, expectedError, customError);
     });
     it("shoud not setup network fee without role", async () => {
-      //Given
+      // Given
       let tx;
-      let expectedNetworkFee = web3.utils.toWei("4", "wei");
+      const expectedNetworkFee = web3.utils.toWei("4", "wei");
       let role;
       let expectedError;
 
-      //When
+      // When
       role = await instances.proxied.TOKENOMICS_ROLE.call();
       const customError = {
         name: "AccessControlUnauthorizedAccount",
@@ -119,13 +99,9 @@ contract("ZrSign fee tests", (accounts) => {
         instance: instances.proxied,
       };
 
-      tx = helpers.setupNetworkFee(
-        expectedNetworkFee,
-        regularAddress,
-        instances.proxied
-      );
+      tx = helpers.setupNetworkFee(expectedNetworkFee, regularAddress, instances.proxied);
 
-      //Then
+      // Then
       await helpers.expectRevert(tx, expectedError, customError);
     });
   });

@@ -5,16 +5,16 @@ async function getZrKeys(walletTypeId, owner, instance) {
 }
 
 async function zrKeyReq(walletTypeId, msgValue, caller, instance) {
-  //Given
+  // Given
   let tx;
-  //When
-  const params = { walletTypeId: walletTypeId };
+  // When
+  const params = { walletTypeId };
 
   tx = instance.zrKeyReq(params, {
     from: caller,
     value: msgValue,
   });
-  //Then
+  // Then
   return tx;
 }
 
@@ -22,22 +22,22 @@ function checkZrKeyReqEvent(log, walletTypeId, owner, walletIndex) {
   assert.equal(
     log.event,
     "ZrKeyRequest",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.walletTypeId,
     walletTypeId,
-    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`
+    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.owner,
     owner,
-    `Wrong owner event argument at transaction: ${log.transactionHash}`
+    `Wrong owner event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.walletIndex.toString(),
     walletIndex.toString(),
-    `Wrong wallet index event argument at transaction: ${log.transactionHash}`
+    `Wrong wallet index event argument at transaction: ${log.transactionHash}`,
   );
 }
 
@@ -48,23 +48,23 @@ async function zrKeyRes(
   publicKey,
   signature,
   caller,
-  instance
+  instance,
 ) {
-  //Given
+  // Given
   let tx;
-  //When
+  // When
   const params = {
-    walletTypeId: walletTypeId,
-    owner: owner,
-    walletIndex: walletIndex,
-    publicKey: publicKey,
+    walletTypeId,
+    owner,
+    walletIndex,
+    publicKey,
     authSignature: signature,
   };
   tx = instance.zrKeyRes(params, {
     from: caller,
   });
 
-  //Then
+  // Then
   return tx;
 }
 
@@ -72,27 +72,27 @@ function checkZrKeyResEvent(log, walletTypeId, walletIndex, owner, publicKey) {
   assert.equal(
     log.event,
     "ZrKeyResolve",
-    `Transaction: ${log.transactionHash} emitted wrong event`
+    `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
     log.args.walletTypeId,
     walletTypeId,
-    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`
+    `Wrong walletTypeId event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.walletIndex.toString(),
     walletIndex.toString(),
-    `Wrong wallet index event argument at transaction: ${log.transactionHash}`
+    `Wrong wallet index event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.owner,
     owner,
-    `Wrong owner address event argument at transaction: ${log.transactionHash}`
+    `Wrong owner address event argument at transaction: ${log.transactionHash}`,
   );
   assert.equal(
     log.args.publicKey,
     publicKey,
-    `Wrong public key event argument at transaction: ${log.transactionHash}`
+    `Wrong public key event argument at transaction: ${log.transactionHash}`,
   );
 }
 
