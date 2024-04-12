@@ -2,6 +2,12 @@
 
 pragma solidity 0.8.20;
 
+import { Lib_RLPWriter } from "./Lib_RLPWriter.sol";
+
+import { SignTypes } from "./zr/SignTypes.sol";
+
+import { IZrSign } from "../interfaces/zr/IZrSign.sol";
+
 // Abstract contract for QSign connections
 abstract contract ZrSignConnect {
     // Use the RLPWriter library for various types
