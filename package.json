@@ -47,9 +47,9 @@
     "prettier-plugin-solidity": "1.0.0-alpha.54",
     "rlp": "^3.0.0",
     "solhint": "^3.3.7",
-    "solidity-coverage": "^0.8.12",
+    "solidity-coverage": "^0.7.22",
     "truffle": "^5.1.35",
-    "truffle-plugin-verify": "^0.6.5",
+    "truffle-plugin-verify": "^0.6.7",
     "web3": "^1.8.1",
     "web3-eth-contract": "^1.7.3"
   }
