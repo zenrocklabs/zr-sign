@@ -4,8 +4,8 @@
 pragma solidity 0.8.20;
 
 // Importing necessary modules from local and external sources
-import { AccessControl } from "../AccessControl.sol"; // Access control functionalities for role management
-import { Pausable } from "../Pausable.sol"; // Pausable control functionalities
+import { AccessControlUpgradeable } from "../AccessControlUpgradeable.sol"; // Access control functionalities for role management
+import { PausableUpgradeable } from "../PausableUpgradeable.sol"; // Pausable control functionalities
 import { ECDSA } from "../../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
 import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
 
@@ -14,7 +14,7 @@ import { SignTypes } from "../../libraries/zr/SignTypes.sol"; // Definitions of 
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
 // Abstract contract for signing functionalities, inheriting from AccessControl for role management
-abstract contract Sign is AccessControl, Pausable, ISign {
+abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     using ZrSignTypes for ZrSignTypes.ChainInfo; // Attach methods from ZrSignTypes to ChainInfo type
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
