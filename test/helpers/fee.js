@@ -76,15 +76,24 @@ async function withdrawFees(caller, instance) {
   // Given
   let tx;
   // When
-  tx = instance.withdrawFees(newFee, { from: caller });
+  tx = instance.withdrawFees({ from: caller });
   // Then
   return tx;
+}
+
+async function checkETHBalance(address) {
+  try {
+    const balance = await web3.eth.getBalance(address);
+    return balance;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function checkFeeWithdrawEvent(log, to, amount) {
   assert.equal(
     log.event,
-    "Withdraw",
+    "FeeWithdraw",
     `Transaction: ${log.transactionHash} emitted wrong event`,
   );
   assert.equal(
@@ -138,4 +147,5 @@ module.exports = {
   checkFeeWithdrawEvent,
   calculateNetworkFee,
   compareFees,
+  checkETHBalance
 };
