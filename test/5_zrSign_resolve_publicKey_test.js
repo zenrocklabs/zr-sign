@@ -245,11 +245,13 @@ contract("ZrSign resolve public key tests", (accounts) => {
         regularAddress,
         instances.proxied,
       );
+
       const chainId = await helpers.getSrcChainId(instances.proxied);
       const payload = web3.eth.abi.encodeParameters(
         ["bytes32", "bytes32", "address", "uint256", "string"],
         [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress],
       );
+
       const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
 
       tx = await helpers.zrKeyRes(
@@ -304,6 +306,90 @@ contract("ZrSign resolve public key tests", (accounts) => {
       const customError = {
         name: "IncorrectWalletIndex",
         params: [walletsAfter.length, pki],
+        instance: instances.proxied,
+      };
+      // Then
+      await helpers.expectRevert(tx, undefined, customError);
+      assert.equal(walletsBefore.length, walletsAfter.length);
+    });
+    
+    it("shoud not resolve same public key twice", async () => {
+      // Given
+      let tx;
+      let walletsBefore;
+      let walletsAfter;
+      const pki = 0;
+
+      // When
+      walletsBefore = await helpers.getZrKeys(
+        supportedWalletTypeId,
+        regularAddress,
+        instances.proxied,
+      );
+      const chainId = await helpers.getSrcChainId(instances.proxied);
+      const payload = web3.eth.abi.encodeParameters(
+        ["bytes32", "bytes32", "address", "uint256", "string"],
+        [chainId, supportedWalletTypeId, regularAddress, pki, fakeMPCAddress],
+      );
+      const authSignature = await helpers.getAuthSignature(ovmAddress, payload);
+
+      tx = await helpers.zrKeyRes(
+        supportedWalletTypeId,
+        regularAddress,
+        pki,
+        fakeMPCAddress,
+        authSignature,
+        ovmAddress,
+        instances.proxied,
+      );
+
+      await helpers.expectTXSuccess(tx);
+      await helpers.checkZrKeyResEvent(
+        tx.receipt.logs[0],
+        supportedWalletTypeId,
+        walletsBefore.length,
+        regularAddress,
+        fakeMPCAddress,
+        ovmAddress,
+      );
+
+      walletsAfter = await helpers.getZrKeys(
+        supportedWalletTypeId,
+        regularAddress,
+        instances.proxied,
+      );
+
+      assert.equal(walletsAfter.length, walletsBefore.length + 1);
+
+      walletsBefore = await helpers.getZrKeys(
+        supportedWalletTypeId,
+        regularAddress,
+        instances.proxied,
+      );
+      const payload1 = web3.eth.abi.encodeParameters(
+        ["bytes32", "bytes32", "address", "uint256", "string"],
+        [chainId, supportedWalletTypeId, regularAddress, pki+1, fakeMPCAddress],
+      );
+      const authSignature1 = await helpers.getAuthSignature(ovmAddress, payload1);
+
+      tx = helpers.zrKeyRes(
+        supportedWalletTypeId,
+        regularAddress,
+        pki+1,
+        fakeMPCAddress,
+        authSignature1,
+        ovmAddress,
+        instances.proxied,
+      );
+
+      walletsAfter = await helpers.getZrKeys(
+        supportedWalletTypeId,
+        regularAddress,
+        instances.proxied,
+      );
+      const customError = {
+        name: "PublicKeyAlreadyRegistered",
+        params: [fakeMPCAddress],
         instance: instances.proxied,
       };
       // Then
