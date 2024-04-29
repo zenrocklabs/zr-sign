@@ -21,7 +21,7 @@ if (fs.existsSync(path.join(__dirname, "config.js"))) {
 module.exports = {
   compilers: {
     solc: {
-      version: "0.8.20",
+      version: "0.8.19",
       settings: {
         optimizer: {
           enabled: true,

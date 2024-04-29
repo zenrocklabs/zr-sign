@@ -3,7 +3,7 @@
 
 // This file is a modification of OpenZeppelin Contracts v4.4.1 (proxy/transparent/TransparentUpgradeableProxy.sol), released under the MIT license
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import { ERC1967Proxy } from "./ERC1967Proxy.sol";
 
