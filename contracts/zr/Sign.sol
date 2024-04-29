@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 // Importing necessary modules from local and external sources
 import { AccessControlUpgradeable } from "../AccessControlUpgradeable.sol"; // Access control functionalities for role management

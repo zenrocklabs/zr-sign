@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 library SignTXTypes {
     struct UnsignedTx {
