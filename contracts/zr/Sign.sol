@@ -46,7 +46,6 @@ abstract contract Sign is AccessControl, Pausable, ISign {
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
-    error UnauthorizedCaller(address caller);
     error InvalidPublicKeyLength(uint256 minLength, uint256 actualLength);
 
     struct SignStorage {
@@ -561,7 +560,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
         }
 
         if (!hasRole(MPC_ROLE, authAddress)) {
-            revert UnauthorizedCaller(authAddress);
+            revert AccessControlUnauthorizedAccount(authAddress, MPC_ROLE);
         }
     }
 

@@ -235,8 +235,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         broadcast: true,
         caller: regularAddress,
         customError: {
-          name: "UnauthorizedCaller",
-          params: [regularAddress],
+          name: "AccessControlUnauthorizedAccount",
+          params: [regularAddress, helpers.MPC_ROLE],
           instance: undefined,
         },
       },
