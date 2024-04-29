@@ -463,7 +463,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
         emit ZrKeyResolve(
             params.walletTypeId,
             params.owner,
-            $.wallets[id].length - 1,
+            params.walletIndex,
             params.publicKey
         );
     }
