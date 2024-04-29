@@ -1185,4 +1185,47 @@ contract("ZrSign integration tests", (accounts) => {
       });
     }
   });
+
+  describe("withdraw fees", async () => {
+    it("should withdraw fees with success", async () => {
+      // Given
+      let expectedBalanceAfter = 0;
+      let balanceBefore;
+      let balanceAfter;
+      let tx;
+
+      // When
+      balanceBefore = await helpers.checkETHBalance(instances.proxied.address);
+      tx = await helpers.withdrawFees(tokenomicsAddress, instances.proxied);
+      balanceAfter = await helpers.checkETHBalance(instances.proxied.address);
+
+      // Then
+      await helpers.expectTXSuccess(tx);
+      await helpers.checkFeeWithdrawEvent(tx.receipt.logs[0], tokenomicsAddress, balanceBefore);
+      assert.equal(balanceAfter.toString(), expectedBalanceAfter.toString());
+    });
+
+    it("should not withdraw fees without tokenomics role", async () => {
+      // Given
+      const role = "0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b";
+      const customError = {
+        name: "AccessControlUnauthorizedAccount",
+        params: [regularAddress, role],
+        instance: instances.proxied,
+      };
+      let balanceBefore;
+      let balanceAfter;
+      let tx;
+
+
+      // When
+      balanceBefore = await helpers.checkETHBalance(instances.proxied.address);
+      tx = helpers.withdrawFees(regularAddress, instances.proxied);
+      balanceAfter = await helpers.checkETHBalance(instances.proxied.address);
+
+      // Then
+      await helpers.expectRevert(tx, undefined, customError);
+      assert.equal(balanceBefore.toString(), balanceAfter.toString());
+    });
+  });
 });
