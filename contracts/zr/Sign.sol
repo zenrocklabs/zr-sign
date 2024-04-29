@@ -118,6 +118,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
     //****************************************************************** INIT FUNCTIONS ******************************************************************/
 
     function __Sign_init() internal onlyInitializing {
+        __AccessControl_init_unchained();
         __Pausable_init_unchained();
         __Sign_init_unchained();
     }
