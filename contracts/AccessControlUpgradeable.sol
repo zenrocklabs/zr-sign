@@ -4,7 +4,7 @@
 pragma solidity 0.8.20;
 
 import { IAccessControl } from "../interfaces/IAccessControl.sol";
-import { Context } from "./Context.sol";
+import { ContextUpgradeable } from "./ContextUpgradeable.sol";
 import { ERC165 } from "./ERC165.sol";
 
 /**
@@ -45,7 +45,7 @@ import { ERC165 } from "./ERC165.sol";
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is Context, IAccessControl, ERC165 {
+abstract contract AccessControlUpgradeable is ContextUpgradeable, IAccessControl, ERC165 {
     struct RoleData {
         mapping(address account => bool) hasRole;
         bytes32 adminRole;
