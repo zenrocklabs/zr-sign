@@ -134,8 +134,8 @@ contract("ZrSign resolve public key tests", (accounts) => {
         mpcAddress: fakeMPCAddress,
         caller: owner,
         customError: {
-          name: "UnauthorizedCaller",
-          params: [owner],
+          name: "AccessControlUnauthorizedAccount",
+          params: [owner, helpers.MPC_ROLE],
           instance: undefined,
         },
       },
