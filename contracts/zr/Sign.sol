@@ -118,6 +118,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** INIT FUNCTIONS ******************************************************************/
 
     function __Sign_init() internal onlyInitializing {
+        __AccessControl_init_unchained();
         __Pausable_init_unchained();
         __Sign_init_unchained();
     }
@@ -463,7 +464,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         emit ZrKeyResolve(
             params.walletTypeId,
             params.owner,
-            $.wallets[id].length - 1,
+            params.walletIndex,
             params.publicKey
         );
     }
