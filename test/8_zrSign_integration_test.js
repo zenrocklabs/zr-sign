@@ -788,8 +788,8 @@ contract("ZrSign integration tests", (accounts) => {
         mpcAddress: FAKE_EVM_MPC_ADDRESS,
         caller: owner,
         customError: {
-          name: "UnauthorizedCaller",
-          params: [owner],
+          name: "AccessControlUnauthorizedAccount",
+          params: [owner, helpers.MPC_ROLE],
           instance: undefined,
         },
       },
