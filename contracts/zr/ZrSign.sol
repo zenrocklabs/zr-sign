@@ -122,7 +122,7 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
         _pause();
     }
 
-    function uppause() external virtual onlyRole(PAUSER_ROLE) {
+    function unpause() external virtual onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 }
