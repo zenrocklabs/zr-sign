@@ -110,10 +110,11 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
      * roles designated with financial management responsibilities.
      */
-    function withdrawFees() external payable virtual override onlyRole(TOKENOMICS_ROLE) nonReentrant {
+    function withdrawFees() external virtual override onlyRole(TOKENOMICS_ROLE) nonReentrant {
         address payable sender = payable(_msgSender());
         uint256 amount = address(this).balance;
-        sender.call{ value: amount }("");
+        (bool success, ) = sender.call{ value: amount }("");
+        require(success, "Failed to send Ether"); // Checks if the low-level call was successful
         emit FeeWithdraw(sender, amount);
     }
 
