@@ -32,6 +32,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
+    uint8 private constant PUBLIC_KEY_NOT_REGISTERED = 0;
+    uint8 private constant PUBLIC_KEY_REGISTERED = 1;
+
     // Error declaration
     error InsufficientFee(uint256 requiredFee, uint256 providedFee);
 
@@ -43,6 +46,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
+    error PublicKeyAlreadyRegistered(string publicKey);
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
@@ -56,6 +60,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
+        mapping(string => uint8) indexByWallet;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -460,7 +465,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
+        if ($.indexByWallet[params.publicKey] == PUBLIC_KEY_REGISTERED) {
+            revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
+        }
+        
         $.wallets[id].push(params.publicKey);
+
+        $.indexByWallet[params.publicKey] = PUBLIC_KEY_REGISTERED;
+
         emit ZrKeyResolve(
             params.walletTypeId,
             params.owner,
