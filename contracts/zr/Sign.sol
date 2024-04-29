@@ -434,7 +434,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
      * @notice This function performs crucial validations such as signature authenticity and public key integrity. It ensures
      * that the wallet index is correct, preventing unauthorized key updates.
      */
-    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual {
+    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -522,7 +522,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
      * @notice This function validates the authorization signature to ensure it matches the expected payload hash.
      * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
      */
-    function _sigRes(SignTypes.SignResParams memory params) internal virtual {
+    function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
         bytes memory payload = abi.encode(
             SRC_CHAIN_ID,
             params.traceId,
