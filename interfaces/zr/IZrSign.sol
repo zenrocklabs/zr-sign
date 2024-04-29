@@ -24,7 +24,7 @@ interface IZrSign is ISign {
 
     function setupNetworkFee(uint256 newNetworkFee) external;
 
-    function withdrawFees() external payable;
+    function withdrawFees() external;
 
     event FeeWithdraw(address indexed to, uint256 indexed amount);
 
