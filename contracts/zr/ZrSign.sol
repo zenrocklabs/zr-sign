@@ -120,7 +120,7 @@ contract ZrSign is Sign, IZrSign {
         _pause();
     }
 
-    function uppause() external virtual onlyRole(PAUSER_ROLE) {
+    function unpause() external virtual onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 }
