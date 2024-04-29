@@ -49,6 +49,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     error UnauthorizedCaller(address caller);
     error InvalidPublicKeyLength(uint256 minLength, uint256 actualLength);
 
+    /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
         uint256 _baseFee;
         uint256 _networkFee;
