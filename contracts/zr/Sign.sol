@@ -43,7 +43,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
     error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
-
+    error AlreadyProcessed(bytes32 payloadHash, uint256 traceId);
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
     error PublicKeyAlreadyRegistered(string publicKey);
@@ -61,6 +61,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
         mapping(string => uint8) indexByWallet;
+        mapping(bytes32 => uint256) processed;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -468,7 +469,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         if ($.indexByWallet[params.publicKey] == PUBLIC_KEY_REGISTERED) {
             revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
         }
-        
+
         $.wallets[id].push(params.publicKey);
 
         $.indexByWallet[params.publicKey] = PUBLIC_KEY_REGISTERED;
@@ -536,6 +537,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
      */
     function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
+        SignStorage storage $ = _getSignStorage();
+
         bytes memory payload = abi.encode(
             SRC_CHAIN_ID,
             params.traceId,
@@ -543,9 +546,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.broadcast
         );
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
-
+        if ($.processed[payloadHash] != 0) {
+            revert AlreadyProcessed({
+                payloadHash: payloadHash,
+                traceId: $.processed[payloadHash]
+            });
+        }
         _mustValidateAuthSignature(payloadHash, params.authSignature);
-
+        $.processed[payloadHash] = params.traceId;
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
 
