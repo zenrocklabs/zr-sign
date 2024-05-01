@@ -43,7 +43,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
     error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
-    error AlreadyProcessed(bytes32 payloadHash, uint256 traceId);
+    
+    error AlreadyProcessed(uint256 traceId);
+
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
     error PublicKeyAlreadyRegistered(string publicKey);
@@ -545,15 +547,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.signature,
             params.broadcast
         );
+
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
+
         if ($.processed[payloadHash] != 0) {
             revert AlreadyProcessed({
-                payloadHash: payloadHash,
                 traceId: $.processed[payloadHash]
             });
         }
+
         _mustValidateAuthSignature(payloadHash, params.authSignature);
+
         $.processed[payloadHash] = params.traceId;
+
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
 
