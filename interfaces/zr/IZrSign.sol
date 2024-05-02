@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import { ISign } from "./ISign.sol";
 
@@ -24,7 +24,7 @@ interface IZrSign is ISign {
 
     function setupNetworkFee(uint256 newNetworkFee) external;
 
-    function withdrawFees() external payable;
+    function withdrawFees() external;
 
     event FeeWithdraw(address indexed to, uint256 indexed amount);
 

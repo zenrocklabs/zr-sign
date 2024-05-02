@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 // Importing necessary modules from local and external sources
-import { AccessControl } from "../AccessControl.sol"; // Access control functionalities for role management
-import { Pausable } from "../Pausable.sol"; // Pausable control functionalities
+import { AccessControlUpgradeable } from "../AccessControlUpgradeable.sol"; // Access control functionalities for role management
+import { PausableUpgradeable } from "../PausableUpgradeable.sol"; // Pausable control functionalities
 import { ECDSA } from "../../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
 import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
 
@@ -14,7 +14,7 @@ import { SignTypes } from "../../libraries/zr/SignTypes.sol"; // Definitions of 
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
 // Abstract contract for signing functionalities, inheriting from AccessControl for role management
-abstract contract Sign is AccessControl, Pausable, ISign {
+abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     using ZrSignTypes for ZrSignTypes.ChainInfo; // Attach methods from ZrSignTypes to ChainInfo type
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
@@ -32,6 +32,9 @@ abstract contract Sign is AccessControl, Pausable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
+    uint8 private constant PUBLIC_KEY_NOT_REGISTERED = 0;
+    uint8 private constant PUBLIC_KEY_REGISTERED = 1;
+
     // Error declaration
     error InsufficientFee(uint256 requiredFee, uint256 providedFee);
 
@@ -40,15 +43,18 @@ abstract contract Sign is AccessControl, Pausable, ISign {
 
     error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
     error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
+    
+    error AlreadyProcessed(uint256 traceId);
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
+    error PublicKeyAlreadyRegistered(string publicKey);
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
-    error UnauthorizedCaller(address caller);
     error InvalidPublicKeyLength(uint256 minLength, uint256 actualLength);
 
+    /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
         uint256 _baseFee;
         uint256 _networkFee;
@@ -56,6 +62,8 @@ abstract contract Sign is AccessControl, Pausable, ISign {
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
+        mapping(string => uint8) indexByWallet;
+        mapping(bytes32 => uint256) processed;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -118,6 +126,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
     //****************************************************************** INIT FUNCTIONS ******************************************************************/
 
     function __Sign_init() internal onlyInitializing {
+        __AccessControl_init_unchained();
         __Pausable_init_unchained();
         __Sign_init_unchained();
     }
@@ -434,7 +443,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
      * @notice This function performs crucial validations such as signature authenticity and public key integrity. It ensures
      * that the wallet index is correct, preventing unauthorized key updates.
      */
-    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual {
+    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -459,11 +468,18 @@ abstract contract Sign is AccessControl, Pausable, ISign {
             });
         }
 
+        if ($.indexByWallet[params.publicKey] == PUBLIC_KEY_REGISTERED) {
+            revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
+        }
+
         $.wallets[id].push(params.publicKey);
+
+        $.indexByWallet[params.publicKey] = PUBLIC_KEY_REGISTERED;
+
         emit ZrKeyResolve(
             params.walletTypeId,
             params.owner,
-            $.wallets[id].length - 1,
+            params.walletIndex,
             params.publicKey
         );
     }
@@ -522,16 +538,27 @@ abstract contract Sign is AccessControl, Pausable, ISign {
      * @notice This function validates the authorization signature to ensure it matches the expected payload hash.
      * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
      */
-    function _sigRes(SignTypes.SignResParams memory params) internal virtual {
+    function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
+        SignStorage storage $ = _getSignStorage();
+
         bytes memory payload = abi.encode(
             SRC_CHAIN_ID,
             params.traceId,
             params.signature,
             params.broadcast
         );
+
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
 
+        if ($.processed[payloadHash] != 0) {
+            revert AlreadyProcessed({
+                traceId: $.processed[payloadHash]
+            });
+        }
+
         _mustValidateAuthSignature(payloadHash, params.authSignature);
+
+        $.processed[payloadHash] = params.traceId;
 
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
@@ -561,7 +588,7 @@ abstract contract Sign is AccessControl, Pausable, ISign {
         }
 
         if (!hasRole(MPC_ROLE, authAddress)) {
-            revert UnauthorizedCaller(authAddress);
+            revert AccessControlUnauthorizedAccount(authAddress, MPC_ROLE);
         }
     }
 
