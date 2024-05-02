@@ -235,8 +235,8 @@ contract("ZrSign resolve signature tests", (accounts) => {
         broadcast: true,
         caller: regularAddress,
         customError: {
-          name: "UnauthorizedCaller",
-          params: [regularAddress],
+          name: "AccessControlUnauthorizedAccount",
+          params: [regularAddress, helpers.MPC_ROLE],
           instance: undefined,
         },
       },
@@ -340,6 +340,75 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
       tx = helpers.zrSignRes(
         0,
+        signature,
+        true,
+        authSignature,
+        regularAddress,
+        instances.proxied,
+      );
+
+      // Then
+      await helpers.expectRevert(tx, undefined, customError);
+    });
+
+    it(`shoud not be able to resolve signature for the same data twice`, async () => {
+      // Given
+      let tx;
+
+      // When
+      const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
+
+      const t = {
+        to: owner,
+        value: 100,
+        gas: 30000,
+        maxFeePerGas: 1000000108,
+        nonce,
+        data: "0x",
+      };
+
+      const transaction = [
+        web3.utils.toHex(t.nonce),
+        web3.utils.toHex(t.maxFeePerGas),
+        web3.utils.toHex(t.gasLimit),
+        t.to,
+        web3.utils.toHex(t.value),
+        t.data,
+        null,
+        null,
+        null,
+      ];
+
+      const payload = RLP.encode(transaction);
+      const payloadHash = web3.utils.soliditySha3(payload);
+      const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
+      const chainId = await helpers.getSrcChainId(instances.proxied);
+      const resPayload = web3.eth.abi.encodeParameters(
+        ["bytes32", "uint256", "bytes", "bool"],
+        [chainId, 1, signature, true],
+      );
+
+      const customError = {
+        name: "AlreadyProcessed",
+        params: [1],
+        instance: instances.proxied,
+      };
+
+      const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
+
+      const txSuccess = await helpers.zrSignRes(
+        1,
+        signature,
+        true,
+        authSignature,
+        ovmAddress,
+        instances.proxied,
+      );
+
+      await helpers.expectTXSuccess(txSuccess);
+
+      tx = helpers.zrSignRes(
+        1,
         signature,
         true,
         authSignature,

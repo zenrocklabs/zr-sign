@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Pausable.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.19;
 
-import { Context } from "./Context.sol";
+import { ContextUpgradeable } from "./ContextUpgradeable.sol";
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -14,7 +14,7 @@ import { Context } from "./Context.sol";
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is Context {
+abstract contract PausableUpgradeable is ContextUpgradeable {
     /// @custom:storage-location erc7201:openzeppelin.storage.Pausable
     struct PausableStorage {
         bool _paused;

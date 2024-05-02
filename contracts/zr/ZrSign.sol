@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
-pragma solidity 0.8.20;
-
+pragma solidity 0.8.19;
+import { ReentrancyGuardUpgradeable } from "../ReentrancyGuardUpgradeable.sol";
 import { Sign } from "./Sign.sol";
 import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
 import { IZrSign } from "../../interfaces/zr/IZrSign.sol";
 
-contract ZrSign is Sign, IZrSign {
+contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
 
     bytes32 public constant TOKENOMICS_ROLE =
         0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
-        
+
     bytes32 public constant PAUSER_ROLE =
         0x8ab6d0465f335f1458251c44a70aa92d9297798531f73d2c8a32b5bd379821b8; //keccak256("zenrock.role.pauser");
 
@@ -37,6 +37,7 @@ contract ZrSign is Sign, IZrSign {
     }
 
     function __ZrSign_init() internal onlyInitializing {
+        __ReentrancyGuard_init();
         __ZrSign_init_unchained();
         __Sign_init();
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -109,10 +110,11 @@ contract ZrSign is Sign, IZrSign {
      * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
      * roles designated with financial management responsibilities.
      */
-    function withdrawFees() external payable virtual override onlyRole(TOKENOMICS_ROLE) {
+    function withdrawFees() external virtual override onlyRole(TOKENOMICS_ROLE) nonReentrant {
         address payable sender = payable(_msgSender());
         uint256 amount = address(this).balance;
-        sender.transfer(amount);
+        (bool success, ) = sender.call{ value: amount }("");
+        require(success, "Failed to send Ether"); // Checks if the low-level call was successful
         emit FeeWithdraw(sender, amount);
     }
 
@@ -120,7 +122,7 @@ contract ZrSign is Sign, IZrSign {
         _pause();
     }
 
-    function uppause() external virtual onlyRole(PAUSER_ROLE) {
+    function unpause() external virtual onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 }

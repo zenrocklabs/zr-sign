@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)
 
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 import { Initializable } from "./Initializable.sol";
 
 /**
@@ -14,7 +14,7 @@ import { Initializable } from "./Initializable.sol";
  *
  * This contract is only required for intermediate, library-like contracts.
  */
-abstract contract Context is Initializable {
+abstract contract ContextUpgradeable is Initializable {
     function __Context_init() internal onlyInitializing {}
 
     function __Context_init_unchained() internal onlyInitializing {}
