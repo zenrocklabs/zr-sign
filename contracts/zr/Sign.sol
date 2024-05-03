@@ -550,7 +550,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
 
-        if ($.processed[payloadHash] != 0) {
+        if ($.processed[payloadHash] != PUBLIC_KEY_NOT_REGISTERED) {
             revert AlreadyProcessed({
                 traceId: $.processed[payloadHash]
             });
