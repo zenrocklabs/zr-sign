@@ -9,8 +9,8 @@ fi
 network=$1
 
 # Execute the truffle commands
-echo "Verifying ZrSignTypes with network $network..."
-truffle run verify ZrSignTypes --network $network
+echo "Verifying SignTypes with network $network..."
+truffle run verify SignTypes --network $network
 if [ $? -ne 0 ]; then
     echo "Error verifying ZrSignTypes. Exiting."
     exit 1
