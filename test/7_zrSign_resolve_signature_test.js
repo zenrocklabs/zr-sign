@@ -13,6 +13,10 @@ contract("ZrSign resolve signature tests", (accounts) => {
   const supportedWalletTypeId = helpers.EVM_CHAIN_TYPE_HASH;
   const unsupportedWalletTypeId = helpers.UNSUPPORTED_CHAIN_TYPE_HASH;
 
+  const IS_HASH_MASK = 1 << 0; // 0b0001
+  const IS_DATA_MASK = 1 << 1; // 0b0010
+  const IS_TX_MASK = 1 << 2; // 0b0100;
+
   const baseFee = web3.utils.toWei("80", "gwei");
   const networkFee = web3.utils.toWei("4", "wei");
   let instances;
@@ -48,7 +52,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
     );
     await helpers.chainIdConfig(
       walletTypeId,
-      helpers.ETH_GOERLI_CAIP,
+      helpers.ETH_SEPOLIA_CAIP,
       support,
       caller,
       instances.proxied,
@@ -78,10 +82,10 @@ contract("ZrSign resolve signature tests", (accounts) => {
         testName: "resolve signature for payload hash without broadcast",
         walletTypeId: supportedWalletTypeId,
         owner: regularAddress,
-        traceId: "0",
         walletIndex: "0",
-        dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
+        dstChainId: helpers.ETH_SEPOLIA_CAIP,
         broadcast: false,
+        flag: IS_HASH_MASK,
         caller: ovmAddress,
       },
     ];
@@ -116,16 +120,48 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
+
+        const totalFee = await helpers.calculateTotalFeeFromInstance(
+          payloadHash,
+          instances.proxied,
+        );
+
+        tx = await helpers.zrSignHash(
+          helpers.EVM_CHAIN_TYPE_HASH,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          totalFee,
+          regularAddress,
+          instances.proxied,
+        );
+
+        const traceId = await helpers.getTraceId(instances.proxied);
+        
+        await helpers.expectTXSuccess(tx);
+        await helpers.checkZrSigRequestEvent(
+          tx.receipt.logs[0],
+          traceId,
+          helpers.EVM_CHAIN_TYPE_HASH,
+          regularAddress,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          c.flag,
+          c.broadcast,
+        );
+
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast],
+          [chainId, traceId, signature, c.broadcast],
         );
+
         const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
 
         tx = await helpers.zrSignRes(
-          c.traceId,
+          traceId.toString(),
           signature,
           c.broadcast,
           authSignature,
@@ -136,7 +172,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
-          c.traceId,
+          traceId,
           signature,
           c.broadcast,
         );
@@ -148,22 +184,12 @@ contract("ZrSign resolve signature tests", (accounts) => {
         testName: "resolve signature for payload hash without broadcast",
         walletTypeId: supportedWalletTypeId,
         owner: regularAddress,
-        traceId: "0",
         walletIndex: "0",
-        dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
+        dstChainId: helpers.ETH_SEPOLIA_CAIP,
         broadcast: false,
+        flag: IS_HASH_MASK,
         caller: ovmAddress,
-      },
-      {
-        testName: "resolve signature for payload hash and broadcast",
-        walletTypeId: supportedWalletTypeId,
-        owner: regularAddress,
-        traceId: "0",
-        walletIndex: "0",
-        dstChainId: helpers.ETH_GOERLI_CHAIN_ID,
-        broadcast: true,
-        caller: ovmAddress,
-      },
+      }
     ];
 
     for (const c of positivePayloadTests) {
@@ -198,16 +224,44 @@ contract("ZrSign resolve signature tests", (accounts) => {
         const payloadBytes = RLP.encode(transaction);
         const payload = `0x${RLP.utils.bytesToHex(payloadBytes)}`;
         const payloadHash = web3.utils.soliditySha3(payload);
+        const totalFee = await helpers.calculateTotalFeeFromInstance(
+          payloadHash,
+          instances.proxied,
+        );
+
+        tx = await helpers.zrSignHash(
+          helpers.EVM_CHAIN_TYPE_HASH,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          totalFee,
+          regularAddress,
+          instances.proxied,
+        );
+
+        const traceId = await helpers.getTraceId(instances.proxied);
+        await helpers.expectTXSuccess(tx);
+        await helpers.checkZrSigRequestEvent(
+          tx.receipt.logs[0],
+          traceId,
+          helpers.EVM_CHAIN_TYPE_HASH,
+          regularAddress,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          c.flag,
+          c.broadcast,
+        );
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast],
+          [chainId, traceId, signature, c.broadcast],
         );
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = await helpers.zrSignRes(
-          c.traceId,
+          traceId.toString(),
           signature,
           c.broadcast,
           authSignature,
@@ -219,7 +273,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
         await helpers.expectTXSuccess(tx);
         await helpers.checkZrSigResolveEvent(
           tx.receipt.logs[0],
-          c.traceId,
+          traceId,
           signature,
           c.broadcast,
         );
@@ -231,9 +285,14 @@ contract("ZrSign resolve signature tests", (accounts) => {
     const negativeTests = [
       {
         testName: "be able to resolve without ovm role",
-        traceId: "0",
-        broadcast: true,
+        broadcast: false,
         caller: regularAddress,
+        walletTypeId: supportedWalletTypeId,
+        owner: regularAddress,
+        walletIndex: "0",
+        dstChainId: helpers.ETH_SEPOLIA_CAIP,
+        broadcast: false,
+        flag: IS_HASH_MASK,
         customError: {
           name: "AccessControlUnauthorizedAccount",
           params: [regularAddress, helpers.MPC_ROLE],
@@ -272,16 +331,44 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
         const payload = RLP.encode(transaction);
         const payloadHash = web3.utils.soliditySha3(payload);
+        const totalFee = await helpers.calculateTotalFeeFromInstance(
+          payloadHash,
+          instances.proxied,
+        );
+
+        tx = await helpers.zrSignHash(
+          helpers.EVM_CHAIN_TYPE_HASH,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          totalFee,
+          regularAddress,
+          instances.proxied,
+        );
+
+        const traceId = await helpers.getTraceId(instances.proxied);
+        await helpers.expectTXSuccess(tx);
+        await helpers.checkZrSigRequestEvent(
+          tx.receipt.logs[0],
+          traceId,
+          helpers.EVM_CHAIN_TYPE_HASH,
+          regularAddress,
+          c.walletIndex,
+          helpers.ETH_SEPOLIA_CHAIN_ID,
+          payloadHash,
+          c.flag,
+          c.broadcast,
+        );
         const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
         const chainId = await helpers.getSrcChainId(instances.proxied);
         const resPayload = web3.eth.abi.encodeParameters(
           ["bytes32", "uint256", "bytes", "bool"],
-          [chainId, c.traceId, signature, c.broadcast],
+          [chainId, traceId, signature, c.broadcast],
         );
         const authSignature = await helpers.getAuthSignature(c.caller, resPayload);
 
         tx = helpers.zrSignRes(
-          c.traceId,
+          traceId.toString(),
           signature,
           c.broadcast,
           authSignature,
@@ -299,6 +386,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
     it(`shoud not be able to resolve signature with invalid signature`, async () => {
       // Given
       let tx;
+      const walletIndex = 0;
       const customError = {
         name: "InvalidSignature",
         params: [2],
@@ -330,16 +418,45 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
       const payload = RLP.encode(transaction);
       const payloadHash = web3.utils.soliditySha3(payload);
+      const totalFee = await helpers.calculateTotalFeeFromInstance(
+        payloadHash,
+        instances.proxied,
+      );
+
+      tx = await helpers.zrSignHash(
+        helpers.EVM_CHAIN_TYPE_HASH,
+        walletIndex,
+        helpers.ETH_SEPOLIA_CHAIN_ID,
+        payloadHash,
+        totalFee,
+        regularAddress,
+        instances.proxied,
+      );
+
+      const traceId = await helpers.getTraceId(instances.proxied);
+      await helpers.expectTXSuccess(tx);
+      await helpers.checkZrSigRequestEvent(
+        tx.receipt.logs[0],
+        traceId,
+        helpers.EVM_CHAIN_TYPE_HASH,
+        regularAddress,
+        walletIndex,
+        helpers.ETH_SEPOLIA_CHAIN_ID,
+        payloadHash,
+        IS_HASH_MASK,
+        false,
+      );
+
       const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
       const chainId = await helpers.getSrcChainId(instances.proxied);
       const resPayload = web3.eth.abi.encodeParameters(
         ["bytes32", "uint256", "bytes", "bool"],
-        [chainId, 0, signature, true],
+        [chainId, traceId, signature, true],
       );
       const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload, -4);
 
       tx = helpers.zrSignRes(
-        0,
+        traceId.toString(),
         signature,
         true,
         authSignature,
@@ -354,7 +471,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
     it(`shoud not be able to resolve signature for the same data twice`, async () => {
       // Given
       let tx;
-
+      const walletIndex = 0;
       // When
       const nonce = await web3.eth.getTransactionCount(owner, "latest"); // nonce starts counting from 0
 
@@ -381,15 +498,44 @@ contract("ZrSign resolve signature tests", (accounts) => {
 
       const payload = RLP.encode(transaction);
       const payloadHash = web3.utils.soliditySha3(payload);
+      const totalFee = await helpers.calculateTotalFeeFromInstance(
+        payloadHash,
+        instances.proxied,
+      );
+
+      tx = await helpers.zrSignHash(
+        helpers.EVM_CHAIN_TYPE_HASH,
+        walletIndex,
+        helpers.ETH_SEPOLIA_CHAIN_ID,
+        payloadHash,
+        totalFee,
+        regularAddress,
+        instances.proxied,
+      );
+
+      const traceId = await helpers.getTraceId(instances.proxied);
+      await helpers.expectTXSuccess(tx);
+      await helpers.checkZrSigRequestEvent(
+        tx.receipt.logs[0],
+        traceId,
+        helpers.EVM_CHAIN_TYPE_HASH,
+        regularAddress,
+        walletIndex,
+        helpers.ETH_SEPOLIA_CHAIN_ID,
+        payloadHash,
+        IS_HASH_MASK,
+        false,
+      );
+
       const signature = await web3.eth.sign(payloadHash, fakeMPCAddress);
       const chainId = await helpers.getSrcChainId(instances.proxied);
       const resPayload = web3.eth.abi.encodeParameters(
         ["bytes32", "uint256", "bytes", "bool"],
-        [chainId, 1, signature, true],
+        [chainId, traceId, signature, false],
       );
 
       const customError = {
-        name: "AlreadyProcessed",
+        name: "RequestNotFoundOrAlreadyProcessed",
         params: [1],
         instance: instances.proxied,
       };
@@ -397,9 +543,9 @@ contract("ZrSign resolve signature tests", (accounts) => {
       const authSignature = await helpers.getAuthSignature(ovmAddress, resPayload);
 
       const txSuccess = await helpers.zrSignRes(
-        1,
+        traceId.toString(),
         signature,
-        true,
+        false,
         authSignature,
         ovmAddress,
         instances.proxied,
@@ -410,7 +556,7 @@ contract("ZrSign resolve signature tests", (accounts) => {
       tx = helpers.zrSignRes(
         1,
         signature,
-        true,
+        false,
         authSignature,
         regularAddress,
         instances.proxied,

@@ -7,6 +7,7 @@ const accessControl = require("./accessControl.js");
 const misc = require("./misc.js");
 const walletTypes = require("./walletTypes.js");
 const chainIds = require("./chainIds.js");
+const traceId = require("./traceId.js");
 
 module.exports = {
   ...deployer,
@@ -18,4 +19,5 @@ module.exports = {
   ...signature,
   ...walletTypes,
   ...chainIds,
+  ...traceId,
 };
