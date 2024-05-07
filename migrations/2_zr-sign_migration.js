@@ -87,9 +87,9 @@ module.exports = function (deployer, network, accounts) {
     tx = await proxied.chainIdConfig(evmWalletTypeId, "eip155:11155111", true);
     console.log("Chain id configuration for Sepolia was successful ", tx.tx);
 
-    console.log("Starting chain id configuration for Mumbai...");
-    tx = await proxied.chainIdConfig(evmWalletTypeId, "eip155:80001", true);
-    console.log("Chain id configuration for Mumbai was successful ", tx.tx);
+    console.log("Starting chain id configuration for Amoy...");
+    tx = await proxied.chainIdConfig(evmWalletTypeId, "eip155:80002", true);
+    console.log("Chain id configuration for Amoy was successful ", tx.tx);
 
     console.log(`Asigning role to MPC wallet to ${accounts[2]} ...`);
     const mpcAddress = accounts[2];
