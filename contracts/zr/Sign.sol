@@ -32,8 +32,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
-    uint8 private constant PUBLIC_KEY_NOT_REGISTERED = 0;
     uint8 private constant PUBLIC_KEY_REGISTERED = 1;
+    uint8 private constant SIG_REQ_IN_PROGRESS = 1;
+    uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
 
     // Error declaration
     error InsufficientFee(uint256 requiredFee, uint256 providedFee);
@@ -43,8 +44,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
     error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
-    
-    error AlreadyProcessed(uint256 traceId);
+
+    error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
@@ -62,8 +63,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
-        mapping(string => uint8) indexByWallet;
-        mapping(bytes32 => uint256) processed;
+        mapping(string => uint8) walletRegistry;
+        mapping(uint256 => uint8) reqState;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -468,13 +469,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
-        if ($.indexByWallet[params.publicKey] == PUBLIC_KEY_REGISTERED) {
+        if ($.walletRegistry[params.publicKey] == PUBLIC_KEY_REGISTERED) {
             revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
         }
 
         $.wallets[id].push(params.publicKey);
 
-        $.indexByWallet[params.publicKey] = PUBLIC_KEY_REGISTERED;
+        $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED;
 
         emit ZrKeyResolve(
             params.walletTypeId,
@@ -509,9 +510,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             abi.encode(params.walletTypeId, params.owner, params.walletIndex)
         );
 
-        unchecked {
-            $._traceId = $._traceId + 1;
-        }
+        $._traceId = $._traceId + 1;
+
+        $.reqState[$._traceId] = SIG_REQ_IN_PROGRESS;
 
         emit ZrSigRequest(
             $._traceId,
@@ -550,15 +551,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
 
-        if ($.processed[payloadHash] != PUBLIC_KEY_NOT_REGISTERED) {
-            revert AlreadyProcessed({
-                traceId: $.processed[payloadHash]
-            });
+        if ($.reqState[params.traceId] != SIG_REQ_IN_PROGRESS) {
+            revert RequestNotFoundOrAlreadyProcessed({ traceId: params.traceId });
         }
 
         _mustValidateAuthSignature(payloadHash, params.authSignature);
 
-        $.processed[payloadHash] = params.traceId;
+        $.reqState[params.traceId] = SIG_REQ_ALREADY_PROCESSED;
 
         emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
     }
