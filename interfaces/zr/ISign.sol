@@ -24,26 +24,27 @@ interface ISign is IAccessControl {
 
     function isWalletTypeSupported(bytes32 walletTypeId) external view returns (bool);
 
-    function isChainIdSupported(bytes32 walletTypeId, bytes32 chainId)
-        external
-        view
-        returns (bool);
+    function isChainIdSupported(
+        bytes32 walletTypeId,
+        bytes32 chainId
+    ) external view returns (bool);
 
     function getTraceId() external view returns (uint256);
 
+    function getRequestState(uint256 traceId) external view returns (uint8);
+    
     function getBaseFee() external view returns (uint256);
 
     function getNetworkFee() external view returns (uint256);
 
-    function getWalletTypeInfo(bytes32 walletTypeId)
-        external
-        view
-        returns (ZrSignTypes.ChainInfo memory);
+    function getWalletTypeInfo(
+        bytes32 walletTypeId
+    ) external view returns (ZrSignTypes.ChainInfo memory);
 
-    function getZrKeys(bytes32 walletTypeId, address owner)
-        external
-        view
-        returns (string[] memory);
+    function getZrKeys(
+        bytes32 walletTypeId,
+        address owner
+    ) external view returns (string[] memory);
 
     function getZrKey(
         bytes32 walletTypeId,

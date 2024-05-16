@@ -300,6 +300,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         return $._traceId;
     }
+    
+    /**
+     * @dev Retrieves the current request state from the contract's storage. The trace ID is typically used to
+     * track and manage signature or key request sequences within the contract.
+     *
+     * @param traceId The trace ID of the request.
+     *
+     * @return uint256 The current trace ID stored in the contract.
+     */
+    function getRequestState(uint256 traceId) public view virtual override returns (uint8) {
+        SignStorage storage $ = _getSignStorage();
+        return $.reqState[traceId];
+    }
 
     /**
      * @dev Returns the base fee required for initiating any signing or key generation request. This fee
