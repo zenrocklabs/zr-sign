@@ -307,7 +307,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      *
      * @param traceId The trace ID of the request.
      *
-     * @return uint256 The current trace ID stored in the contract.
+     * @return uint256 The current state stored in the contract.
      */
     function getRequestState(uint256 traceId) public view virtual override returns (uint8) {
         SignStorage storage $ = _getSignStorage();
