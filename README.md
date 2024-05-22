@@ -8,6 +8,7 @@ may not yet be fully stable and are not production-ready.
 The purpose of this Technology Preview is to gather user feedback, identify issues, and make
 improvements before the official release.
 
+
 ## Provide feedback
 
 We highly value the feedback of our users, as it helps us improve and enhance our products. If
@@ -30,13 +31,32 @@ liable for any damages of any kind arising from its use.
 
 ## Developer documentation
 
-You can find more information on ZrSign in our
-[developer documentation](https://developers.zenrock.com/developer-guides/zrsign).
+You can find more information on ZrSign in our [developer documentation](https://developers.zenrock.com/developer-guides/zrsign).
 
 ## Get started
 
-For a quick start, see the
-[Get started guide](https://developers.zenrock.com/developer-guides/zrsign).
+For a quick start, see the [Get started guide](https://developers.zenrock.com/developer-guides/zrsign).
+
+### Deployment
+The project uses Hardhat Ignition to facilitate deployments. Deployment modules are located
+under `/ignition/modules`.
+
+- `zr-sign` - deploys all relevant contracts (libraries, proxy and implementation).
+- `zr-sign-init` - loads the `zr-sign` module and sets up any additional configuration such as 
+role and chain configurations.
+
+**Running the deployments**
+
+Run using Ignition:
+```
+ npx hardhat ignition deploy <ignition_module_path>
+```
+
+Run using hardhat scripts (which runs the ignition modules):
+```
+npx hardhat run scripts/deploy.ts
+```
+
 
 ## Licence
 

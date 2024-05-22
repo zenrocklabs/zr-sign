@@ -1,0 +1,1215 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/AccessControlUpgradeable.sol": {
+      "lastModificationDate": 1716208519363,
+      "contentHash": "9d7b19a547c90d0d042069b4f7454987",
+      "sourceName": "contracts/AccessControlUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./interfaces/IAccessControl.sol",
+        "./ContextUpgradeable.sol",
+        "./ERC165.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "AccessControlUpgradeable"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/ContextUpgradeable.sol": {
+      "lastModificationDate": 1716203474236,
+      "contentHash": "11e2bb1d5b321cfbdc175398c08a0615",
+      "sourceName": "contracts/ContextUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Initializable.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ContextUpgradeable"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/ERC165.sol": {
+      "lastModificationDate": 1716208524857,
+      "contentHash": "e1b6e52b913e00b3600ae9fc927e1614",
+      "sourceName": "contracts/ERC165.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./interfaces/IERC165.sol",
+        "./Initializable.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ERC165"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/interfaces/IAccessControl.sol": {
+      "lastModificationDate": 1716208386941,
+      "contentHash": "6f0f056a658721a54b52ac1281c28f53",
+      "sourceName": "contracts/interfaces/IAccessControl.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "IAccessControl"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/Initializable.sol": {
+      "lastModificationDate": 1716203474236,
+      "contentHash": "7ad9816958ed1546f4fc2e738398753d",
+      "sourceName": "contracts/Initializable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Initializable"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/interfaces/IERC165.sol": {
+      "lastModificationDate": 1716208386941,
+      "contentHash": "126095a3a8cbf63e59ad33d55c0746fc",
+      "sourceName": "contracts/interfaces/IERC165.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "IERC165"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/zr/Sign.sol": {
+      "lastModificationDate": 1716373021439,
+      "contentHash": "95954ec5d5fc782f6d849723e4c507ed",
+      "sourceName": "contracts/zr/Sign.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../AccessControlUpgradeable.sol",
+        "../PausableUpgradeable.sol",
+        "../libraries/ECDSA.sol",
+        "../libraries/MessageHashUtils.sol",
+        "../interfaces/zr/ISign.sol",
+        "../libraries/zr/SignTypes.sol",
+        "../libraries/zr/ZrSignTypes.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Sign"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/PausableUpgradeable.sol": {
+      "lastModificationDate": 1716203474237,
+      "contentHash": "4a2cf6131166b7c3829de5cdddd11c2d",
+      "sourceName": "contracts/PausableUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ContextUpgradeable.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "PausableUpgradeable"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/ECDSA.sol": {
+      "lastModificationDate": 1716208386942,
+      "contentHash": "852b2c65bc2f2dfd7614a52e8313bd4c",
+      "sourceName": "contracts/libraries/ECDSA.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ECDSA"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/MessageHashUtils.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "5a3e089a7434cc035e0b558960a97061",
+      "sourceName": "contracts/libraries/MessageHashUtils.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Strings.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "MessageHashUtils"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/interfaces/zr/ISign.sol": {
+      "lastModificationDate": 1716373228589,
+      "contentHash": "40586ed00bfaffe2a270962925a9f7eb",
+      "sourceName": "contracts/interfaces/zr/ISign.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IAccessControl.sol",
+        "../../libraries/zr/SignTypes.sol",
+        "../../libraries/zr/ZrSignTypes.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ISign"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/zr/SignTypes.sol": {
+      "lastModificationDate": 1716208386944,
+      "contentHash": "8aa1fd52ca2538df94731d46010d88ed",
+      "sourceName": "contracts/libraries/zr/SignTypes.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "SignTypes"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/zr/ZrSignTypes.sol": {
+      "lastModificationDate": 1716208386944,
+      "contentHash": "b0cf480afd97e8f8a8a7cc2334ca6997",
+      "sourceName": "contracts/libraries/zr/ZrSignTypes.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ZrSignTypes"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Strings.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "6be1a69c755b210f18a0665d14e76a38",
+      "sourceName": "contracts/libraries/Strings.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Math.sol",
+        "./SignedMath.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Strings"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Math.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "2dcf076a3516984c1125cff416fc66af",
+      "sourceName": "contracts/libraries/Math.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Panic.sol",
+        "./SafeCast.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Math"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/SignedMath.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "afd7fd723ffe5e29323ad2314d9c6299",
+      "sourceName": "contracts/libraries/SignedMath.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "SignedMath"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/SafeCast.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "aae5e11068cd461cc0a7dbad28fc332f",
+      "sourceName": "contracts/libraries/SafeCast.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "SafeCast"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Panic.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "442e8e40117e3c9ff7cf0054a079fcd2",
+      "sourceName": "contracts/libraries/Panic.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Panic"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/zr/ZrSign.sol": {
+      "lastModificationDate": 1716373021439,
+      "contentHash": "bfca68424a628e7f1231817ec9399619",
+      "sourceName": "contracts/zr/ZrSign.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ReentrancyGuardUpgradeable.sol",
+        "./Sign.sol",
+        "../libraries/zr/ZrSignTypes.sol",
+        "../interfaces/zr/IZrSign.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ZrSign"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/ReentrancyGuardUpgradeable.sol": {
+      "lastModificationDate": 1716203474237,
+      "contentHash": "01c5924c92d63b0d59abe71d1b49d464",
+      "sourceName": "contracts/ReentrancyGuardUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Initializable.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ReentrancyGuardUpgradeable"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/interfaces/zr/IZrSign.sol": {
+      "lastModificationDate": 1716208386942,
+      "contentHash": "bc3904bdbf9e8d7fee52ee7392615d71",
+      "sourceName": "contracts/interfaces/zr/IZrSign.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ISign.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "IZrSign"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/zrSignConnect.sol": {
+      "lastModificationDate": 1716208386944,
+      "contentHash": "212a8089bee35d05223aac61b0fd7b23",
+      "sourceName": "contracts/libraries/zrSignConnect.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Lib_RLPWriter.sol",
+        "./zr/SignTypes.sol",
+        "../interfaces/zr/IZrSign.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ZrSignConnect"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Lib_RLPWriter.sol": {
+      "lastModificationDate": 1716208386942,
+      "contentHash": "cc2b41effc895727ea5bcc52427dfcf8",
+      "sourceName": "contracts/libraries/Lib_RLPWriter.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Lib_RLPWriter"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/Migrations.sol": {
+      "lastModificationDate": 1716203474236,
+      "contentHash": "6038f2750695525812cbdb41a7346675",
+      "sourceName": "contracts/Migrations.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Migrations"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/interfaces/IBeacon.sol": {
+      "lastModificationDate": 1716208386941,
+      "contentHash": "e023db89ede806ceef5c6a037d6ea876",
+      "sourceName": "contracts/interfaces/IBeacon.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "IBeacon"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/proxy/ERC1967Upgrade.sol": {
+      "lastModificationDate": 1716208566220,
+      "contentHash": "f960ffa454e67de73ab41c6f143d0140",
+      "sourceName": "contracts/proxy/ERC1967Upgrade.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IBeacon.sol",
+        "../libraries/Address.sol",
+        "../libraries/StorageSlot.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ERC1967Upgrade"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Address.sol": {
+      "lastModificationDate": 1716208386942,
+      "contentHash": "275c49b94fa94fd049e7bc355c9cc181",
+      "sourceName": "contracts/libraries/Address.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Errors.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/StorageSlot.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "f1a4d5eba390258386bb649fa4e2ec0c",
+      "sourceName": "contracts/libraries/StorageSlot.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "StorageSlot"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/Errors.sol": {
+      "lastModificationDate": 1716208386942,
+      "contentHash": "ca76fde00e33838a095c0d8c2e0cbe70",
+      "sourceName": "contracts/libraries/Errors.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Errors"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/proxy/ERC1967Proxy.sol": {
+      "lastModificationDate": 1716203474237,
+      "contentHash": "988e01d37556f7bbd6d543a37100db92",
+      "sourceName": "contracts/proxy/ERC1967Proxy.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Proxy.sol",
+        "./ERC1967Upgrade.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ERC1967Proxy"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/proxy/Proxy.sol": {
+      "lastModificationDate": 1716203474237,
+      "contentHash": "0448af43b990f780f4ceed28c5c7ab08",
+      "sourceName": "contracts/proxy/Proxy.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "Proxy"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/proxy/ZrProxy.sol": {
+      "lastModificationDate": 1716203474237,
+      "contentHash": "0c99f81611ba80d0f460a14e7b1be908",
+      "sourceName": "contracts/proxy/ZrProxy.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ERC1967Proxy.sol"
+      ],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "ZrProxy"
+      ]
+    },
+    "/Users/vkamenarov/workspace/zenrocklabs/zr-sign/contracts/libraries/zr/SignTxTypes.sol": {
+      "lastModificationDate": 1716208386943,
+      "contentHash": "09973accde1608f8f45de04ea46ee910",
+      "sourceName": "contracts/libraries/zr/SignTxTypes.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.8.19"
+      ],
+      "artifacts": [
+        "SignTXTypes"
+      ]
+    }
+  }
+}

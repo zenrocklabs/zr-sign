@@ -3,7 +3,7 @@
 
 pragma solidity 0.8.19;
 
-import { IAccessControl } from "../interfaces/IAccessControl.sol";
+import { IAccessControl } from "./interfaces/IAccessControl.sol";
 import { ContextUpgradeable } from "./ContextUpgradeable.sol";
 import { ERC165 } from "./ERC165.sol";
 
