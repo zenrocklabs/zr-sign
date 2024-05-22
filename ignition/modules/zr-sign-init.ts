@@ -10,24 +10,20 @@ const mpcAddress = "0x2bb9cB3c6a87e537Ba89b214004dC691d8a83eF1";
 export default buildModule("ZrSignInit", (m) => {
     const { ZrSignImpl, ZrSignProxy } = m.useModule(ZrSignModule);
 
-    // ~ Chain setup ~
-    // Configure wallet types
     const callWalletTypeIdConfig = m.call(ZrSignProxy, "walletTypeIdConfig", [44, 60, true]);
 
-    // chain config: Sepolia
-    const callChainConfigSepolia = m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdSepolia, true], {
+    // ~ Chain setup ~
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdSepolia, true], {
         id: "chainConfigSepolia",
         after: [callWalletTypeIdConfig],
     });
     
-    // chain config: Amoy
-    const callChainConfigAmoy = m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdAmoy, true], {
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdAmoy, true], {
         id: "chainConfigAmoy",
-        after: [callChainConfigSepolia]
+        after: [callWalletTypeIdConfig],
     });
 
     // ~ Role setup ~
-
     const mpcRole = m.staticCall(ZrSignProxy, "MPC_ROLE");
     m.call(ZrSignProxy, "grantRole",[mpcRole, mpcAddress])
 
