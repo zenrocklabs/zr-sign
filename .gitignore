@@ -1,5 +1,7 @@
 build
 node_modules
+artifacts
+typechain-types
 package-lock.json
 config.js
 *.go
