@@ -33,22 +33,6 @@ export default buildModule("ZrSign", (m) => {
 
     // Deploy proxy
     const ZrSignProxy = m.contractAt("ZrSign", ZrProxy, {id: "ZrSignProxied"});
-    // CONFIG ----
-
-    // // Configure wallet types
-    // const callWalletTypeIdConfig = m.call(ZrSignProxy, "walletTypeIdConfig", [44, 60, true]);
-
-    // // chain config: Sepolia
-    // const callChainConfigSepolia = m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdSepolia, true], {
-    //     id: "chainConfigSepolia",
-    //     after: [callWalletTypeIdConfig],
-    // });
-    
-    // // chain config: Amoy
-    // const callChainConfigAmoy = m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdAmoy, true], {
-    //     id: "chainConfigAmoy",
-    //     after: [callChainConfigSepolia]
-    // });
 
     return { ZrSignImpl: ZrSignImpl, ZrSignProxy: ZrSignProxy }
 }); 
