@@ -20,11 +20,11 @@ let instance: IgnitionModuleResultsTToEthersContracts<string, {
 describe("QSign chain config tests", function () {
     
     let accounts: Array<HardhatEthersSigner> | any;
-    let tokenomicsAcc: HardhatEthersSigner;
+    let regularAddress: HardhatEthersSigner;
 
     this.beforeAll(async() => {
         accounts = await ethers.getSigners();
-        tokenomicsAcc = accounts[8];
+        regularAddress = accounts[1];
     });
 
     this.beforeEach(async() => {
@@ -81,7 +81,6 @@ describe("QSign chain config tests", function () {
 
         it("should not config wallet type from account without appropriate role", async () => { 
             const wt = helpers.BTC_CHAIN_TYPE;
-            const regularAddress = accounts[1];
 
             await expect(instance.ZrSignProxy.connect(regularAddress).walletTypeIdConfig(
                 wt.purpose,
@@ -193,7 +192,6 @@ describe("QSign chain config tests", function () {
         it("should not set chain id from account without appropriate role", async () => { 
             const wt = helpers.EVM_CHAIN_TYPE;
             const caip = chainIds.ETH_MAINNET_CAIP;
-            const regularAddress = accounts[1];
             const walletTypeIdPayload = abi.encode(
                 ["uint256", "uint256"],
                 [wt.purpose, wt.coinType]
