@@ -1,0 +1,11 @@
+const DEFAULT_ADMIN_ROLE =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const MPC_ROLE =
+  "0xe10371affd65e24cab392f019bf45e5e4f84b16aafda5a4c67d3489692543958"; // web3.utils.keccak256("qredo.role.mpc");
+const TOKENOMICS_ROLE =
+  "0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b"; // web3.utils.keccak256("zenrock.role.tokenomics");
+export {
+    DEFAULT_ADMIN_ROLE,
+    MPC_ROLE,
+    TOKENOMICS_ROLE
+}
