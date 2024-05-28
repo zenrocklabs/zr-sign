@@ -72,8 +72,7 @@ describe("QSign Fees", function () {
             // When
             await expect(instance.ZrSignProxy.connect(regularAddress).setupBaseFee(expectedFee))
                 .to.be.revertedWithCustomError(instance.ZrSignProxy, "AccessControlUnauthorizedAccount")
-                .withArgs(regularAddress, roles.TOKENOMICS_ROLE
-            );
+                .withArgs(regularAddress, roles.TOKENOMICS_ROLE);
         });
 
         it("should not setup network fee without role", async () => {
@@ -84,8 +83,7 @@ describe("QSign Fees", function () {
             // When
             await expect(instance.ZrSignProxy.connect(regularAddress).setupNetworkFee(expectedFee))
                 .to.be.revertedWithCustomError(instance.ZrSignProxy, "AccessControlUnauthorizedAccount")
-                .withArgs(regularAddress, roles.TOKENOMICS_ROLE
-            );
+                .withArgs(regularAddress, roles.TOKENOMICS_ROLE);
         });
     });
 });
