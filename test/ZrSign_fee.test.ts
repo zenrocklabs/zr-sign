@@ -7,7 +7,7 @@ import { IgnitionModuleResultsTToEthersContracts } from "@nomicfoundation/hardha
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/src/signers"
 import { NamedArtifactContractDeploymentFuture, NamedArtifactContractAtFuture } from "@nomicfoundation/ignition-core";
 
-describe("QSign Fees", function () {
+describe("ZrSign Fees", function () {
 
     let instance: IgnitionModuleResultsTToEthersContracts<string, { 
         ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">; 
