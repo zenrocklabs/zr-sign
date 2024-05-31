@@ -23,13 +23,14 @@ type TestCase = {
     owner: string; 
     mpcAddress: string; 
     caller: HardhatEthersSigner; 
+    rerun: boolean;
     customError: { 
         name: string; 
         params: any; 
     } | null; 
 }
 
-describe("ZrSign key request", function() {
+describe("ZrSign key resolve", function() {
 
     const baseFee = ethers.parseUnits("80", "gwei");
     const networkFee = ethers.parseUnits("4", "wei");
@@ -55,109 +56,118 @@ describe("ZrSign key request", function() {
         tokenomicsAddress = accounts[8];
     });
 
-    this.beforeEach(async() => {
-        const wt = helpers.EVM_CHAIN_TYPE;
-        instance = await loadFixture(ZrSignProxyFixture);
-
-        await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAddress.address);
-        await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
-        
-        await instance.ZrSignProxy.connect(tokenomicsAddress).setupBaseFee(baseFee);
-        await instance.ZrSignProxy.connect(tokenomicsAddress).setupNetworkFee(networkFee);
-        await instance.ZrSignProxy.walletTypeIdConfig(
-            wt.purpose, wt.coinType, true
-        );
-    });
-
     it(`Key resolve scenarios`, function() {
+        describe("key resolve - data driven test", function() { 
+
+        this.beforeEach(async() => {
+            const wt = helpers.EVM_CHAIN_TYPE;
+            instance = await loadFixture(ZrSignProxyFixture);
+
+            await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAddress.address);
+            await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
+            
+            await instance.ZrSignProxy.connect(tokenomicsAddress).setupBaseFee(baseFee);
+            await instance.ZrSignProxy.connect(tokenomicsAddress).setupNetworkFee(networkFee);
+            await instance.ZrSignProxy.walletTypeIdConfig(
+                wt.purpose, wt.coinType, true
+            );
+        });
+        
         // Hack: needs to be inside "it" because we need to load "before" hooks.
         // CAUTION: Test cases share state, order sensitive.
-        testCases = [
-            {
-                testName: "resolve public key for chain type",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 0,
-                owner: user.address,
-                mpcAddress: mockMPC.address,
-                caller: ovm,
-                customError: null
-            },
-            {
-                testName: "not resolve public key twice",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 0,
-                owner: user.address,
-                mpcAddress: mockMPC.address,
-                caller: ovm,
-                customError: {
-                    name: "PublicKeyAlreadyRegistered",
-                    params: [mockMPC.address]
-                }
-            },
-            {
-                testName: "not resolve unsupported wallet type",
-                walletTypeId: unsupportedWalletType,
-                walletIndexIncrement: 0,
-                owner: user.address,
-                mpcAddress: mockMPC.address,
-                caller: ovm,
-                customError: {
-                    name: "WalletTypeNotSupported",
-                    params: [unsupportedWalletType],
-                }
-            },
-            {
-                testName: "not resolve zero address",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 0,
-                owner: zeroAddress,
-                mpcAddress: mockMPC.address,
-                caller: ovm,
-                customError: {
-                    name: "OwnableInvalidOwner",
-                    params: [zeroAddress],
+            testCases = [
+                {
+                    testName: "resolve public key for chain type",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: user.address,
+                    mpcAddress: mockMPC.address,
+                    caller: ovm,
+                    rerun: false,
+                    customError: null
                 },
-            },
-            {
-                testName: "not resolve with incorrect public key",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 0,
-                owner: user.address,
-                mpcAddress: "",
-                caller: ovm,
-                customError: {
-                    name: "InvalidPublicKeyLength",
-                    params: [5, 0],
+                {
+                    testName: "not resolve public key twice",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: user.address,
+                    mpcAddress: mockMPC.address,
+                    caller: ovm,
+                    rerun: true,
+                    customError: {
+                        name: "PublicKeyAlreadyRegistered",
+                        params: [mockMPC.address]
+                    }
                 },
-            },
-            {
-                testName: "not resolve without mpc role",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 0,
-                owner: user.address,
-                mpcAddress: mockMPC.address,
-                caller: owner,  
-                customError: {
-                    name: "AccessControlUnauthorizedAccount",
-                    params: [owner, roles.MPC_ROLE],
+                {
+                    testName: "not resolve unsupported wallet type",
+                    walletTypeId: unsupportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: user.address,
+                    mpcAddress: mockMPC.address,
+                    caller: ovm,
+                    rerun: false,
+                    customError: {
+                        name: "WalletTypeNotSupported",
+                        params: [unsupportedWalletType],
+                    }
                 },
-            },
-            {
-                testName: "not resolve public key for chain type with wrong public key index",
-                walletTypeId: supportedWalletType,
-                walletIndexIncrement: 1,
-                owner: user.address,
-                mpcAddress: mockMPC.address,
-                caller: ovm,
-                customError: {
-                    name: "IncorrectWalletIndex",
-                    params: [1, 2]
-                }
-            },
-        ]
+                {
+                    testName: "not resolve zero address",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: zeroAddress,
+                    mpcAddress: mockMPC.address,
+                    caller: ovm,
+                    rerun: false,
+                    customError: {
+                        name: "OwnableInvalidOwner",
+                        params: [zeroAddress],
+                    },
+                },
+                {
+                    testName: "not resolve with incorrect public key",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: user.address,
+                    mpcAddress: "",
+                    caller: ovm,
+                    rerun: false,
+                    customError: {
+                        name: "InvalidPublicKeyLength",
+                        params: [5, 0],
+                    },
+                },
+                {
+                    testName: "not resolve without mpc role",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 0,
+                    owner: user.address,
+                    mpcAddress: mockMPC.address,
+                    caller: owner,  
+                    rerun: false,
+                    customError: {
+                        name: "AccessControlUnauthorizedAccount",
+                        params: [owner, roles.MPC_ROLE],
+                    },
+                },
+                {
+                    testName: "not resolve public key for chain type with wrong public key index",
+                    walletTypeId: supportedWalletType,
+                    walletIndexIncrement: 1,
+                    owner: user.address,
+                    mpcAddress: mockMPC.address,
+                    caller: ovm,
+                    rerun: false,
+                    customError: {
+                        name: "IncorrectWalletIndex",
+                        params: [0, 1]
+                    }
+                },
+            ]
 
-        describe('', function() { 
-                for (let c of testCases) {
+        
+            for (let c of testCases) {
                 it(`should ${c.testName}`, async () => {
                     const wallets = await instance.ZrSignProxy.getZrKeys(
                         supportedWalletType,
@@ -171,8 +181,7 @@ describe("ZrSign key request", function() {
                         [chainId, supportedWalletType, user.address, walletIndex, c.mpcAddress]
                     );
                     
-                    const plBytes = ethers.toBeArray(payload);
-                    const payloadHash = ethers.keccak256(plBytes);
+                    const payloadHash = ethers.keccak256(ethers.toBeArray(payload));
                     const sig = await c.caller.signMessage(ethers.toBeArray(payloadHash));
             
                     const params = {
@@ -183,12 +192,28 @@ describe("ZrSign key request", function() {
                         authSignature: sig
                     };
             
+                    let tx = instance.ZrSignProxy.connect(c.caller).zrKeyRes(params);
+
+                    if (c.rerun) {
+                        const payload = abi.encode(
+                            ["bytes32", "bytes32", "address", "uint256", "string"], 
+                            [chainId, supportedWalletType, user.address, walletIndex + 1, c.mpcAddress]
+                        );
+                        
+                        const payloadHash = ethers.keccak256(ethers.toBeArray(payload));
+                        const sig = await c.caller.signMessage(ethers.toBeArray(payloadHash));
+                        
+                        params.walletIndex++;
+                        params.authSignature = sig;
+                        tx = instance.ZrSignProxy.connect(c.caller).zrKeyRes(params);
+                    }
+
                     if (c.customError != null) {
-                        await expect(instance.ZrSignProxy.connect(c.caller).zrKeyRes(params))
+                        await expect(tx)
                             .to.revertedWithCustomError(instance.ZrSignProxy, c.customError.name)
                             .withArgs(...c.customError.params);
                     } else {
-                        await expect(instance.ZrSignProxy.connect(ovm).zrKeyRes(params))
+                        await expect(tx)
                         .to.emit(instance.ZrSignProxy, "ZrKeyResolve")
                         .withArgs(
                             c.walletTypeId,
