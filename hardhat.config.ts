@@ -1,5 +1,12 @@
 import { HardhatUserConfig } from "hardhat/config";
+
+// Hardhat extensions
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@nomicfoundation/hardhat-ethers";
+import "@typechain/hardhat";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 
 let conf = {
   MNEMONIC: "mandate dance blood bag income element maid void install hungry quarter rack",

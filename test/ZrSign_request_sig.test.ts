@@ -65,7 +65,6 @@ describe("ZrSign Fees", function () {
     });
 
     it("Signature resolve scenarios:", async () => {
-
         describe("signature resolve - data driven test", function() {
             this.beforeEach(async() => {
                 const wt = helpers.EVM_CHAIN_TYPE;
