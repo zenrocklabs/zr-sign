@@ -28,12 +28,10 @@
   },
   "homepage": "https://github.com/fusionlaboratories/zr-sign#readme",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.1",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/bytes": "^5.7.0",
     "@ethersproject/solidity": "^5.7.0",
-    "@truffle/hdwallet-provider": "^2.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^7.6.0",
     "chai": "^4.3.6",
     "custom-error-test-helper": "^1.0.6",
@@ -46,12 +44,12 @@
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-standard": "^5.0.0",
     "eth-gas-reporter": "^0.2.0",
+    "hardhat": "^2.22.1",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "1.0.0-alpha.54",
     "rlp": "^3.0.0",
     "solhint": "^3.3.7",
-    "truffle": "^5.1.35",
-    "truffle-plugin-verify": "^0.6.7",
+    "typescript": "^5.4.5",
     "web3": "^1.8.1",
     "web3-eth-contract": "^1.7.3"
   }
