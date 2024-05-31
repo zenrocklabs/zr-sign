@@ -4,7 +4,6 @@ import { ethers } from "hardhat";
 const ZrSignContract = require("../../artifacts/contracts/zr/ZrSign.sol/ZrSign.json");
 const ZrSignInterface = new ethers.Interface(ZrSignContract.abi);
 
-
 const ZrSignProxyModule = buildModule("ZrSignProxy", (m) => {
     const proxyAdmin = m.getAccount(9);
 
