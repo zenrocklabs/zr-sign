@@ -64,52 +64,50 @@ describe("ZrSign Fees", function () {
         tokenomicsAcc = accounts[8];
     });
 
-    //TODO: Move into a fixture.
-    this.beforeEach(async() => {
-        const wt = helpers.EVM_CHAIN_TYPE;
-        instance = await loadFixture(ZrSignProxyFixture);
-        
-        await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAcc.address);
-        await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
-
-        await instance.ZrSignProxy.connect(tokenomicsAcc).setupBaseFee(baseFee);
-        await instance.ZrSignProxy.connect(tokenomicsAcc).setupNetworkFee(networkFee);
-        await instance.ZrSignProxy.walletTypeIdConfig(
-            wt.purpose, wt.coinType, true
-        );
-
-        const wtId = abi.encode(["uint256", "uint256"], [wt.purpose, wt.coinType]);
-        const wtIdHash = ethers.keccak256(wtId);
-
-        await instance.ZrSignProxy.chainIdConfig(
-            wtIdHash, chains.ETH_GOERLI_CAIP, true
-        );
-
-        const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
-        const payload = abi.encode(
-            ["bytes32", "bytes32", "address", "uint256", "string"], 
-            [chainId, supportedWalletType, user.address, 0, mockMPC.address]
-        );
-
-        const plBytes = ethers.toBeArray(payload);
-        const payloadHash = ethers.keccak256(plBytes);
-        const sig = await ovm.signMessage(ethers.toBeArray(payloadHash));
-
-        const params = {
-            walletTypeId: supportedWalletType,
-            owner: user.address,
-            walletIndex: 0,
-            publicKey: mockMPC.address,
-            authSignature: sig
-        };
-
-        await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
-    });
-
     it("Signature resolve scenarios:", async () => {
 
-        describe("", async () => {
-            let traceId = BigInt(1);
+        describe("signature resolve - data driven test", function() {
+            this.beforeEach(async() => {
+                const wt = helpers.EVM_CHAIN_TYPE;
+                instance = await loadFixture(ZrSignProxyFixture);
+                
+                await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAcc.address);
+                await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
+        
+                await instance.ZrSignProxy.connect(tokenomicsAcc).setupBaseFee(baseFee);
+                await instance.ZrSignProxy.connect(tokenomicsAcc).setupNetworkFee(networkFee);
+                await instance.ZrSignProxy.walletTypeIdConfig(
+                    wt.purpose, wt.coinType, true
+                );
+        
+                const wtId = abi.encode(["uint256", "uint256"], [wt.purpose, wt.coinType]);
+                const wtIdHash = ethers.keccak256(wtId);
+        
+                await instance.ZrSignProxy.chainIdConfig(
+                    wtIdHash, chains.ETH_SEPOLIA_CAIP, true
+                );
+        
+                const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
+                const payload = abi.encode(
+                    ["bytes32", "bytes32", "address", "uint256", "string"], 
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address]
+                );
+        
+                const plBytes = ethers.toBeArray(payload);
+                const payloadHash = ethers.keccak256(plBytes);
+                const sig = await ovm.signMessage(ethers.toBeArray(payloadHash));
+        
+                const params = {
+                    walletTypeId: supportedWalletType,
+                    owner: user.address,
+                    walletIndex: 0,
+                    publicKey: mockMPC.address,
+                    authSignature: sig
+                };
+        
+                await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
+            });
+
             testCases = [
                 {
                     testName: "request signature for payload hash",
@@ -120,7 +118,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: null,
                     customError: null
                 },
@@ -133,7 +131,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_TX_MASK,
                     broadcast: false,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: null,
                     customError: null
                 },
@@ -146,7 +144,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_TX_MASK,
                     broadcast: true,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: null,
                     customError: null
                 },
@@ -159,7 +157,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: null,
                     customError: {
                         name: "WalletTypeNotSupported",
@@ -191,7 +189,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: 0x32,
                     customError: null
                 },
@@ -204,7 +202,7 @@ describe("ZrSign Fees", function () {
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
-                    dstChainId: chains.ETH_GOERLI_CHAIN_ID,
+                    dstChainId: chains.ETH_SEPOLIA_CHAIN_ID,
                     panicError: null,
                     customError: {
                         name: "InsufficientFee",
@@ -291,7 +289,7 @@ describe("ZrSign Fees", function () {
                     } else {
                         await expect(tx).to.emit(instance.ZrSignProxy, "ZrSigRequest")
                             .withArgs(
-                                traceId,
+                                1,
                                 wid,
                                 c.walletTypeId,
                                 c.caller.address,
@@ -302,8 +300,6 @@ describe("ZrSign Fees", function () {
                                 c.broadcast
                             )
                     }
-
-                    traceId++;
                 });
             }
         }); 
