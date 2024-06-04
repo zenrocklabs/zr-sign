@@ -21,11 +21,11 @@ type TestCase = {
     networkFee: bigint;
     broadcast: boolean;
     dstChainId: string;
-    panicError: number | null;
-    customError: { 
-        name: string; 
-        params: any; 
-    } | null; 
+        panicError: number | null;
+        customError: { 
+            name: string; 
+            params: any; 
+        } | null; 
 }
 
 const abi = ethers.AbiCoder.defaultAbiCoder();
@@ -64,8 +64,8 @@ describe("ZrSign Fees", function () {
         tokenomicsAcc = accounts[8];
     });
 
-    it("Signature resolve scenarios:", async () => {
-        describe("signature resolve - data driven test", function() {
+    it("Signature request scenarios:", async () => {
+        describe("signature request - data driven test", function() {
             this.beforeEach(async() => {
                 const wt = helpers.EVM_CHAIN_TYPE;
                 instance = await loadFixture(ZrSignProxyFixture);
@@ -250,7 +250,6 @@ describe("ZrSign Fees", function () {
                     const txNewtorkFee =  BigInt(arrayify(payloadHash).length) * c.networkFee;
                     const txTotalFee = txNewtorkFee + baseFee;
 
-                    
                     const signPayload = {
                         walletTypeId: c.walletTypeId,
                         walletIndex: c.walletIndex,
