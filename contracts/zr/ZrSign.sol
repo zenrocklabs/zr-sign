@@ -10,8 +10,8 @@ import { IZrSign } from "../../interfaces/zr/IZrSign.sol";
 contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
 
-    bytes32 public constant TOKENOMICS_ROLE =
-        0x08f48008958b82aad038b7223d0f8c74cce860619b44d53651dd4adcbe78162b; //keccak256("zenrock.role.tokenomics");
+    bytes32 public constant FEE_ROLE =
+        0x13b7ad447453d194d272cdda9bb09d7d357cda1ab7de80d865b4c1cbefc3cf28; //keccak256("zenrock.role.fee");
 
     bytes32 public constant PAUSER_ROLE =
         0x8ab6d0465f335f1458251c44a70aa92d9297798531f73d2c8a32b5bd379821b8; //keccak256("zenrock.role.pauser");
@@ -52,15 +52,17 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      *
      * @param purpose The intended use or category of the wallet type.
      * @param coinType The specific coin or token type associated with the wallet.
+     * @param multiplier The new network fee to be set.
      * @param support Boolean indicating whether to add or remove support.
      */
     function walletTypeIdConfig(
         uint256 purpose,
         uint256 coinType,
+        uint256 multiplier,
         bool support
     ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(purpose, coinType);
-        bytes32 walletTypeId = _walletTypeIdConfig(c, support);
+        bytes32 walletTypeId = _walletTypeIdConfig(c, multiplier, support);
         emit WalletTypeIdSupport(purpose, coinType, walletTypeId, support);
     }
 
@@ -90,7 +92,7 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      */
     function setupBaseFee(
         uint256 newBaseFee
-    ) external virtual override onlyRole(TOKENOMICS_ROLE) {
+    ) external virtual override onlyRole(FEE_ROLE) {
         _setupBaseFee(newBaseFee);
     }
 
@@ -98,19 +100,21 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      * @dev Sets the network fee associated with the processing of operations, reflecting changes in network
      * conditions or operational costs.
      *
-     * @param newNetworkFee The new network fee to be set.
+     * @param walletTypeId The identifier for the wallet type being checked.
+     * @param newMultiplier The new network fee to be set.
      */
-    function setupNetworkFee(
-        uint256 newNetworkFee
-    ) external virtual override onlyRole(TOKENOMICS_ROLE) {
-        _setupNetworkFee(newNetworkFee);
+    function setupMultiplier(
+        bytes32 walletTypeId,
+        uint256 newMultiplier
+    ) external virtual override onlyRole(FEE_ROLE) {
+        _setupMultiplier(walletTypeId, newMultiplier);
     }
 
     /**
      * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
      * roles designated with financial management responsibilities.
      */
-    function withdrawFees() external virtual override onlyRole(TOKENOMICS_ROLE) nonReentrant {
+    function withdrawFees() external virtual override onlyRole(FEE_ROLE) nonReentrant {
         address payable sender = payable(_msgSender());
         uint256 amount = address(this).balance;
         (bool success, ) = sender.call{ value: amount }("");

@@ -7,6 +7,12 @@ if [ "$#" -ne 1 ]; then
 fi
 
 network=$1
+echo "Starting migration for $network..."
+truffle migrate --network $network
+if [ $? -ne 0 ]; then
+    echo "Error migrating. Exiting."
+    exit 1
+fi
 
 # Execute the truffle commands
 echo "Verifying SignTypes with network $network..."
