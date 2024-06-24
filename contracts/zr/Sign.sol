@@ -58,9 +58,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
         uint256 _baseFee;
-        uint256 _networkFee;
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
+        mapping(bytes32 => uint256) _multipliers;
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
         mapping(string => uint8) walletRegistry;
@@ -80,21 +80,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** MODIFIERS ******************************************************************/
 
     // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier keyFee() {
+    modifier Fee(bytes32 walletTypeId) {
         SignStorage storage $ = _getSignStorage();
-        if (msg.value < $._baseFee) {
-            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
-        }
-        _;
-    }
-
-    // Modifier to calculate and enforce a dynamic fee based on payload size and network conditions
-    modifier sigFee(bytes memory payload) {
-        SignStorage storage $ = _getSignStorage();
-        uint256 networkFee = payload.length * $._networkFee;
-        uint256 totalFee = $._baseFee + networkFee;
+        uint256 totalFee = $._baseFee * $._multipliers[walletTypeId];
         if (msg.value < totalFee) {
-            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
+            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
         }
         _;
     }
@@ -143,7 +133,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable keyFee walletTypeGuard(params.walletTypeId) {
+    ) external payable Fee(params.walletTypeId) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -300,7 +290,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         return $._traceId;
     }
-    
+
     /**
      * @dev Retrieves the current request state from the contract's storage. The trace ID is typically used to
      * track and manage signature or key request sequences within the contract.
@@ -329,12 +319,16 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @dev Fetches the network fee associated with operations within the contract. This fee can vary based
      * on network conditions and is stored in the contract's storage.
      *
+     * @param walletTypeId The identifier for the wallet type being checked.
+     *
      * @return uint256 The current network fee, which adjusts based on payload sizes or network congestion.
      */
-    function getNetworkFee() external view virtual override returns (uint256) {
+    function getMultiplier(
+        bytes32 walletTypeId
+    ) external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
 
-        return $._networkFee;
+        return $._multipliers[walletTypeId];
     }
 
     /**
@@ -512,7 +506,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
-    ) internal virtual sigFee(params.payload) whenNotPaused {
+    ) internal virtual Fee(params.walletTypeId) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         _validatePublicKey(
@@ -610,12 +604,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      *
      * @param c The chain information struct that describes the wallet type.
      * @param support Boolean flag indicating whether to support (true) or remove support (false) for the wallet type.
+     * @param multiplier multiplier
      * @return bytes32 The wallet type ID generated from the chain information hash.
      *
      * @notice This function can revert if attempting to add a wallet type that is already supported.
      */
     function _walletTypeIdConfig(
         ZrSignTypes.ChainInfo memory c,
+        uint256 multiplier,
         bool support
     ) internal virtual returns (bytes32) {
         SignStorage storage $ = _getSignStorage();
@@ -625,6 +621,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
                 revert WalletTypeAlreadySupported(walletTypeId);
             }
             $.supportedWalletTypes[walletTypeId] = c;
+            _setupMultiplier(walletTypeId, multiplier);
         } else {
             if (getWalletTypeInfo(walletTypeId).isNull()) {
                 revert WalletTypeNotSupported(walletTypeId);
@@ -682,14 +679,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @dev Sets the network fee associated with operations within the contract. This fee can be adjusted to
      * accommodate varying network conditions and costs.
      *
-     * @param newNetworkFee The new network fee to set.
+     * @param walletTypeId The identifier for the wallet type being checked.
+     * @param newMultiplier The new network fee to be set.
      *
-     * @notice Emits a `NetworkFeeUpdate` event indicating the change from the old network fee to the new network fee.
+     * @notice Emits a `MultiplierUpdate` event indicating the change from the old multiplier to the new multiplier.
      */
-    function _setupNetworkFee(uint256 newNetworkFee) internal virtual {
+    function _setupMultiplier(bytes32 walletTypeId, uint256 newMultiplier) internal virtual {
         SignStorage storage $ = _getSignStorage();
-        emit NetworkFeeUpdate($._networkFee, newNetworkFee);
-        $._networkFee = newNetworkFee;
+        emit MultiplierUpdate($._multipliers[walletTypeId], newMultiplier);
+        $._multipliers[walletTypeId] = newMultiplier;
     }
 
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
