@@ -81,7 +81,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** MODIFIERS ******************************************************************/
 
     // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier KeyFee(SignTypes.ZrKeyReqParams memory params) {
+    modifier keyFee(SignTypes.ZrKeyReqParams memory params) {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
         if (params.monitoring) {
@@ -93,7 +93,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         _;
     }
 
-    modifier SigFee(SignTypes.SigReqParams memory params) {
+    modifier sigFee(SignTypes.SigReqParams memory params) {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
         string memory wallet = _getWalletByIndex(
@@ -154,7 +154,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable KeyFee(params) walletTypeGuard(params.walletTypeId) {
+    ) external payable keyFee(params) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -520,7 +520,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
-    ) internal virtual SigFee(params) whenNotPaused {
+    ) internal virtual sigFee(params) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         _validateAddress(
