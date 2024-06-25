@@ -4,8 +4,8 @@
 pragma solidity 0.8.19;
 import { ReentrancyGuardUpgradeable } from "../ReentrancyGuardUpgradeable.sol";
 import { Sign } from "./Sign.sol";
-import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol";
-import { IZrSign } from "../../interfaces/zr/IZrSign.sol";
+import { ZrSignTypes } from "../libraries/zr/ZrSignTypes.sol";
+import { IZrSign } from "../interfaces/zr/IZrSign.sol";
 
 contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
