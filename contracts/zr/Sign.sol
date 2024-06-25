@@ -88,7 +88,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
-            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
+            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
         _;
     }
@@ -105,7 +105,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
-            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
+            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
         _;
     }
