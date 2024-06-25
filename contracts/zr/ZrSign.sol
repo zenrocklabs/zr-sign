@@ -52,17 +52,15 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      *
      * @param purpose The intended use or category of the wallet type.
      * @param coinType The specific coin or token type associated with the wallet.
-     * @param multiplier The new network fee to be set.
      * @param support Boolean indicating whether to add or remove support.
      */
     function walletTypeIdConfig(
         uint256 purpose,
         uint256 coinType,
-        uint256 multiplier,
         bool support
     ) external virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
         ZrSignTypes.ChainInfo memory c = ZrSignTypes.ChainInfo(purpose, coinType);
-        bytes32 walletTypeId = _walletTypeIdConfig(c, multiplier, support);
+        bytes32 walletTypeId = _walletTypeIdConfig(c, support);
         emit WalletTypeIdSupport(purpose, coinType, walletTypeId, support);
     }
 
@@ -94,20 +92,6 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
         uint256 newBaseFee
     ) external virtual override onlyRole(FEE_ROLE) {
         _setupBaseFee(newBaseFee);
-    }
-
-    /**
-     * @dev Sets the network fee associated with the processing of operations, reflecting changes in network
-     * conditions or operational costs.
-     *
-     * @param walletTypeId The identifier for the wallet type being checked.
-     * @param newMultiplier The new network fee to be set.
-     */
-    function setupMultiplier(
-        bytes32 walletTypeId,
-        uint256 newMultiplier
-    ) external virtual override onlyRole(FEE_ROLE) {
-        _setupMultiplier(walletTypeId, newMultiplier);
     }
 
     /**

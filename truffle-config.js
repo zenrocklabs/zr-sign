@@ -57,8 +57,9 @@ module.exports = {
       provider: infuraProvider("sepolia"),
       network_id: 11155111,
       gas: 5000000,
-      // gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
-      networkCheckTimeout: 120000,
+      gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 1000000, // Increase timeout to 1000 seconds (or as needed)
       skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
     },
     fuji: {
@@ -69,13 +70,61 @@ module.exports = {
       networkCheckTimeout: 120000,
       skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
     },
-    polygon_mumbai: {
-      provider: infuraProvider("polygon-mumbai"),
-      network_id: 80001,
+    polygon_amoy: {
+      provider: infuraProvider("polygon-amoy"),
+      network_id: 80002,
       gas: 5000000,
-      // gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
-      networkCheckTimeout: 120000,
+      gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 1000000, // Increase timeout to 1000 seconds (or as needed)
       skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
+      verify: {
+        apiUrl: 'https://api-amoy.polygonscan.com/api',
+        apiKey: "VAGSVX86YDSKD6NSK2X5MYUXG7PYHNNT28",
+        explorerUrl: 'https://amoy.polygonscan.com/address',
+      },
+    },
+    blast_sepolia: {
+      provider: infuraProvider("blast-sepolia"),
+      network_id: "*",
+      gas: 5000000,
+      gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 1000000, // Increase timeout to 1000 seconds (or as needed)
+      skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
+      verify: {
+        apiUrl: 'https://api-sepolia.blastscan.io/api',
+        apiKey: "BZ7A3UUJ36X7IY9M35D2SXVNDI7ZTYIFSA",
+        explorerUrl: 'https://sepolia.blastscan.io/address',
+      },
+    },
+    scroll: {
+      provider: quickNodeProvider("scroll"),
+      network_id: "*",
+      gas: 5000000,
+      gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 1000000, // Increase timeout to 1000 seconds (or as needed)
+      skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
+      verify: {
+        apiUrl: 'https://api-sepolia.scrollscan.com/api',
+        apiKey: "A83PABHVYZDTVWNTNYF5ZGRPB8ZZ2NARZ3",
+        explorerUrl: 'https://sepolia.scrollscan.com/address',
+      },
+    },
+    sepolia_zksync: {
+      provider: quickNodeProvider("sepolia_zksync"),
+      network_id: "*",
+      gas: 5000000,
+      gasPrice: 80000000000, // 50 gwei (in wei) (default: 100 gwei)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      networkCheckTimeout: 1000000, // Increase timeout to 1000 seconds (or as needed)
+      skipDryRun: false, // Skip dry run before migrations? (default: false for public nets )
+      // verify: {
+      //   apiUrl: 'https://api-sepolia.scrollscan.com/api',
+      //   apiKey: "A83PABHVYZDTVWNTNYF5ZGRPB8ZZ2NARZ3",
+      //   explorerUrl: 'https://sepolia.scrollscan.com/address',
+      // },
     },
     // polygonZkEvm: {
     //   provider: new HDWalletProvider(
@@ -127,6 +176,23 @@ module.exports = {
     snowtrace: config.AVALANCHE_KEY,
   },
 };
+
+function quickNodeProvider(network) {
+  return () => {
+    if (!config.MNEMONIC) {
+      console.error("A valid MNEMONIC must be provided in config.js");
+      process.exit(1);
+    }
+    if (!config.INFURA_KEY) {
+      console.error("A valid INFURA_KEY must be provided in config.js");
+      process.exit(1);
+    }
+    return new HDWalletProvider(
+      config.MNEMONIC,
+      `https://methodical-morning-film.scroll-testnet.quiknode.pro/f4b980e2ee4a99adff547114a46d277751601b4c/`,
+    );
+  };
+}
 
 function infuraProvider(network) {
   return () => {

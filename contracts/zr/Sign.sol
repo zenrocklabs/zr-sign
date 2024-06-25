@@ -33,6 +33,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
     uint8 private constant PUBLIC_KEY_REGISTERED = 1;
+    uint8 private constant PUBLIC_KEY_REGISTERED_WITH_MONITORING = 2;
+
     uint8 private constant SIG_REQ_IN_PROGRESS = 1;
     uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
 
@@ -60,7 +62,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 _baseFee;
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
-        mapping(bytes32 => uint256) _multipliers;
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
         mapping(string => uint8) walletRegistry;
@@ -80,9 +81,29 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** MODIFIERS ******************************************************************/
 
     // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier Fee(bytes32 walletTypeId) {
+    modifier KeyFee(SignTypes.ZrKeyReqParams memory params) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee * $._multipliers[walletTypeId];
+        uint256 totalFee = $._baseFee;
+        if (params.monitoring) {
+            totalFee = $._baseFee * PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+        }
+        if (msg.value < totalFee) {
+            revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
+        }
+        _;
+    }
+
+    modifier SigFee(SignTypes.SigReqParams memory params) {
+        SignStorage storage $ = _getSignStorage();
+        uint256 totalFee = $._baseFee;
+        string memory wallet = _getWalletByIndex(
+            params.walletTypeId,
+            params.owner,
+            params.walletIndex
+        );
+        if ($.walletRegistry[wallet] == PUBLIC_KEY_REGISTERED_WITH_MONITORING) {
+            totalFee = $._baseFee * PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+        }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
         }
@@ -133,7 +154,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable Fee(params.walletTypeId) walletTypeGuard(params.walletTypeId) {
+    ) external payable KeyFee(params) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -316,22 +337,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     /**
-     * @dev Fetches the network fee associated with operations within the contract. This fee can vary based
-     * on network conditions and is stored in the contract's storage.
-     *
-     * @param walletTypeId The identifier for the wallet type being checked.
-     *
-     * @return uint256 The current network fee, which adjusts based on payload sizes or network congestion.
-     */
-    function getMultiplier(
-        bytes32 walletTypeId
-    ) external view virtual override returns (uint256) {
-        SignStorage storage $ = _getSignStorage();
-
-        return $._multipliers[walletTypeId];
-    }
-
-    /**
      * @dev Retrieves a list of all keys associated with a specific wallet type and owner. This function is
      * useful for external parties or contract interactions that need to audit or verify the keys held by a particular
      * user or operation.
@@ -437,7 +442,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         bytes32 id = _getId(params.walletTypeId, _msgSender());
         uint256 walletIndex = $.wallets[id].length;
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex);
+        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
     }
 
     /**
@@ -459,7 +464,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.walletTypeId,
             params.owner,
             params.walletIndex,
-            params.publicKey
+            params.publicKey,
+            params.monitoring
         );
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
@@ -476,13 +482,17 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
-        if ($.walletRegistry[params.publicKey] == PUBLIC_KEY_REGISTERED) {
+        if ($.walletRegistry[params.publicKey] >= PUBLIC_KEY_REGISTERED) {
             revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
         }
 
         $.wallets[id].push(params.publicKey);
 
-        $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED;
+        if (params.monitoring) {
+            $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+        } else {
+            $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED;
+        }
 
         emit ZrKeyResolve(
             params.walletTypeId,
@@ -506,7 +516,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
-    ) internal virtual Fee(params.walletTypeId) whenNotPaused {
+    ) internal virtual SigFee(params) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
         _validatePublicKey(
@@ -604,14 +614,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      *
      * @param c The chain information struct that describes the wallet type.
      * @param support Boolean flag indicating whether to support (true) or remove support (false) for the wallet type.
-     * @param multiplier multiplier
      * @return bytes32 The wallet type ID generated from the chain information hash.
      *
      * @notice This function can revert if attempting to add a wallet type that is already supported.
      */
     function _walletTypeIdConfig(
         ZrSignTypes.ChainInfo memory c,
-        uint256 multiplier,
         bool support
     ) internal virtual returns (bytes32) {
         SignStorage storage $ = _getSignStorage();
@@ -621,7 +629,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
                 revert WalletTypeAlreadySupported(walletTypeId);
             }
             $.supportedWalletTypes[walletTypeId] = c;
-            _setupMultiplier(walletTypeId, multiplier);
         } else {
             if (getWalletTypeInfo(walletTypeId).isNull()) {
                 revert WalletTypeNotSupported(walletTypeId);
@@ -673,21 +680,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         emit BaseFeeUpdate($._baseFee, newBaseFee);
         $._baseFee = newBaseFee;
-    }
-
-    /**
-     * @dev Sets the network fee associated with operations within the contract. This fee can be adjusted to
-     * accommodate varying network conditions and costs.
-     *
-     * @param walletTypeId The identifier for the wallet type being checked.
-     * @param newMultiplier The new network fee to be set.
-     *
-     * @notice Emits a `MultiplierUpdate` event indicating the change from the old multiplier to the new multiplier.
-     */
-    function _setupMultiplier(bytes32 walletTypeId, uint256 newMultiplier) internal virtual {
-        SignStorage storage $ = _getSignStorage();
-        emit MultiplierUpdate($._multipliers[walletTypeId], newMultiplier);
-        $._multipliers[walletTypeId] = newMultiplier;
     }
 
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
