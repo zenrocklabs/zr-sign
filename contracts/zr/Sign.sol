@@ -6,12 +6,12 @@ pragma solidity 0.8.19;
 // Importing necessary modules from local and external sources
 import { AccessControlUpgradeable } from "../AccessControlUpgradeable.sol"; // Access control functionalities for role management
 import { PausableUpgradeable } from "../PausableUpgradeable.sol"; // Pausable control functionalities
-import { ECDSA } from "../../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
-import { MessageHashUtils } from "../../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
+import { ECDSA } from "../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
+import { MessageHashUtils } from "../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
 
-import { ISign } from "../../interfaces/zr/ISign.sol"; // Interface for the Sign contract
-import { SignTypes } from "../../libraries/zr/SignTypes.sol"; // Definitions of various types used within the Sign contract
-import { ZrSignTypes } from "../../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
+import { ISign } from "../interfaces/zr/ISign.sol"; // Interface for the Sign contract
+import { SignTypes } from "../libraries/zr/SignTypes.sol"; // Definitions of various types used within the Sign contract
+import { ZrSignTypes } from "../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
 // Abstract contract for signing functionalities, inheriting from AccessControl for role management
 abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
