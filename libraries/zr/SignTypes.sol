@@ -13,7 +13,7 @@ library SignTypes {
         bytes32 walletTypeId;
         address owner;
         uint256 walletIndex;
-        string publicKey;
+        string addr;
         bool monitoring;
         bytes authSignature;
     }

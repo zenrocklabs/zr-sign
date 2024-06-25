@@ -32,8 +32,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
-    uint8 private constant PUBLIC_KEY_REGISTERED = 1;
-    uint8 private constant PUBLIC_KEY_REGISTERED_WITH_MONITORING = 2;
+    uint8 private constant ADDRESS_REGISTERED = 1;
+    uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
 
     uint8 private constant SIG_REQ_IN_PROGRESS = 1;
     uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
@@ -51,11 +51,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
-    error PublicKeyAlreadyRegistered(string publicKey);
+    error AddressAlreadyRegistered(string addr);
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
-    error InvalidPublicKeyLength(uint256 minLength, uint256 actualLength);
+    error InvalidAddressLength(uint256 minLength, uint256 actualLength);
 
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
@@ -85,7 +85,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
         if (params.monitoring) {
-            totalFee = $._baseFee * PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
@@ -101,8 +101,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.owner,
             params.walletIndex
         );
-        if ($.walletRegistry[wallet] == PUBLIC_KEY_REGISTERED_WITH_MONITORING) {
-            totalFee = $._baseFee * PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+        if ($.walletRegistry[wallet] == ADDRESS_REGISTERED_WITH_MONITORING) {
+            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: $._baseFee, providedFee: msg.value });
@@ -425,6 +425,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return $.supportedChainIds[walletTypeId][chainId];
     }
 
+    function getWalletRegistry(
+        bytes32 walletTypeId,
+        uint256 walletIndex,
+        address owner
+    ) public view virtual override returns (uint8) {
+        SignStorage storage $ = _getSignStorage();
+        return $.walletRegistry[_getWalletByIndex(walletTypeId, owner, walletIndex)];
+    }
+
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
 
     /**
@@ -450,10 +459,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * integrity of the key response through signature verification and then updates the contract state with the new key
      * information. It is called by an external method that receives the key generation results.
      *
-     * @param params Struct containing response parameters, including the wallet type, owner address, wallet index, public key,
+     * @param params Struct containing response parameters, including the wallet type, owner address, wallet index, address,
      * and the authorization signature proving the key's legitimacy.
      *
-     * @notice This function performs crucial validations such as signature authenticity and public key integrity. It ensures
+     * @notice This function performs crucial validations such as signature authenticity and address integrity. It ensures
      * that the wallet index is correct, preventing unauthorized key updates.
      */
     function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
@@ -464,14 +473,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.walletTypeId,
             params.owner,
             params.walletIndex,
-            params.publicKey,
+            params.addr,
             params.monitoring
         );
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
         _mustValidateAuthSignature(payloadHash, params.authSignature);
 
-        _validatePublicKey(params.publicKey);
+        _validateAddress(params.addr);
 
         bytes32 id = _getId(params.walletTypeId, params.owner);
 
@@ -482,44 +491,39 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
-        if ($.walletRegistry[params.publicKey] >= PUBLIC_KEY_REGISTERED) {
-            revert PublicKeyAlreadyRegistered({ publicKey: params.publicKey });
+        if ($.walletRegistry[params.addr] >= ADDRESS_REGISTERED) {
+            revert AddressAlreadyRegistered({ addr: params.addr });
         }
 
-        $.wallets[id].push(params.publicKey);
+        $.wallets[id].push(params.addr);
 
         if (params.monitoring) {
-            $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED_WITH_MONITORING;
+            $.walletRegistry[params.addr] = ADDRESS_REGISTERED_WITH_MONITORING;
         } else {
-            $.walletRegistry[params.publicKey] = PUBLIC_KEY_REGISTERED;
+            $.walletRegistry[params.addr] = ADDRESS_REGISTERED;
         }
 
-        emit ZrKeyResolve(
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex,
-            params.publicKey
-        );
+        emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.addr);
     }
 
     /**
-     * @dev Internal function to process a signature request. This function validates the public key of the wallet,
+     * @dev Internal function to process a signature request. This function validates the address of the wallet,
      * increments a trace ID for tracking, and logs the initiation of the signature request. It's designed to be
      * called from a public or external function that handles the initial user request for signing.
      *
      * @param params Struct containing the parameters necessary for the signature request. This includes the wallet type ID,
-     * the owner's address, and the wallet index which are used to compute the wallet ID and validate the public key.
+     * the owner's address, and the wallet index which are used to compute the wallet ID and validate the address.
      * The `payload` within params is used to calculate the fee.
      *
      * @notice This function also applies the `sigFee` modifier to ensure that the appropriate fees are paid with the request.
-     * Ensure that all public keys and wallet indices are validated prior to calling this function.
+     * Ensure that all addresses and wallet indices are validated prior to calling this function.
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
     ) internal virtual SigFee(params) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
-        _validatePublicKey(
+        _validateAddress(
             _getWalletByIndex(params.walletTypeId, params.owner, params.walletIndex)
         );
 
@@ -587,7 +591,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @param dataHash The keccak256 hash of the data for which the signature is being verified. This data hash
      * should encapsulate all relevant information that the signature purports to authorize.
      * @param signature The digital signature provided for verification against the data hash. It must be produced by
-     * the appropriate private key corresponding to the public key that is expected to authorize the action.
+     * the appropriate private key corresponding to the address that is expected to authorize the action.
      *
      * @notice If the signature does not correctly match the expected address derived from the data hash,
      * or if any error occurs in the recovery process, this function reverts the transaction. This ensures that
@@ -740,17 +744,17 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     /**
-     * @dev Validates the public key by checking its length. This function ensures that the public key meets
+     * @dev Validates the address by checking its length. This function ensures that the address meets
      * the minimum length requirement, providing basic validation that is crucial for security.
      *
-     * @param publicKey The public key to validate.
+     * @param addr The address to validate.
      *
-     * @notice Reverts if the public key length is not sufficient, indicating an invalid or malformed key.
+     * @notice Reverts if the address length is not sufficient, indicating an invalid or malformed key.
      */
-    function _validatePublicKey(string memory publicKey) internal pure virtual {
-        uint256 length = abi.encodePacked(publicKey).length;
+    function _validateAddress(string memory addr) internal pure virtual {
+        uint256 length = abi.encodePacked(addr).length;
         if (length <= 4) {
-            revert InvalidPublicKeyLength({ minLength: 5, actualLength: length });
+            revert InvalidAddressLength({ minLength: 5, actualLength: length });
         }
     }
 }
