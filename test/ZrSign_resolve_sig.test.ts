@@ -45,7 +45,7 @@ describe("ZrSign Resolve Signatures", function () {
     let user: HardhatEthersSigner;
     let ovm: HardhatEthersSigner;
     let mockMPC: HardhatEthersSigner;
-    let tokenomicsAcc: HardhatEthersSigner;
+    let feeAcc: HardhatEthersSigner;
     let testCases: Array<TestCase>;
 
     this.beforeAll(async() => {
@@ -54,7 +54,7 @@ describe("ZrSign Resolve Signatures", function () {
         user = accounts[1];
         ovm = accounts[2];
         mockMPC = accounts[7];
-        tokenomicsAcc = accounts[8];
+        feeAcc = accounts[8];
     });
 
     it("Signature resolve scenarios:", async () => {
@@ -63,11 +63,10 @@ describe("ZrSign Resolve Signatures", function () {
                 const wt = helpers.EVM_CHAIN_TYPE;
                 instance = await loadFixture(ZrSignProxyFixture);
                 
-                await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAcc.address);
+                await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAcc.address);
                 await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
         
-                await instance.ZrSignProxy.connect(tokenomicsAcc).setupBaseFee(baseFee);
-                await instance.ZrSignProxy.connect(tokenomicsAcc).setupNetworkFee(networkFee);
+                await instance.ZrSignProxy.connect(feeAcc).setupBaseFee(baseFee);
                 await instance.ZrSignProxy.walletTypeIdConfig(
                     wt.purpose, wt.coinType, true
                 );
@@ -81,8 +80,8 @@ describe("ZrSign Resolve Signatures", function () {
 
                 const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                 const payload = abi.encode(
-                    ["bytes32", "bytes32", "address", "uint256", "string"], 
-                    [chainId, supportedWalletType, user.address, 0, mockMPC.address]
+                    ["bytes32", "bytes32", "address", "uint256", "string", "bool"], 
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, false]
                 );
         
                 const plBytes = ethers.toBeArray(payload);
@@ -93,7 +92,8 @@ describe("ZrSign Resolve Signatures", function () {
                     walletTypeId: supportedWalletType,
                     owner: user.address,
                     walletIndex: 0,
-                    publicKey: mockMPC.address,
+                    addr: mockMPC.address,
+                    monitoring: false,
                     authSignature: sig
                 };
         
@@ -167,9 +167,6 @@ describe("ZrSign Resolve Signatures", function () {
                     const rlpPayload = RLP.encode(transaction);                    
                     const payloadHash = ethers.keccak256(rlpPayload);
 
-                    const txNewtorkFee =  BigInt(arrayify(payloadHash).length) * networkFee;
-                    const txTotalFee = txNewtorkFee + baseFee;
-
                     const signPayload = {
                         walletTypeId: c.walletTypeId,
                         walletIndex: c.walletIndex,
@@ -179,7 +176,7 @@ describe("ZrSign Resolve Signatures", function () {
                     };
 
                     await instance.ZrSignProxy.connect(user).zrSignHash(
-                        signPayload, { value: txTotalFee}
+                        signPayload, { value: baseFee}
                     );
 
                     const signature = await mockMPC.signMessage(ethers.toBeArray(payloadHash));

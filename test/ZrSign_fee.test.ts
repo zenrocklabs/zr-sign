@@ -16,17 +16,17 @@ describe("ZrSign Fees", function () {
     }>;
 
     let accounts: Array<HardhatEthersSigner> | any;
-    let tokenomicsAcc: HardhatEthersSigner;
+    let feeAccount: HardhatEthersSigner;
 
     this.beforeAll(async() => {
         accounts = await ethers.getSigners();
-        tokenomicsAcc = accounts[8];
+        feeAccount = accounts[8];
     });
 
     this.beforeEach(async() => {
         instance = await loadFixture(ZrSignProxyFixture);
         
-        await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAcc.address);
+        await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAccount.address);
     });
 
     describe("Positive scenarios", async () => {
@@ -36,7 +36,7 @@ describe("ZrSign Fees", function () {
             let expectedFee = ethers.parseUnits("80", "gwei");
 
             // When
-            let tx = await instance.ZrSignProxy.connect(tokenomicsAcc).setupBaseFee(expectedFee);
+            let tx = await instance.ZrSignProxy.connect(feeAccount).setupBaseFee(expectedFee);
             let newFee = await instance.ZrSignProxy.getBaseFee();
 
             // Then
@@ -44,22 +44,6 @@ describe("ZrSign Fees", function () {
             await expect(tx)
                 .to.emit(instance.ZrSignProxy, "BaseFeeUpdate")
                 .withArgs(oldFee, newFee);
-        });
-
-        it("should setup network fee", async () => { 
-            // Given
-            let oldFee = await instance.ZrSignProxy.getNetworkFee();
-            let expectedFee = ethers.parseUnits("4", "wei");
-
-            // When
-            let tx = await instance.ZrSignProxy.connect(tokenomicsAcc).setupNetworkFee(expectedFee);
-            let newBaseFee = await instance.ZrSignProxy.getNetworkFee();
-
-            // Then
-            expect(newBaseFee).to.equal(expectedFee);
-            await expect(tx)
-                .to.emit(instance.ZrSignProxy, "NetworkFeeUpdate")
-                .withArgs(oldFee, newBaseFee);
         });
     });
 
@@ -72,18 +56,7 @@ describe("ZrSign Fees", function () {
             // When
             await expect(instance.ZrSignProxy.connect(regularAddress).setupBaseFee(expectedFee))
                 .to.be.revertedWithCustomError(instance.ZrSignProxy, "AccessControlUnauthorizedAccount")
-                .withArgs(regularAddress, roles.TOKENOMICS_ROLE);
-        });
-
-        it("should not setup network fee without role", async () => {
-            // Given
-            const regularAddress = accounts[1];
-            let expectedFee = ethers.parseUnits("80", "gwei");
-
-            // When
-            await expect(instance.ZrSignProxy.connect(regularAddress).setupNetworkFee(expectedFee))
-                .to.be.revertedWithCustomError(instance.ZrSignProxy, "AccessControlUnauthorizedAccount")
-                .withArgs(regularAddress, roles.TOKENOMICS_ROLE);
+                .withArgs(regularAddress, roles.FEE_ROLE);
         });
     });
 });
