@@ -11,21 +11,20 @@ import * as chains from "./shared/chainIds";
 import RLP from "rlp";
 import { arrayify } from "@ethersproject/bytes";
 
-type TestCase = { 
-    testName: string; 
-    walletTypeId: string; 
+type TestCase = {
+    testName: string;
+    walletTypeId: string;
     walletIndex: number;
-    caller: HardhatEthersSigner; 
+    caller: HardhatEthersSigner;
     flag: number;
     baseFee: bigint;
-    networkFee: bigint;
     broadcast: boolean;
     dstChainId: string;
-        panicError: number | null;
-        customError: { 
-            name: string; 
-            params: any; 
-        } | null; 
+    panicError: number | null;
+    customError: {
+        name: string;
+        params: any;
+    } | null;
 }
 
 const abi = ethers.AbiCoder.defaultAbiCoder();
@@ -33,7 +32,6 @@ const abi = ethers.AbiCoder.defaultAbiCoder();
 describe("ZrSign Fees", function () {
 
     const baseFee = ethers.parseUnits("80", "gwei");
-    const networkFee = ethers.parseUnits("4", "wei");
     const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
     const unsupportedWalletType = helpers.UNSUPPORTED_CHAIN_TYPE_HASH;
 
@@ -41,10 +39,10 @@ describe("ZrSign Fees", function () {
     const IS_DATA_MASK = 1 << 1; // 0b0010
     const IS_TX_MASK = 1 << 2; // 0b0100;
 
-    let instance: IgnitionModuleResultsTToEthersContracts<string, { 
-        ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">; 
-        ZrProxy: NamedArtifactContractDeploymentFuture<"ZrProxy">; 
-        ZrSignProxy: NamedArtifactContractAtFuture<"ZrSign">; 
+    let instance: IgnitionModuleResultsTToEthersContracts<string, {
+        ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">;
+        ZrProxy: NamedArtifactContractDeploymentFuture<"ZrProxy">;
+        ZrSignProxy: NamedArtifactContractAtFuture<"ZrSign">;
     }>;
 
     let accounts: Array<HardhatEthersSigner> | any;
@@ -52,58 +50,58 @@ describe("ZrSign Fees", function () {
     let user: HardhatEthersSigner;
     let ovm: HardhatEthersSigner;
     let mockMPC: HardhatEthersSigner;
-    let tokenomicsAcc: HardhatEthersSigner;
+    let feeAcc: HardhatEthersSigner;
     let testCases: Array<TestCase>;
 
-    this.beforeAll(async() => {
+    this.beforeAll(async () => {
         accounts = await ethers.getSigners();
         owner = accounts[0];
         user = accounts[1];
         ovm = accounts[2];
         mockMPC = accounts[7];
-        tokenomicsAcc = accounts[8];
+        feeAcc = accounts[8];
     });
 
     it("Signature request scenarios:", async () => {
-        describe("signature request - data driven test", function() {
-            this.beforeEach(async() => {
+        describe("signature request - data driven test", function () {
+            this.beforeEach(async () => {
                 const wt = helpers.EVM_CHAIN_TYPE;
                 instance = await loadFixture(ZrSignProxyFixture);
-                
-                await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAcc.address);
+
+                await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAcc.address);
                 await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
-        
-                await instance.ZrSignProxy.connect(tokenomicsAcc).setupBaseFee(baseFee);
-                await instance.ZrSignProxy.connect(tokenomicsAcc).setupNetworkFee(networkFee);
+
+                await instance.ZrSignProxy.connect(feeAcc).setupBaseFee(baseFee);
                 await instance.ZrSignProxy.walletTypeIdConfig(
                     wt.purpose, wt.coinType, true
                 );
-        
+
                 const wtId = abi.encode(["uint256", "uint256"], [wt.purpose, wt.coinType]);
                 const wtIdHash = ethers.keccak256(wtId);
-        
+
                 await instance.ZrSignProxy.chainIdConfig(
                     wtIdHash, chains.ETH_SEPOLIA_CAIP, true
                 );
-        
+
                 const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                 const payload = abi.encode(
-                    ["bytes32", "bytes32", "address", "uint256", "string"], 
-                    [chainId, supportedWalletType, user.address, 0, mockMPC.address]
+                    ["bytes32", "bytes32", "address", "uint256", "string", "bool"],
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, false]
                 );
-        
+
                 const plBytes = ethers.toBeArray(payload);
                 const payloadHash = ethers.keccak256(plBytes);
                 const sig = await ovm.signMessage(ethers.toBeArray(payloadHash));
-        
+
                 const params = {
                     walletTypeId: supportedWalletType,
                     owner: user.address,
                     walletIndex: 0,
-                    publicKey: mockMPC.address,
+                    addr: mockMPC.address,
+                    monitoring: false,
                     authSignature: sig
                 };
-        
+
                 await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
             });
 
@@ -113,7 +111,6 @@ describe("ZrSign Fees", function () {
                     walletTypeId: supportedWalletType,
                     walletIndex: 0,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
@@ -126,7 +123,6 @@ describe("ZrSign Fees", function () {
                     walletTypeId: supportedWalletType,
                     walletIndex: 0,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_TX_MASK,
                     broadcast: false,
@@ -139,7 +135,6 @@ describe("ZrSign Fees", function () {
                     walletTypeId: supportedWalletType,
                     walletIndex: 0,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_TX_MASK,
                     broadcast: true,
@@ -152,7 +147,6 @@ describe("ZrSign Fees", function () {
                     walletTypeId: unsupportedWalletType,
                     walletIndex: 0,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
@@ -168,7 +162,6 @@ describe("ZrSign Fees", function () {
                     walletTypeId: supportedWalletType,
                     walletIndex: 0,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
@@ -177,14 +170,13 @@ describe("ZrSign Fees", function () {
                     customError: {
                         name: "ChainIdNotSupported",
                         params: [supportedWalletType, chains.UNSUPPORTED_CHAIN_ID]
-                    } 
+                    }
                 },
                 {
                     testName: "not be able to request with incorrect key index",
                     walletTypeId: supportedWalletType,
                     walletIndex: 5,
                     baseFee: baseFee,
-                    networkFee: networkFee,
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
@@ -196,8 +188,7 @@ describe("ZrSign Fees", function () {
                     testName: "not be able to request with less fee",
                     walletTypeId: supportedWalletType,
                     walletIndex: 0,
-                    baseFee: baseFee,
-                    networkFee: ethers.parseUnits("2", "wei"),
+                    baseFee: baseFee - BigInt(1000),
                     caller: user,
                     flag: IS_HASH_MASK,
                     broadcast: false,
@@ -205,14 +196,7 @@ describe("ZrSign Fees", function () {
                     panicError: null,
                     customError: {
                         name: "InsufficientFee",
-                        params: [
-                            (BigInt(
-                                arrayify("0x8166b5ef3786f477a19973ffcd946c854ca3c99a53ce99b18b5ac63314a2a751").length
-                            ) * networkFee) + baseFee,
-                            (BigInt(
-                                arrayify("0x8166b5ef3786f477a19973ffcd946c854ca3c99a53ce99b18b5ac63314a2a751").length
-                            ) * ethers.parseUnits("2", "wei")) + baseFee,
-                        ]
+                        params: [baseFee, baseFee - BigInt(1000)]
                     }
                 }
             ]
@@ -239,16 +223,14 @@ describe("ZrSign Fees", function () {
                     ];
 
                     const widPayload = abi.encode(
-                        ["bytes32","address","uint256"],
+                        ["bytes32", "address", "uint256"],
                         [c.walletTypeId, c.caller.address, c.walletIndex]
                     )
                     const wid = ethers.keccak256(widPayload);
 
-                    const rlpPayload = RLP.encode(transaction);                    
+                    const rlpPayload = RLP.encode(transaction);
                     const payloadHash = ethers.keccak256(rlpPayload)
 
-                    const txNewtorkFee =  BigInt(arrayify(payloadHash).length) * c.networkFee;
-                    const txTotalFee = txNewtorkFee + baseFee;
 
                     const signPayload = {
                         walletTypeId: c.walletTypeId,
@@ -259,29 +241,29 @@ describe("ZrSign Fees", function () {
                     };
 
                     let tx: any;
-                    switch(c.flag) {
+                    switch (c.flag) {
                         case IS_TX_MASK: {
                             tx = instance.ZrSignProxy.connect(c.caller).zrSignTx(
-                                signPayload, { value: txTotalFee}
+                                signPayload, { value: c.baseFee }
                             );
-                            
+
                             break;
                         }
                         case IS_HASH_MASK: {
                             tx = instance.ZrSignProxy.connect(c.caller).zrSignHash(
-                                signPayload, { value: txTotalFee}
+                                signPayload, { value: c.baseFee }
                             );
 
                             break;
                         }
                     }
-                    
+
                     if (c.customError != null) {
                         await expect(tx).to.revertedWithCustomError(
                             instance.ZrSignProxy, c.customError.name
                         ).withArgs(...c.customError.params);
 
-                    } else if(c.panicError != null) {
+                    } else if (c.panicError != null) {
                         await expect(tx).to.revertedWithPanic(c.panicError);
 
                     } else {
@@ -300,7 +282,7 @@ describe("ZrSign Fees", function () {
                     }
                 });
             }
-        }); 
+        });
     });
 
 });
