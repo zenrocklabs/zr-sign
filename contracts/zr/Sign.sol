@@ -365,8 +365,24 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return $.walletRegistry[walletId];
     }
 
-    //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+    function getWalletsIndex(
+        bytes32 walletTypeId,
+        uint256 walletIndex,
+        address owner
+    ) public view virtual override returns (uint256) {
+        return _getWalletsIndex(walletTypeId, walletIndex, owner);
+    }
 
+    //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+    function _getWalletsIndex(
+        bytes32 walletTypeId,
+        uint256 walletIndex,
+        address owner
+    ) internal view virtual returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        return $.walletsIndex[walletId];
+    }
     /**
      * @dev Internal function that logs a key request event. This function is called as part of the key request flow,
      * typically from a public or external function that processes the initial key request. It handles the internal
