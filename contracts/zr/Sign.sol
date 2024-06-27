@@ -32,8 +32,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
 
-    uint8 private constant ADDRESS_REGISTERED = 1;
-    uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
+    uint8 private constant ADDRESS_REQUESTED = 1;
+    uint8 private constant ADDRESS_REQUESTED_WITH_MONITORING = 2;
 
     uint8 private constant SIG_REQ_IN_PROGRESS = 1;
     uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
@@ -55,7 +55,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
-    error InvalidAddressLength(uint256 minLength, uint256 actualLength);
+    error InvalidWalletIndex(uint256 lastIndex, uint256 reqIndex);
 
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
@@ -63,9 +63,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
-        mapping(bytes32 => string[]) wallets;
-        mapping(string => uint8) walletRegistry;
-        mapping(uint256 => uint8) reqState;
+        mapping(bytes32 => uint256) walletsIndex;
+        mapping(bytes32 => uint8) walletRegistry;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -85,7 +84,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
         if (params.monitoring) {
-            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
+            totalFee = $._baseFee * ADDRESS_REQUESTED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
@@ -96,13 +95,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     modifier sigFee(SignTypes.SigReqParams memory params) {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
-        string memory wallet = _getWalletByIndex(
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex
-        );
-        if ($.walletRegistry[wallet] == ADDRESS_REGISTERED_WITH_MONITORING) {
-            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
+        bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
+        if ($.walletRegistry[walletId] == ADDRESS_REQUESTED_WITH_MONITORING) {
+            totalFee = $._baseFee * ADDRESS_REQUESTED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
@@ -156,17 +151,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignTypes.ZrKeyReqParams memory params
     ) external payable keyFee(params) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
-    }
-
-    /**
-     * @dev See the internal function `_zrKeyRes` for the core implementation details of key response handling.
-     * This reference is provided to highlight where the detailed logic and state modifications occur following the
-     * initial validations and preparations made in this public-facing function.
-     */
-    function zrKeyRes(
-        SignTypes.ZrKeyResParams memory params
-    ) external walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
-        _zrKeyRes(params);
     }
 
     /**
@@ -291,14 +275,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         _sigReq(sigReqParams);
     }
 
-    /**
-     * @dev See the internal function `_sigRes` for the core implementation details of sig response handling.
-     * This reference is provided to highlight where the detailed logic.
-     */
-    function zrSignRes(SignTypes.SignResParams memory params) external virtual override {
-        _sigRes(params);
-    }
-
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
 
     /**
@@ -313,19 +289,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     /**
-     * @dev Retrieves the current request state from the contract's storage. The trace ID is typically used to
-     * track and manage signature or key request sequences within the contract.
-     *
-     * @param traceId The trace ID of the request.
-     *
-     * @return uint256 The current state stored in the contract.
-     */
-    function getRequestState(uint256 traceId) public view virtual override returns (uint8) {
-        SignStorage storage $ = _getSignStorage();
-        return $.reqState[traceId];
-    }
-
-    /**
      * @dev Returns the base fee required for initiating any signing or key generation request. This fee
      * is set and stored within the contract's storage and may be updated by authorized roles.
      *
@@ -334,39 +297,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function getBaseFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
         return $._baseFee;
-    }
-
-    /**
-     * @dev Retrieves a list of all keys associated with a specific wallet type and owner. This function is
-     * useful for external parties or contract interactions that need to audit or verify the keys held by a particular
-     * user or operation.
-     *
-     * @param walletTypeId The type ID of the wallet for which keys are being requested.
-     * @param owner The address of the wallet owner.
-     * @return string[] An array of keys for the specified wallet type and owner.
-     */
-    function getZrKeys(
-        bytes32 walletTypeId,
-        address owner
-    ) external view virtual override returns (string[] memory) {
-        return _getWallets(walletTypeId, owner);
-    }
-
-    /**
-     * @dev Fetches a specific key from a wallet based on the wallet type, owner, and index. This is used to
-     * retrieve detailed information about individual keys when needed.
-     *
-     * @param walletTypeId The type ID of the wallet which the key belongs to.
-     * @param owner The address of the owner of the wallet.
-     * @param index The index of the key within the wallet to retrieve.
-     * @return string The key at the specified index for the given wallet type and owner.
-     */
-    function getZrKey(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 index
-    ) external view virtual override returns (string memory) {
-        return _getWalletByIndex(walletTypeId, owner, index);
     }
 
     /**
@@ -431,7 +361,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         address owner
     ) public view virtual override returns (uint8) {
         SignStorage storage $ = _getSignStorage();
-        return $.walletRegistry[_getWalletByIndex(walletTypeId, owner, walletIndex)];
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        return $.walletRegistry[walletId];
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
@@ -450,60 +381,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
         bytes32 id = _getId(params.walletTypeId, _msgSender());
-        uint256 walletIndex = $.wallets[id].length;
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
-    }
-
-    /**
-     * @dev Internal function that processes the response for a key request. It is used to validate the authenticity and
-     * integrity of the key response through signature verification and then updates the contract state with the new key
-     * information. It is called by an external method that receives the key generation results.
-     *
-     * @param params Struct containing response parameters, including the wallet type, owner address, wallet index, address,
-     * and the authorization signature proving the key's legitimacy.
-     *
-     * @notice This function performs crucial validations such as signature authenticity and address integrity. It ensures
-     * that the wallet index is correct, preventing unauthorized key updates.
-     */
-    function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes memory payload = abi.encode(
-            SRC_CHAIN_ID,
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex,
-            params.addr,
-            params.monitoring
-        );
-
-        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
-        _mustValidateAuthSignature(payloadHash, params.authSignature);
-
-        _validateAddress(params.addr);
-
-        bytes32 id = _getId(params.walletTypeId, params.owner);
-
-        if ($.wallets[id].length != params.walletIndex) {
-            revert IncorrectWalletIndex({
-                expectedIndex: $.wallets[id].length,
-                providedIndex: params.walletIndex
-            });
-        }
-
-        if ($.walletRegistry[params.addr] >= ADDRESS_REGISTERED) {
-            revert AddressAlreadyRegistered({ addr: params.addr });
-        }
-
-        $.wallets[id].push(params.addr);
-
+        uint256 walletIndex = $.walletsIndex[id];
+        bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
         if (params.monitoring) {
-            $.walletRegistry[params.addr] = ADDRESS_REGISTERED_WITH_MONITORING;
+            $.walletRegistry[walletId] = ADDRESS_REQUESTED_WITH_MONITORING;
         } else {
-            $.walletRegistry[params.addr] = ADDRESS_REGISTERED;
+            $.walletRegistry[walletId] = ADDRESS_REQUESTED;
         }
-
-        emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.addr);
+        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
     }
 
     /**
@@ -523,17 +408,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     ) internal virtual sigFee(params) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
-        _validateAddress(
-            _getWalletByIndex(params.walletTypeId, params.owner, params.walletIndex)
-        );
+        bytes32 id = _getId(params.walletTypeId, params.owner);
+        uint256 walletIndex = $.walletsIndex[id];
+        _validateWalletIndex(walletIndex, params.walletIndex);
 
-        bytes32 walletId = keccak256(
-            abi.encode(params.walletTypeId, params.owner, params.walletIndex)
-        );
+        bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
 
         $._traceId = $._traceId + 1;
-
-        $.reqState[$._traceId] = SIG_REQ_IN_PROGRESS;
 
         emit ZrSigRequest(
             $._traceId,
@@ -546,70 +427,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.isHashDataTx,
             params.broadcast
         );
-    }
-
-    /**
-     * @dev Internal function to finalize the signature response. This function checks the authenticity of the
-     * authorization signature against the combined payload and logs the resolution of the signature operation.
-     * It is typically called by an external function responsible for receiving and processing the signature
-     * response from a signer.
-     *
-     * @param params Struct containing the response parameters, including the trace ID, the signature itself, and a broadcast flag
-     * indicating whether the signature should be broadcasted. These parameters are encoded and hashed to validate the auth signature.
-     *
-     * @notice This function validates the authorization signature to ensure it matches the expected payload hash.
-     * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
-     */
-    function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes memory payload = abi.encode(
-            SRC_CHAIN_ID,
-            params.traceId,
-            params.signature,
-            params.broadcast
-        );
-
-        bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
-
-        if ($.reqState[params.traceId] != SIG_REQ_IN_PROGRESS) {
-            revert RequestNotFoundOrAlreadyProcessed({ traceId: params.traceId });
-        }
-
-        _mustValidateAuthSignature(payloadHash, params.authSignature);
-
-        $.reqState[params.traceId] = SIG_REQ_ALREADY_PROCESSED;
-
-        emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
-    }
-
-    /**
-     * @dev Internal function to validate an authorization signature against a given data hash. This function is critical
-     * for ensuring the integrity and authenticity of actions within the contract that require verified approval,
-     * typically those involving key or signature operations. It uses ECDSA for signature recovery and validation.
-     *
-     * @param dataHash The keccak256 hash of the data for which the signature is being verified. This data hash
-     * should encapsulate all relevant information that the signature purports to authorize.
-     * @param signature The digital signature provided for verification against the data hash. It must be produced by
-     * the appropriate private key corresponding to the address that is expected to authorize the action.
-     *
-     * @notice If the signature does not correctly match the expected address derived from the data hash,
-     * or if any error occurs in the recovery process, this function reverts the transaction. This ensures that
-     * only valid, verifiable actions are processed.
-     */
-    function _mustValidateAuthSignature(
-        bytes32 dataHash,
-        bytes memory signature
-    ) internal virtual {
-        (address authAddress, ECDSA.RecoverError sigErr, ) = dataHash.tryRecover(signature);
-
-        if (sigErr != ECDSA.RecoverError.NoError) {
-            revert InvalidSignature(sigErr);
-        }
-
-        if (!hasRole(MPC_ROLE, authAddress)) {
-            revert AccessControlUnauthorizedAccount(authAddress, MPC_ROLE);
-        }
     }
 
     /**
@@ -686,46 +503,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         $._baseFee = newBaseFee;
     }
 
-    //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
-
-    /**
-     * @dev Retrieves a specific wallet by its index from the storage. This is used to access detailed information
-     * about individual wallets under a particular wallet type and owner.
-     *
-     * @param walletTypeId The identifier for the wallet type.
-     * @param owner The owner's address whose wallet is being accessed.
-     * @param index The index of the wallet in the list of wallets owned by the specified owner.
-     * @return string The wallet information at the specified index.
-     */
-    function _getWalletByIndex(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 index
-    ) internal view virtual returns (string memory) {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes32 id = _getId(walletTypeId, owner);
-        return $.wallets[id][index];
-    }
-
-    /**
-     * @dev Retrieves all wallets associated with a given wallet type and owner. This function is useful for
-     * operations that need to interact with or display all wallets owned by a particular user under a specific wallet type.
-     *
-     * @param walletTypeId The identifier for the wallet type.
-     * @param owner The owner's address whose wallets are being retrieved.
-     * @return string[] An array of all wallets associated with the given wallet type and owner.
-     */
-    function _getWallets(
-        bytes32 walletTypeId,
-        address owner
-    ) internal view virtual returns (string[] memory) {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes32 id = _getId(walletTypeId, owner);
-        return $.wallets[id];
-    }
-
     //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
 
     /**
@@ -743,18 +520,17 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return keccak256(abi.encode(block.chainid, address(this), walletTypeId, owner));
     }
 
-    /**
-     * @dev Validates the address by checking its length. This function ensures that the address meets
-     * the minimum length requirement, providing basic validation that is crucial for security.
-     *
-     * @param addr The address to validate.
-     *
-     * @notice Reverts if the address length is not sufficient, indicating an invalid or malformed key.
-     */
-    function _validateAddress(string memory addr) internal pure virtual {
-        uint256 length = abi.encodePacked(addr).length;
-        if (length <= 4) {
-            revert InvalidAddressLength({ minLength: 5, actualLength: length });
+    function _getWalletId(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(walletTypeId, owner, walletIndex));
+    }
+
+    function _validateWalletIndex(uint256 lastIndex, uint256 reqIndex) internal pure virtual {
+        if (lastIndex < reqIndex) {
+            revert InvalidWalletIndex({ lastIndex: lastIndex, reqIndex: reqIndex });
         }
     }
 }
