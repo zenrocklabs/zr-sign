@@ -299,6 +299,20 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return $._baseFee;
     }
 
+    function estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) external view virtual override returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        uint256 totalFee = $._baseFee;
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        if ($.walletRegistry[walletId] == ADDRESS_REQUESTED_WITH_MONITORING) {
+            totalFee = $._baseFee * ADDRESS_REQUESTED_WITH_MONITORING;
+        }
+        return totalFee;
+    }
+
     /**
      * @dev Returns the version of the contract as a uint256. This is typically used to manage upgrades
      * and ensure compatibility with interfaces or dependent contracts.
@@ -374,6 +388,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+
     function _getWalletsIndex(
         bytes32 walletTypeId,
         uint256 walletIndex,
@@ -383,6 +398,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
         return $.walletsIndex[walletId];
     }
+
     /**
      * @dev Internal function that logs a key request event. This function is called as part of the key request flow,
      * typically from a public or external function that processes the initial key request. It handles the internal
