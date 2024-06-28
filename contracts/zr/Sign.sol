@@ -381,21 +381,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     function getWalletsIndex(
         bytes32 walletTypeId,
-        uint256 walletIndex,
         address owner
     ) public view virtual override returns (uint256) {
-        return _getWalletsIndex(walletTypeId, walletIndex, owner);
+        return _getWalletsIndex(walletTypeId, owner);
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
 
     function _getWalletsIndex(
         bytes32 walletTypeId,
-        uint256 walletIndex,
         address owner
     ) internal view virtual returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        bytes32 walletId = _getId(walletTypeId, owner);
         return $.walletsIndex[walletId];
     }
 
@@ -412,8 +410,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
-        bytes32 id = _getId(params.walletTypeId, _msgSender());
-        uint256 walletIndex = $.walletsIndex[id];
+
+        uint256 walletIndex = _getWalletsIndex(params.walletTypeId, _msgSender());
+        
         bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
         if (params.monitoring) {
             $.walletRegistry[walletId] = ADDRESS_REQUESTED_WITH_MONITORING;
@@ -440,9 +439,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     ) internal virtual sigFee(params) whenNotPaused {
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 id = _getId(params.walletTypeId, params.owner);
-        uint256 walletIndex = $.walletsIndex[id];
-        _validateWalletIndex(walletIndex, params.walletIndex);
+        uint256 walletIndex = _getWalletsIndex(params.walletTypeId, params.owner);
+
+        if (walletIndex < params.walletIndex) {
+            revert InvalidWalletIndex({ lastIndex: walletIndex, reqIndex: params.walletIndex });
+        }
 
         bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
 
@@ -558,11 +559,5 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 walletIndex
     ) public pure returns (bytes32) {
         return keccak256(abi.encode(walletTypeId, owner, walletIndex));
-    }
-
-    function _validateWalletIndex(uint256 lastIndex, uint256 reqIndex) internal pure virtual {
-        if (lastIndex < reqIndex) {
-            revert InvalidWalletIndex({ lastIndex: lastIndex, reqIndex: reqIndex });
-        }
     }
 }

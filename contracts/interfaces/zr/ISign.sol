@@ -27,7 +27,6 @@ interface ISign is IAccessControl {
 
     function getWalletsIndex(
         bytes32 walletTypeId,
-        uint256 walletIndex,
         address owner
     ) external view returns (uint256);
 
@@ -36,7 +35,7 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         address owner
     ) external view returns (uint8);
-    
+
     function estimateFee(
         bytes32 walletTypeId,
         address owner,
