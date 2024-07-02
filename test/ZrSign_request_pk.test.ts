@@ -22,22 +22,21 @@ describe("ZrSign key request", function() {
 
     let accounts: Array<HardhatEthersSigner> | any;
     let regularAddress: HardhatEthersSigner;
-    let tokenomicsAddress: HardhatEthersSigner;
+    let feeAddress: HardhatEthersSigner;
 
     this.beforeAll(async() => {
         accounts = await ethers.getSigners();
         regularAddress = accounts[1];
-        tokenomicsAddress = accounts[8];
+        feeAddress = accounts[8];
     });
 
     this.beforeEach(async() => {
         const wt = helpers.EVM_CHAIN_TYPE;
         instance = await loadFixture(ZrSignProxyFixture);
 
-        await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAddress.address);
+        await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAddress.address);
         
-        await instance.ZrSignProxy.connect(tokenomicsAddress).setupBaseFee(baseFee);
-        await instance.ZrSignProxy.connect(tokenomicsAddress).setupNetworkFee(networkFee);
+        await instance.ZrSignProxy.connect(feeAddress).setupBaseFee(baseFee);
         await instance.ZrSignProxy.walletTypeIdConfig(
             wt.purpose, wt.coinType, true
         );
@@ -50,12 +49,13 @@ describe("ZrSign key request", function() {
         );
 
         await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
-            { walletTypeId: supportedWalletType },
+            { walletTypeId: supportedWalletType, monitoring: false },
             {value: baseFee }
         )).to.emit(instance.ZrSignProxy,"ZrKeyRequest").withArgs(
             supportedWalletType,
             regularAddress.address,
-            wallets.length
+            wallets.length,
+            false
         );
     });
 
@@ -83,7 +83,7 @@ describe("ZrSign key request", function() {
     for (let c of negativeTests) {
         it(`shoud not ${c.testName}`, async () => {
             await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
-                { walletTypeId: c.walletTypeId },
+                { walletTypeId: c.walletTypeId, monitoring: false },
                 {value: c.fee}
             )).to.revertedWithCustomError(instance.ZrSignProxy, c.customError.name)
                 .withArgs(...c.customError.params);
