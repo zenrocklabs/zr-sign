@@ -14,15 +14,9 @@ interface IZrSign is ISign {
         bool support
     ) external;
 
-    function chainIdConfig(
-        bytes32 walletTypeId,
-        string memory caip,
-        bool support
-    ) external;
+    function chainIdConfig(bytes32 walletTypeId, string memory caip, bool support) external;
 
     function setupBaseFee(uint256 newBaseFee) external;
-
-    function setupNetworkFee(uint256 newNetworkFee) external;
 
     function withdrawFees() external;
 

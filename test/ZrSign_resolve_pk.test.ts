@@ -22,6 +22,7 @@ type TestCase = {
     walletIndexIncrement: number;
     owner: string; 
     mpcAddress: string; 
+    monitoring: boolean;
     caller: HardhatEthersSigner; 
     rerun: boolean;
     customError: { 
@@ -33,7 +34,6 @@ type TestCase = {
 describe("ZrSign key resolve", function() {
 
     const baseFee = ethers.parseUnits("80", "gwei");
-    const networkFee = ethers.parseUnits("4", "wei");
     const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
     const unsupportedWalletType = helpers.UNSUPPORTED_CHAIN_TYPE_HASH;
     const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -42,7 +42,7 @@ describe("ZrSign key resolve", function() {
     let owner: HardhatEthersSigner;
     let user: HardhatEthersSigner;
     let ovm: HardhatEthersSigner;
-    let tokenomicsAddress: HardhatEthersSigner;
+    let feeAddress: HardhatEthersSigner;
     let mockMPC: HardhatEthersSigner;
     
     let testCases: Array<TestCase>;
@@ -53,7 +53,7 @@ describe("ZrSign key resolve", function() {
         user = accounts[1];
         ovm = accounts[2];
         mockMPC = accounts[7];
-        tokenomicsAddress = accounts[8];
+        feeAddress = accounts[8];
     });
 
     it(`Key resolve scenarios`, function() {
@@ -63,11 +63,10 @@ describe("ZrSign key resolve", function() {
             const wt = helpers.EVM_CHAIN_TYPE;
             instance = await loadFixture(ZrSignProxyFixture);
 
-            await instance.ZrSignProxy.grantRole(roles.TOKENOMICS_ROLE, tokenomicsAddress.address);
+            await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAddress.address);
             await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
             
-            await instance.ZrSignProxy.connect(tokenomicsAddress).setupBaseFee(baseFee);
-            await instance.ZrSignProxy.connect(tokenomicsAddress).setupNetworkFee(networkFee);
+            await instance.ZrSignProxy.connect(feeAddress).setupBaseFee(baseFee);
             await instance.ZrSignProxy.walletTypeIdConfig(
                 wt.purpose, wt.coinType, true
             );
@@ -82,6 +81,7 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: user.address,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: ovm,
                     rerun: false,
                     customError: null
@@ -92,10 +92,11 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: user.address,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: ovm,
                     rerun: true,
                     customError: {
-                        name: "PublicKeyAlreadyRegistered",
+                        name: "AddressAlreadyRegistered",
                         params: [mockMPC.address]
                     }
                 },
@@ -105,6 +106,7 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: user.address,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: ovm,
                     rerun: false,
                     customError: {
@@ -118,6 +120,7 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: zeroAddress,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: ovm,
                     rerun: false,
                     customError: {
@@ -131,10 +134,11 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: user.address,
                     mpcAddress: "",
+                    monitoring: false,
                     caller: ovm,
                     rerun: false,
                     customError: {
-                        name: "InvalidPublicKeyLength",
+                        name: "InvalidAddressLength",
                         params: [5, 0],
                     },
                 },
@@ -144,6 +148,7 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 0,
                     owner: user.address,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: owner,  
                     rerun: false,
                     customError: {
@@ -157,6 +162,7 @@ describe("ZrSign key resolve", function() {
                     walletIndexIncrement: 1,
                     owner: user.address,
                     mpcAddress: mockMPC.address,
+                    monitoring: false,
                     caller: ovm,
                     rerun: false,
                     customError: {
@@ -177,8 +183,8 @@ describe("ZrSign key resolve", function() {
                     const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                     const walletIndex = wallets.length + c.walletIndexIncrement;
                     const payload = abi.encode(
-                        ["bytes32", "bytes32", "address", "uint256", "string"], 
-                        [chainId, supportedWalletType, user.address, walletIndex, c.mpcAddress]
+                        ["bytes32", "bytes32", "address", "uint256", "string", "bool"],
+                        [chainId, supportedWalletType, user.address, walletIndex, c.mpcAddress, c.monitoring]
                     );
                     
                     const payloadHash = ethers.keccak256(ethers.toBeArray(payload));
@@ -188,7 +194,8 @@ describe("ZrSign key resolve", function() {
                         walletTypeId: c.walletTypeId,
                         owner: c.owner,
                         walletIndex: walletIndex,
-                        publicKey: c.mpcAddress,
+                        addr: c.mpcAddress,
+                        monitoring: c.monitoring,
                         authSignature: sig
                     };
             
@@ -196,8 +203,8 @@ describe("ZrSign key resolve", function() {
 
                     if (c.rerun) {
                         const payload = abi.encode(
-                            ["bytes32", "bytes32", "address", "uint256", "string"], 
-                            [chainId, supportedWalletType, user.address, walletIndex + 1, c.mpcAddress]
+                            ["bytes32", "bytes32", "address", "uint256", "string", "bool"], 
+                            [chainId, supportedWalletType, user.address, walletIndex + 1, c.mpcAddress, c.monitoring]
                         );
                         
                         const payloadHash = ethers.keccak256(ethers.toBeArray(payload));
