@@ -30,7 +30,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
-    uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100;
+    uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
+    uint8 public constant IS_FETCH_TX_MASK = 1 << 3; // 0b1000
 
     uint8 private constant ADDRESS_REGISTERED = 1;
     uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
@@ -210,7 +211,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            isHashDataTx: IS_HASH_MASK,
+            signTypeData: IS_HASH_MASK,
             broadcast: false // Broadcasting not relevant for a hash
         });
 
@@ -249,7 +250,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            isHashDataTx: IS_DATA_MASK,
+            signTypeData: IS_DATA_MASK,
             broadcast: false // Broadcasting not relevant for a hash
         });
 
@@ -284,7 +285,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            isHashDataTx: IS_TX_MASK,
+            signTypeData: IS_TX_MASK,
             broadcast: params.broadcast
         });
 
@@ -543,7 +544,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.walletIndex,
             params.dstChainId,
             params.payload,
-            params.isHashDataTx,
+            params.signTypeData,
             params.broadcast
         );
     }

@@ -32,7 +32,7 @@ library SignTypes {
         bytes32 dstChainId;
         bytes payload;
         address owner;
-        uint8 isHashDataTx;
+        uint8 signTypeData;
         bool broadcast;
     }
 
