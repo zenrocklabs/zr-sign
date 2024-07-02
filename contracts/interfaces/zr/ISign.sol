@@ -79,7 +79,7 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         bytes32 dstChainId,
         bytes payload,
-        uint8 isHashDataTx,
+        uint8 signTypeData,
         bool broadcast
     );
 
