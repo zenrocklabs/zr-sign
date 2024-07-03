@@ -84,10 +84,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** MODIFIERS ******************************************************************/
 
     // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier keyFee(SignTypes.ZrKeyReqParams memory params) {
+    modifier keyFee(bool monitoring) {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
-        if (params.monitoring) {
+        if (monitoring) {
             totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
@@ -96,27 +96,22 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         _;
     }
 
-    modifier sigFee(SignTypes.SigReqParams memory params) {
-        SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
-        string memory wallet = _getWalletByIndex(
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex
-        );
-        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
-        }
+    modifier sigFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) {
+        uint256 totalFee = _estimateFee(walletTypeId, owner, walletIndex);
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
         _;
     }
 
-    modifier monitoringGuard(SignTypes.ZrSignParams memory params) {
+    modifier monitoringGuard(bytes32 walletTypeId, uint256 walletIndex) {
         SignStorage storage $ = _getSignStorage();
-        bytes32 id = _getId(params.walletTypeId, _msgSender());
-        string memory wallet = $.wallets[id][params.walletIndex];
+        bytes32 id = _getId(walletTypeId, _msgSender());
+        string memory wallet = $.wallets[id][walletIndex];
         if ($.walletRegistry[wallet] != WALLET_REGISTERED_WITH_MONITORING) {
             revert WalletNotRegisteredForMonitoring(wallet);
         }
@@ -167,7 +162,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable override keyFee(params) walletTypeGuard(params.walletTypeId) {
+    ) external payable override keyFee(params.monitoring) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -329,7 +324,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
-        monitoringGuard(params)
+        monitoringGuard(params.walletTypeId, params.walletIndex)
     {
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -353,6 +348,27 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
+    function estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) external view virtual override returns (uint256) {
+        return _estimateFee(walletTypeId, owner, walletIndex);
+    }
+
+    function _estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) internal view virtual returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        uint256 totalFee = $._baseFee;
+        string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
+        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
+            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
+        }
+        return totalFee;
+    }
 
     /**
      * @dev Retrieves the current trace ID from the contract's storage. The trace ID is typically used to
@@ -573,7 +589,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _sigReq(
         SignTypes.SigReqParams memory params
-    ) internal virtual sigFee(params) whenNotPaused {
+    )
+        internal
+        virtual
+        sigFee(params.walletTypeId, params.owner, params.walletIndex)
+        whenNotPaused
+    {
         SignStorage storage $ = _getSignStorage();
 
         _validateAddress(
