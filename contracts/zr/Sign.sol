@@ -31,7 +31,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
-    uint8 public constant IS_TVD_TX_MASK = 1 << 3; // 0b1000 //TVD => to, value, data
+    uint8 public constant IS_SIMPLE_TX_MASK = 1 << 3; // 0b1000 //Simple Tx => to, value, data.
 
     uint8 private constant ADDRESS_REGISTERED = 1;
     uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
@@ -212,7 +212,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            signTypeData: IS_HASH_MASK,
+            zrSignDataType: IS_HASH_MASK,
             broadcast: false // Broadcasting not relevant for a hash
         });
 
@@ -252,7 +252,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            signTypeData: IS_DATA_MASK,
+            zrSignDataType: IS_DATA_MASK,
             broadcast: false // Broadcasting not relevant for a hash
         });
 
@@ -288,7 +288,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            signTypeData: IS_TX_MASK,
+            zrSignDataType: IS_TX_MASK,
             broadcast: params.broadcast
         });
 
@@ -309,7 +309,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * wallet types and on supported chains. This function handles the creation of a signing request and processes
      * broadcasting based on the provided flags.
      */
-    function zrSignTVDTx(
+    function zrSignSimpleTx(
         SignTypes.ZrSignParams memory params
     )
         external
@@ -324,12 +324,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            signTypeData: IS_TVD_TX_MASK,
+            zrSignDataType: IS_SIMPLE_TX_MASK,
             broadcast: params.broadcast
         });
 
         _sigReq(sigReqParams);
     }
+
     /**
      * @dev See the internal function `_sigRes` for the core implementation details of sig response handling.
      * This reference is provided to highlight where the detailed logic.
