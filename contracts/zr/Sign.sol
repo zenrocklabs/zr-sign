@@ -31,7 +31,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
-    uint8 public constant IS_FETCH_TX_MASK = 1 << 3; // 0b1000
+    uint8 public constant IS_TVD_TX_MASK = 1 << 3; // 0b1000 //TVD => to, value, data
 
     uint8 private constant ADDRESS_REGISTERED = 1;
     uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
@@ -155,7 +155,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable keyFee(params) walletTypeGuard(params.walletTypeId) {
+    ) external payable override keyFee(params) walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -166,7 +166,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyRes(
         SignTypes.ZrKeyResParams memory params
-    ) external walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
+    ) external override walletTypeGuard(params.walletTypeId) ownerGuard(params.owner) {
         _zrKeyRes(params);
     }
 
@@ -189,6 +189,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -236,6 +237,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -276,6 +278,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -292,6 +295,41 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         _sigReq(sigReqParams);
     }
 
+    /**
+     * @dev External function designed for signing transactions. Similar to `zrSignHash`, this function ensures
+     * compatibility with the wallet type and destination chain ID but also prepares the parameters for a transaction
+     * signing request. It allows for the optional broadcasting of the signed transaction depending on the
+     * `broadcast` flag.
+     *
+     * @param params Struct containing all necessary parameters for the transaction signing operation. These parameters
+     * are converted into `SigReqParams` format and include the wallet type ID, destination chain ID, payload,
+     * and owner information, tailored for transaction-specific requirements.
+     *
+     * @notice Uses `walletTypeGuard` and `chainIdGuard` modifiers to ensure operations are performed only with valid
+     * wallet types and on supported chains. This function handles the creation of a signing request and processes
+     * broadcasting based on the provided flags.
+     */
+    function zrSignTVDTx(
+        SignTypes.ZrSignParams memory params
+    )
+        external
+        payable
+        override
+        walletTypeGuard(params.walletTypeId)
+        chainIdGuard(params.walletTypeId, params.dstChainId)
+    {
+        SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
+            walletTypeId: params.walletTypeId,
+            walletIndex: params.walletIndex,
+            dstChainId: params.dstChainId,
+            payload: params.payload,
+            owner: _msgSender(),
+            signTypeData: IS_TVD_TX_MASK,
+            broadcast: params.broadcast
+        });
+
+        _sigReq(sigReqParams);
+    }
     /**
      * @dev See the internal function `_sigRes` for the core implementation details of sig response handling.
      * This reference is provided to highlight where the detailed logic.
