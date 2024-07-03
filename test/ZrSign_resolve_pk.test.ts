@@ -96,7 +96,7 @@ describe("ZrSign key resolve", function() {
                     caller: ovm,
                     rerun: true,
                     customError: {
-                        name: "AddressAlreadyRegistered",
+                        name: "WalletAlreadyRegistered",
                         params: [mockMPC.address]
                     }
                 },
@@ -194,7 +194,7 @@ describe("ZrSign key resolve", function() {
                         walletTypeId: c.walletTypeId,
                         owner: c.owner,
                         walletIndex: walletIndex,
-                        addr: c.mpcAddress,
+                        wallet: c.mpcAddress,
                         monitoring: c.monitoring,
                         authSignature: sig
                     };
