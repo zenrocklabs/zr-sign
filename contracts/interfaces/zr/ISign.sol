@@ -94,5 +94,4 @@ interface ISign is IAccessControl {
     event ZrSigResolve(uint256 indexed traceId, bytes signature, bool broadcast);
 
     event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
-    event MultiplierUpdate(uint256 indexed oldMultiplierFee, uint256 indexed newMultiplierFee);
 }
