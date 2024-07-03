@@ -18,6 +18,8 @@ interface ISign is IAccessControl {
 
     function zrSignTx(SignTypes.ZrSignParams calldata params) external payable;
 
+    function zrSignSimpleTx(SignTypes.ZrSignParams memory params) external payable;
+
     function zrSignRes(SignTypes.SignResParams calldata params) external;
 
     function version() external view returns (uint256);
@@ -34,6 +36,12 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         address owner
     ) external view returns (uint8);
+    
+    function estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) external view returns (uint256);
 
     function getTraceId() external view returns (uint256);
 
@@ -79,12 +87,11 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         bytes32 dstChainId,
         bytes payload,
-        uint8 isHashDataTx,
+        uint8 zrSignDataType,
         bool broadcast
     );
 
     event ZrSigResolve(uint256 indexed traceId, bytes signature, bool broadcast);
 
     event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
-    event MultiplierUpdate(uint256 indexed oldMultiplierFee, uint256 indexed newMultiplierFee);
 }

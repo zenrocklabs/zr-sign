@@ -92,7 +92,7 @@ describe("ZrSign Resolve Signatures", function () {
                     walletTypeId: supportedWalletType,
                     owner: user.address,
                     walletIndex: 0,
-                    addr: mockMPC.address,
+                    wallet: mockMPC.address,
                     monitoring: false,
                     authSignature: sig
                 };

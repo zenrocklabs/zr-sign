@@ -17,7 +17,6 @@ let instance: IgnitionModuleResultsTToEthersContracts<string, {
 describe("ZrSign key request", function() {
     
     const baseFee = ethers.parseUnits("80", "gwei");
-    const networkFee = ethers.parseUnits("4", "wei");
     const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
 
     let accounts: Array<HardhatEthersSigner> | any;
