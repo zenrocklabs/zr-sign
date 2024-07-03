@@ -26,16 +26,16 @@ library SignTypes {
         bool broadcast; // Relevant for `zrSignTx`, must be ignored for others
     }
 
-    struct TVDTx {
+    struct SimpleTx {
         string to;
         uint256 value;
         bytes data;
     }
 
-    function encodeTVD(TVDTx memory self) public pure returns (bytes memory) {
+    function encodeSimple(SimpleTx memory self) public pure returns (bytes memory) {
         return
             abi.encodeWithSignature(
-                "transfer(string,uint256,bytes)",
+                "transaction(string,uint256,bytes)",
                 self.to,
                 self.value,
                 self.data
@@ -43,17 +43,17 @@ library SignTypes {
     }
 
     function decodeTVD(
-        bytes calldata tvdData
+        bytes calldata simpleTxData
     )
         external
         pure
         returns (string memory to, uint256 value, bytes4 signature, bytes memory data)
     {
         // Extract the first 4 bytes for the function signature
-        signature = bytes4(tvdData[:4]);
+        signature = bytes4(simpleTxData[:4]);
 
         // Decode the remaining data
-        (to, value, data) = abi.decode(tvdData[4:], (string, uint256, bytes));
+        (to, value, data) = abi.decode(simpleTxData[4:], (string, uint256, bytes));
     }
 
     struct SigReqParams {
@@ -62,7 +62,7 @@ library SignTypes {
         bytes32 dstChainId;
         bytes payload;
         address owner;
-        uint8 signTypeData;
+        uint8 zrSignDataType;
         bool broadcast;
     }
 

@@ -18,7 +18,7 @@ interface ISign is IAccessControl {
 
     function zrSignTx(SignTypes.ZrSignParams calldata params) external payable;
     
-    function zrSignTVDTx(SignTypes.ZrSignParams memory params) external payable;
+    function zrSignSimpleTx(SignTypes.ZrSignParams memory params) external payable;
 
     function zrSignRes(SignTypes.SignResParams calldata params) external;
 
