@@ -102,7 +102,6 @@ describe("ZrSign Fees", function () {
                     monitoring: false,
                     authSignature: sig
                 };
-                console.log("await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);")
                 await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
             });
 
