@@ -38,6 +38,7 @@ describe("ZrSign Fees", function () {
     const IS_HASH_MASK = 1 << 0; // 0b0001
     const IS_DATA_MASK = 1 << 1; // 0b0010
     const IS_TX_MASK = 1 << 2; // 0b0100;
+    const IS_SIMPLE_TX_MASK = 1 << 2; // 0b1000;
 
     let instance: IgnitionModuleResultsTToEthersContracts<string, {
         ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">;
@@ -97,11 +98,11 @@ describe("ZrSign Fees", function () {
                     walletTypeId: supportedWalletType,
                     owner: user.address,
                     walletIndex: 0,
-                    addr: mockMPC.address,
+                    wallet: mockMPC.address,
                     monitoring: false,
                     authSignature: sig
                 };
-
+                console.log("await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);")
                 await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
             });
 
