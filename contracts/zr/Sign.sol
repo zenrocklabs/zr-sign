@@ -318,6 +318,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
+        SignTypes.TVDTx memory tvd = abi.decode(params.payload, (SignTypes.TVDTx));
+
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
             walletIndex: params.walletIndex,
