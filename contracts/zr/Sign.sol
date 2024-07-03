@@ -414,11 +414,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 walletIndex = _getWalletsIndex(params.walletTypeId, _msgSender());
         
         bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
+        
         if (params.monitoring) {
             $.walletRegistry[walletId] = ADDRESS_REQUESTED_WITH_MONITORING;
         } else {
             $.walletRegistry[walletId] = ADDRESS_REQUESTED;
         }
+        
+        $.walletsIndex[walletId] += 1;
+
         emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
     }
 
