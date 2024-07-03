@@ -187,7 +187,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * destination chain ID, and the payload which should be exactly 32 bytes in length, among other relevant data.
      *
      * @notice This function is guarded by `walletTypeGuard` and `chainIdGuard` modifiers to ensure that the operation
-     * is performed only if the wallet type is supported and the destination chain ID is valid, respectively. These checks
+     * is performed only if the wallet type is supported and the destination chain ID is valid,respectively. These checks
      * are crucial for maintaining operational integrity and security. The function reverts if the payload length is incorrect,
      * ensuring that only properly formatted requests are processed.
      */
@@ -206,9 +206,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
                 expectedLength: 32,
                 actualLength: params.payload.length
             });
-        }
-
-        // Check broadcast flag
+        } // Check broadcast flag
         if (params.broadcast) {
             revert BroadcastNotAllowed();
         }
@@ -303,7 +301,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     /**
-     * @dev External function designed for signing transactions. Similar to `zrSignHash`, this function ensures
+     * @dev External function designed for signing simple transactions. Similar to `zrSignTx`, this function ensures
      * compatibility with the wallet type and destination chain ID but also prepares the parameters for a transaction
      * signing request. It allows for the optional broadcasting of the signed transaction depending on the
      * `broadcast` flag.
@@ -312,9 +310,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * are converted into `SigReqParams` format and include the wallet type ID, destination chain ID, payload,
      * and owner information, tailored for transaction-specific requirements.
      *
-     * @notice Uses `walletTypeGuard` and `chainIdGuard` modifiers to ensure operations are performed only with valid
-     * wallet types and on supported chains. This function handles the creation of a signing request and processes
-     * broadcasting based on the provided flags.
+     * @notice Uses `walletTypeGuard`, `chainIdGuard`, and `monitoringGuard` modifiers to ensure operations are performed
+     * only with valid wallet types, on supported chains, and for wallets registered with monitoring. This function handles
+     * the creation of a signing request and processes broadcasting based on the provided flags.
      */
     function zrSignSimpleTx(
         SignTypes.ZrSignParams memory params
@@ -348,6 +346,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
+    
+    /**
+     * @dev See the internal function `_estimateFee` for the core implementation details of fee estimation.
+     * This reference is provided to highlight where the detailed logic and calculations occur following the
+     * initial parameter preparations made in this public-facing function.
+     */
     function estimateFee(
         bytes32 walletTypeId,
         address owner,
@@ -356,6 +360,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return _estimateFee(walletTypeId, owner, walletIndex);
     }
 
+    /**
+     * @dev Internal function to estimate the fee required for a signature request. This function calculates the 
+     * total fee based on whether the wallet is registered with monitoring.
+     *
+     * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
+     * @param owner The address of the wallet owner.
+     * @param walletIndex The index of the wallet within the owner's list of wallets.
+     * @return uint256 The estimated fee required for the signature request.
+     */
     function _estimateFee(
         bytes32 walletTypeId,
         address owner,
