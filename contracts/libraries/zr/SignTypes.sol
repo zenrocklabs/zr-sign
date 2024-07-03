@@ -42,7 +42,7 @@ library SignTypes {
             );
     }
 
-    function decodeTVD(
+    function decodeSimpleTx(
         bytes calldata simpleTxData
     )
         external
