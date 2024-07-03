@@ -33,8 +33,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
     uint8 public constant IS_SIMPLE_TX_MASK = 1 << 3; // 0b1000 //Simple Tx => to, value, data.
 
-    uint8 private constant ADDRESS_REGISTERED = 1;
-    uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
+    uint8 private constant WALLET_REGISTERED = 1;
+    uint8 private constant WALLET_REGISTERED_WITH_MONITORING = 2;
 
     uint8 private constant SIG_REQ_IN_PROGRESS = 1;
     uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
@@ -52,7 +52,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
-    error AddressAlreadyRegistered(string addr);
+    error WalletAlreadyRegistered(string wallet);
+    error WalletNotRegisteredForMonitoring(string wallet);
+
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
@@ -86,7 +88,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         SignStorage storage $ = _getSignStorage();
         uint256 totalFee = $._baseFee;
         if (params.monitoring) {
-            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
+            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
@@ -102,11 +104,21 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.owner,
             params.walletIndex
         );
-        if ($.walletRegistry[wallet] == ADDRESS_REGISTERED_WITH_MONITORING) {
-            totalFee = $._baseFee * ADDRESS_REGISTERED_WITH_MONITORING;
+        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
+            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
+        }
+        _;
+    }
+
+    modifier monitoringGuard(SignTypes.ZrSignParams memory params) {
+        SignStorage storage $ = _getSignStorage();
+        bytes32 id = _getId(params.walletTypeId, _msgSender());
+        string memory wallet = $.wallets[id][params.walletIndex];
+        if ($.walletRegistry[wallet] != WALLET_REGISTERED_WITH_MONITORING) {
+            revert WalletNotRegisteredForMonitoring(wallet);
         }
         _;
     }
@@ -317,6 +329,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
+        monitoringGuard(params)
     {
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -513,14 +526,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.walletTypeId,
             params.owner,
             params.walletIndex,
-            params.addr,
+            params.wallet,
             params.monitoring
         );
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
         _mustValidateAuthSignature(payloadHash, params.authSignature);
 
-        _validateAddress(params.addr);
+        _validateAddress(params.wallet);
 
         bytes32 id = _getId(params.walletTypeId, params.owner);
 
@@ -531,19 +544,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
-        if ($.walletRegistry[params.addr] >= ADDRESS_REGISTERED) {
-            revert AddressAlreadyRegistered({ addr: params.addr });
+        if ($.walletRegistry[params.wallet] >= WALLET_REGISTERED) {
+            revert WalletAlreadyRegistered({ wallet: params.wallet });
         }
 
-        $.wallets[id].push(params.addr);
+        $.wallets[id].push(params.wallet);
 
         if (params.monitoring) {
-            $.walletRegistry[params.addr] = ADDRESS_REGISTERED_WITH_MONITORING;
+            $.walletRegistry[params.wallet] = WALLET_REGISTERED_WITH_MONITORING;
         } else {
-            $.walletRegistry[params.addr] = ADDRESS_REGISTERED;
+            $.walletRegistry[params.wallet] = WALLET_REGISTERED;
         }
 
-        emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.addr);
+        emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.wallet);
     }
 
     /**
@@ -583,7 +596,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.walletIndex,
             params.dstChainId,
             params.payload,
-            params.signTypeData,
+            params.zrSignDataType,
             params.broadcast
         );
     }
