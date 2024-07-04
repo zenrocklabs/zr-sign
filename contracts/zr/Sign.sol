@@ -19,12 +19,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
 
+    uint256 internal responseGasLimit = 200000; // maximum gas limit for key and signature response
+
     // Constant variable for Multi-Party Computation role hash, computed as keccak256 hash of the string "zenrock.role.mpc"
     bytes32 public constant MPC_ROLE =
         0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14;
 
     bytes32 public constant SRC_WALLET_TYPE_ID =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a; // keccak256(abi.encode(ChainInfo{purpose:44 coinType: 60}));
+
     bytes32 public constant SRC_CHAIN_ID =
         0xafa90c317deacd3d68f330a30f96e4fa7736e35e8d1426b2e1b2c04bce1c2fb7; //keccak256(abi.encodePacked("eip155:11155111"));
 
@@ -206,9 +209,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
                 expectedLength: 32,
                 actualLength: params.payload.length
             });
-        } // Check broadcast flag
+        }
+
+        // Check broadcast flag
         if (params.broadcast) {
-            revert BroadcastNotAllowed();
+            revert BroadcastNotAllowed(); // Broadcasting not relevant for a hash
         }
 
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
@@ -218,7 +223,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             payload: params.payload,
             owner: _msgSender(),
             zrSignDataType: IS_HASH_MASK,
-            broadcast: false // Broadcasting not relevant for a hash
+            broadcast: params.broadcast
         });
 
         _sigReq(sigReqParams);
@@ -248,7 +253,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     {
         // Check broadcast flag
         if (params.broadcast) {
-            revert BroadcastNotAllowed();
+            revert BroadcastNotAllowed(); // Broadcasting not relevant for data
         }
 
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
@@ -258,7 +263,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             payload: params.payload,
             owner: _msgSender(),
             zrSignDataType: IS_DATA_MASK,
-            broadcast: false // Broadcasting not relevant for a hash
+            broadcast: params.broadcast
         });
 
         _sigReq(sigReqParams);
@@ -346,7 +351,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** VIEW EXTERNAL FUNCTIONS ******************************************************************/
-    
+
     /**
      * @dev See the internal function `_estimateFee` for the core implementation details of fee estimation.
      * This reference is provided to highlight where the detailed logic and calculations occur following the
@@ -361,8 +366,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     /**
-     * @dev Internal function to estimate the fee required for a signature request. This function calculates the 
-     * total fee based on whether the wallet is registered with monitoring.
+     * @dev Internal function to estimate the fee required for a signature request. This function calculates the
+     * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
      *
      * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
      * @param owner The address of the wallet owner.
@@ -375,10 +380,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 walletIndex
     ) internal view virtual returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
+        uint256 responseFee = block.basefee * responseGasLimit;
+        uint256 totalFee = $._baseFee + responseFee;
         string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
         if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
+            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING) + responseFee;
         }
         return totalFee;
     }
@@ -653,6 +659,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         bytes memory payload = abi.encode(
             SRC_CHAIN_ID,
             params.traceId,
+            params.metaData,
             params.signature,
             params.broadcast
         );
@@ -667,7 +674,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         $.reqState[params.traceId] = SIG_REQ_ALREADY_PROCESSED;
 
-        emit ZrSigResolve(params.traceId, params.signature, params.broadcast);
+        emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
     }
 
     /**
