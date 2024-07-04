@@ -8,7 +8,7 @@ import { SignTypes } from "./zr/SignTypes.sol";
 
 import { IZrSign } from "../interfaces/zr/IZrSign.sol";
 
-// Abstract contract for QSign connections
+// Abstract contract for ZrSign connections
 abstract contract ZrSignConnect {
     // Use the RLPWriter library for various types
     using Lib_RLPWriter for address;
@@ -94,7 +94,7 @@ abstract contract ZrSignConnect {
     }
 
     // Request a signature for a transaction
-    // This function uses the QSign contract to request a signature for a transaction
+    // This function uses the ZrSign contract to request a signature for a transaction
     // Parameters:
     // - walletTypeId: The ID of the wallet type associated with the transaction
     // - fromAccountIndex: The index of the account from which the transaction will be sent
@@ -134,13 +134,13 @@ abstract contract ZrSignConnect {
     }
 
     // Get all EVM wallets associated with this contract
-    // This function uses the QSign contract to get all wallets of the EVM type that belong to this contract
+    // This function uses the ZrSign contract to get all wallets of the EVM type that belong to this contract
     function getEVMWallets() public view virtual returns (string[] memory) {
         return IZrSign(ZR_SIGN_ADDRESS).getZrKeys(EVM_WALLET_TYPE, address(this));
     }
 
     // Get an EVM wallet associated with this contract by index
-    // This function uses the QSign contract to get a specific EVM wallet that belongs to this contract, specified by an index
+    // This function uses the ZrSign contract to get a specific EVM wallet that belongs to this contract, specified by an index
     // Parameter:
     // - index: The index of the EVM wallet to be retrieved
     function getEVMWallet(uint256 index) public view returns (string memory) {
