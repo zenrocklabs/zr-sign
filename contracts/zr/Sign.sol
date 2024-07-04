@@ -19,8 +19,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
 
-    uint256 internal responseGasLimit = 200000; // avarage gas limit for key and signature response
-
     // Constant variable for Multi-Party Computation role hash, computed as keccak256 hash of the string "zenrock.role.mpc"
     bytes32 public constant MPC_ROLE =
         0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14;
@@ -380,11 +378,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 walletIndex
     ) internal view virtual returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        uint256 responseFee = block.basefee * responseGasLimit;
-        uint256 totalFee = $._baseFee + responseFee;
+        uint256 totalFee = $._baseFee;
         string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
         if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING) + responseFee;
+            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
         }
         return totalFee;
     }
