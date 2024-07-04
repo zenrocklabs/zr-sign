@@ -19,7 +19,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
 
-    uint256 internal responseGasLimit = 200000; // maximum gas limit for key and signature response
+    uint256 internal responseGasLimit = 200000; // avarage gas limit for key and signature response
 
     // Constant variable for Multi-Party Computation role hash, computed as keccak256 hash of the string "zenrock.role.mpc"
     bytes32 public constant MPC_ROLE =
