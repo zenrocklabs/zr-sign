@@ -17,7 +17,7 @@ let instance: IgnitionModuleResultsTToEthersContracts<string, {
     ZrSignProxy: NamedArtifactContractAtFuture<"ZrSign">; 
 }>;
 
-describe("QSign chain config tests", function () {
+describe("ZrSign chain config tests", function () {
     
     let accounts: Array<HardhatEthersSigner> | any;
     let regularAddress: HardhatEthersSigner;
