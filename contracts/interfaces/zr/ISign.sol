@@ -36,7 +36,7 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         address owner
     ) external view returns (uint8);
-    
+
     function estimateFee(
         bytes32 walletTypeId,
         address owner,
@@ -91,7 +91,12 @@ interface ISign is IAccessControl {
         bool broadcast
     );
 
-    event ZrSigResolve(uint256 indexed traceId, bytes signature, bool broadcast);
+    event ZrSigResolve(
+        uint256 indexed traceId,
+        bytes metaData,
+        bytes signature,
+        bool broadcast
+    );
 
     event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
 }

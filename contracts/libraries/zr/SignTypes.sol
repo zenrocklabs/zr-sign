@@ -68,6 +68,7 @@ library SignTypes {
 
     struct SignResParams {
         uint256 traceId;
+        bytes metaData;
         bytes signature;
         bool broadcast;
         bytes authSignature;
