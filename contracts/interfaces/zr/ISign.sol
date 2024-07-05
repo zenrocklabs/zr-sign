@@ -38,6 +38,10 @@ interface ISign is IAccessControl {
     ) external view returns (uint8);
 
     function estimateFee(
+        bool monitoring
+    ) external view returns (uint256);
+
+    function estimateFee(
         bytes32 walletTypeId,
         address owner,
         uint256 walletIndex
