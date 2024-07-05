@@ -363,6 +363,16 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return _estimateFee(walletTypeId, owner, walletIndex);
     }
 
+    /**
+     * @dev See the internal function `_estimateFee` for the core implementation details of fee estimation.
+     * This reference is provided to highlight where the detailed logic and calculations occur following the
+     * initial parameter preparations made in this public-facing function.
+     */
+    function estimateFee(
+        bool monitoring
+    ) external view virtual override returns (uint256) {
+        return _estimateFee(monitoring);
+    }
 
     /**
      * @dev Retrieves the current trace ID from the contract's storage. The trace ID is typically used to
@@ -759,7 +769,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
     
     /**
-     * @dev Internal function to estimate the fee required for a signature request. This function calculates the
+     * @dev Internal function to estimate the fee required for a request. This function calculates the
      * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
      *
      * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
@@ -780,6 +790,25 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         }
         return totalFee;
     }
+
+    /**
+     * @dev Internal function to estimate the fee required for a request. This function calculates the
+     * total fee based on whether monitoring is included and calculates the response fee.
+     *
+     * @param monitoring the flag specifiying if monitoring is set or not.
+     * @return uint256 The estimated fee required for the request.
+     */
+    function _estimateFee(
+        bool monitoring
+    ) internal view virtual returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        uint256 totalFee = $._baseFee;
+        if (monitoring) {
+            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
+        }
+        return totalFee;
+    }
+
     /**
      * @dev Retrieves a specific wallet by its index from the storage. This is used to access detailed information
      * about individual wallets under a particular wallet type and owner.
