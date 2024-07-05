@@ -363,28 +363,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return _estimateFee(walletTypeId, owner, walletIndex);
     }
 
-    /**
-     * @dev Internal function to estimate the fee required for a signature request. This function calculates the
-     * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
-     *
-     * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
-     * @param owner The address of the wallet owner.
-     * @param walletIndex The index of the wallet within the owner's list of wallets.
-     * @return uint256 The estimated fee required for the signature request.
-     */
-    function _estimateFee(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) internal view virtual returns (uint256) {
-        SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
-        string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
-        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
-        }
-        return totalFee;
-    }
 
     /**
      * @dev Retrieves the current trace ID from the contract's storage. The trace ID is typically used to
@@ -520,6 +498,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
+
 
     /**
      * @dev Internal function that logs a key request event. This function is called as part of the key request flow,
@@ -778,7 +757,29 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
-
+    
+    /**
+     * @dev Internal function to estimate the fee required for a signature request. This function calculates the
+     * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
+     *
+     * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
+     * @param owner The address of the wallet owner.
+     * @param walletIndex The index of the wallet within the owner's list of wallets.
+     * @return uint256 The estimated fee required for the signature request.
+     */
+    function _estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) internal view virtual returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        uint256 totalFee = $._baseFee;
+        string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
+        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
+            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
+        }
+        return totalFee;
+    }
     /**
      * @dev Retrieves a specific wallet by its index from the storage. This is used to access detailed information
      * about individual wallets under a particular wallet type and owner.
