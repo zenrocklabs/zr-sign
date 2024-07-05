@@ -86,12 +86,12 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      * @dev Sets the base fee required for initiating operations within the contract. This function is
      * restricted to roles managing tokenomics to adjust economic parameters as necessary.
      *
-     * @param newBaseFee The new base fee to be set for contract operations.
+     * @param newMPCFee The new base fee to be set for contract operations.
      */
-    function setupBaseFee(
-        uint256 newBaseFee
+    function updateMPCFee(
+        uint256 newMPCFee
     ) external virtual override onlyRole(FEE_ROLE) {
-        _setupBaseFee(newBaseFee);
+        _updateMPCFee(newMPCFee);
     }
 
     /**

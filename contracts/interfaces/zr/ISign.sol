@@ -51,7 +51,7 @@ interface ISign is IAccessControl {
 
     function getRequestState(uint256 traceId) external view returns (uint8);
 
-    function getBaseFee() external view returns (uint256);
+    function getMPCFee() external view returns (uint256);
 
     function getWalletTypeInfo(
         bytes32 walletTypeId
@@ -102,5 +102,5 @@ interface ISign is IAccessControl {
         bool broadcast
     );
 
-    event BaseFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
+    event MPCFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
 }
