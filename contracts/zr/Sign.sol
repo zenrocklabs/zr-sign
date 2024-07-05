@@ -63,7 +63,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
-        uint256 _baseFee;
+        uint256 _mpcFee;
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
@@ -87,9 +87,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     // Modifier to ensure the provided fee covers the base fee required by the contract
     modifier keyFee(bool monitoring) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
+        uint256 totalFee = $._mpcFee;
         if (monitoring) {
-            totalFee = $._baseFee * WALLET_REGISTERED_WITH_MONITORING;
+            totalFee = $._mpcFee * WALLET_REGISTERED_WITH_MONITORING;
         }
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
@@ -404,9 +404,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      *
      * @return uint256 The base fee amount required for operations, retrieved from contract storage.
      */
-    function getBaseFee() external view virtual override returns (uint256) {
+    function getMPCFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        return $._baseFee;
+        return $._mpcFee;
     }
 
     /**
@@ -756,14 +756,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @dev Sets the base fee for operations within the contract. This fee is required for key or signature requests
      * and can be updated to reflect changes in operational or network costs.
      *
-     * @param newBaseFee The new base fee to set.
+     * @param newMPCFee The new base fee to set.
      *
-     * @notice Emits a `BaseFeeUpdate` event indicating the change from the old base fee to the new base fee.
+     * @notice Emits a `MPCFeeUpdate` event indicating the change from the old base fee to the new base fee.
      */
-    function _setupBaseFee(uint256 newBaseFee) internal virtual {
+    function _updateMPCFee(uint256 newMPCFee) internal virtual {
         SignStorage storage $ = _getSignStorage();
-        emit BaseFeeUpdate($._baseFee, newBaseFee);
-        $._baseFee = newBaseFee;
+        emit MPCFeeUpdate($._mpcFee, newMPCFee);
+        $._mpcFee = newMPCFee;
     }
 
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
@@ -783,10 +783,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 walletIndex
     ) internal view virtual returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
+        uint256 totalFee = $._mpcFee;
         string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
         if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
+            totalFee = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
         }
         return totalFee;
     }
@@ -802,9 +802,9 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         bool monitoring
     ) internal view virtual returns (uint256) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._baseFee;
+        uint256 totalFee = $._mpcFee;
         if (monitoring) {
-            totalFee = ($._baseFee * WALLET_REGISTERED_WITH_MONITORING);
+            totalFee = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
         }
         return totalFee;
     }
