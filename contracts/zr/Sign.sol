@@ -51,10 +51,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
 
+    error RequestUnderPriced(uint256 actual, uint256 sent);
+
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
     error WalletAlreadyRegistered(string wallet);
-    error WalletNotRegisteredForMonitoring(string wallet);
+    error WalletNotRegisteredForMonitoring(uint256 walletIndex);
 
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
@@ -64,12 +66,15 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
         uint256 _mpcFee;
+        uint256 _totalMPCFee;
+        uint256 _respGas;
+        uint256 _respGasPriceBuffer;
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
         mapping(bytes32 => string[]) wallets;
-        mapping(string => uint8) walletRegistry;
-        mapping(uint256 => uint8) reqState;
+        mapping(bytes32 => SignTypes.WalletRegistry) walletReg;
+        mapping(uint256 => SignTypes.ReqRegistry) reqReg;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -84,37 +89,32 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     //****************************************************************** MODIFIERS ******************************************************************/
 
-    // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier keyFee(bool monitoring) {
-        SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._mpcFee;
-        if (monitoring) {
-            totalFee = $._mpcFee * WALLET_REGISTERED_WITH_MONITORING;
-        }
-        if (msg.value < totalFee) {
-            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
-        }
-        _;
-    }
-
     modifier sigFee(
         bytes32 walletTypeId,
         address owner,
         uint256 walletIndex
     ) {
-        uint256 totalFee = _estimateFee(walletTypeId, owner, walletIndex);
+        (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
+            walletTypeId,
+            owner,
+            walletIndex,
+            msg.value
+        );
         if (msg.value < totalFee) {
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
         _;
     }
 
-    modifier monitoringGuard(bytes32 walletTypeId, uint256 walletIndex) {
+    modifier monitoringGuard(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) {
         SignStorage storage $ = _getSignStorage();
-        bytes32 id = _getId(walletTypeId, _msgSender());
-        string memory wallet = $.wallets[id][walletIndex];
-        if ($.walletRegistry[wallet] != WALLET_REGISTERED_WITH_MONITORING) {
-            revert WalletNotRegisteredForMonitoring(wallet);
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        if ($.walletReg[walletId].registered != WALLET_REGISTERED_WITH_MONITORING) {
+            revert WalletNotRegisteredForMonitoring(walletIndex);
         }
         _;
     }
@@ -163,7 +163,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable override keyFee(params.monitoring) walletTypeGuard(params.walletTypeId) {
+    ) external payable override walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -220,7 +220,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            zrSignDataType: IS_HASH_MASK,
+            zrSignReqType: IS_HASH_MASK,
             broadcast: params.broadcast
         });
 
@@ -260,7 +260,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            zrSignDataType: IS_DATA_MASK,
+            zrSignReqType: IS_DATA_MASK,
             broadcast: params.broadcast
         });
 
@@ -296,7 +296,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            zrSignDataType: IS_TX_MASK,
+            zrSignReqType: IS_TX_MASK,
             broadcast: params.broadcast
         });
 
@@ -325,7 +325,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         override
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
-        monitoringGuard(params.walletTypeId, params.walletIndex)
+        monitoringGuard(params.walletTypeId, _msgSender(), params.walletIndex)
     {
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -333,7 +333,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             dstChainId: params.dstChainId,
             payload: params.payload,
             owner: _msgSender(),
-            zrSignDataType: IS_SIMPLE_TX_MASK,
+            zrSignReqType: IS_SIMPLE_TX_MASK,
             broadcast: params.broadcast
         });
 
@@ -358,9 +358,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function estimateFee(
         bytes32 walletTypeId,
         address owner,
-        uint256 walletIndex
-    ) external view virtual override returns (uint256) {
-        return _estimateFee(walletTypeId, owner, walletIndex);
+        uint256 walletIndex,
+        uint256 value
+    ) external view virtual override returns (uint256, uint256, uint256) {
+        return _estimateFee(walletTypeId, owner, walletIndex, value);
     }
 
     /**
@@ -369,9 +370,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * initial parameter preparations made in this public-facing function.
      */
     function estimateFee(
-        bool monitoring
-    ) external view virtual override returns (uint256) {
-        return _estimateFee(monitoring);
+        uint8 monitoring,
+        uint256 value
+    ) external view virtual override returns (uint256, uint256, uint256) {
+        return _estimateFee(monitoring, value);
     }
 
     /**
@@ -393,9 +395,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      *
      * @return uint256 The current state stored in the contract.
      */
-    function getRequestState(uint256 traceId) public view virtual override returns (uint8) {
+    function getRequestState(
+        uint256 traceId
+    ) public view virtual override returns (SignTypes.ReqRegistry memory) {
         SignStorage storage $ = _getSignStorage();
-        return $.reqState[traceId];
+        return $.reqReg[traceId];
     }
 
     /**
@@ -407,6 +411,16 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function getMPCFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
         return $._mpcFee;
+    }
+
+    function getRespGas() external view virtual override returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        return $._respGas;
+    }
+
+    function getRespGasPriceBuffer() external view virtual override returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        return $._respGasPriceBuffer;
     }
 
     /**
@@ -502,13 +516,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         bytes32 walletTypeId,
         uint256 walletIndex,
         address owner
-    ) public view virtual override returns (uint8) {
+    ) public view virtual override returns (SignTypes.WalletRegistry memory) {
         SignStorage storage $ = _getSignStorage();
-        return $.walletRegistry[_getWalletByIndex(walletTypeId, owner, walletIndex)];
+        return $.walletReg[_getWalletId(walletTypeId, owner, walletIndex)];
     }
 
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
-
 
     /**
      * @dev Internal function that logs a key request event. This function is called as part of the key request flow,
@@ -523,8 +536,33 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
-        bytes32 id = _getId(params.walletTypeId, _msgSender());
-        uint256 walletIndex = $.wallets[id].length;
+
+        bytes32 walletTypeId = _getUserWalletTypeId(params.walletTypeId, _msgSender());
+        uint256 walletIndex = $.wallets[walletTypeId].length;
+        bytes32 walletId = _getWalletId(walletTypeId, _msgSender(), walletIndex);
+
+        (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
+            params.monitoring,
+            msg.value
+        );
+
+        if (msg.value < totalFee) {
+            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
+        }
+
+        if ($.walletReg[walletId].registered >= WALLET_REGISTERED) {
+            if ($.walletReg[walletId].value < netResp) {
+                revert RequestUnderPriced($.walletReg[walletId].value, netResp);
+            }
+        } else {
+            $._totalMPCFee += mpc;
+        }
+
+        $.walletReg[walletId] = SignTypes.WalletRegistry({
+            registered: params.monitoring,
+            value: netResp
+        });
+
         emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
     }
 
@@ -540,6 +578,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * that the wallet index is correct, preventing unauthorized key updates.
      */
     function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
+        uint256 initialGas = gasleft();
+
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -548,7 +588,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             params.owner,
             params.walletIndex,
             params.wallet,
-            params.monitoring
+            params.walletRegistration
         );
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
@@ -556,7 +596,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         _validateAddress(params.wallet);
 
-        bytes32 id = _getId(params.walletTypeId, params.owner);
+        bytes32 id = _getUserWalletTypeId(params.walletTypeId, params.owner);
 
         if ($.wallets[id].length != params.walletIndex) {
             revert IncorrectWalletIndex({
@@ -565,19 +605,33 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             });
         }
 
-        if ($.walletRegistry[params.wallet] >= WALLET_REGISTERED) {
+        bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
+        if ($.walletReg[walletId].registered >= WALLET_REGISTERED) {
             revert WalletAlreadyRegistered({ wallet: params.wallet });
         }
 
         $.wallets[id].push(params.wallet);
 
-        if (params.monitoring) {
-            $.walletRegistry[params.wallet] = WALLET_REGISTERED_WITH_MONITORING;
-        } else {
-            $.walletRegistry[params.wallet] = WALLET_REGISTERED;
-        }
-
         emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.wallet);
+
+        // Calculate the actual gas used and the refund amount
+        uint256 gasUsed = (initialGas - gasleft()) + 22000;
+        uint256 gasPrice = tx.gasprice;
+        uint256 actualGasCost = gasUsed * gasPrice;
+        uint256 netRespFee = $.walletReg[walletId].value;
+
+        if (netRespFee > actualGasCost) {
+            actualGasCost = (gasUsed + 21000) * gasPrice;
+            (bool successGasCost, ) = _msgSender().call{ value: actualGasCost }(""); // 21,000 gas
+            require(successGasCost, "Transfer failed");
+
+            uint256 excessAmount = netRespFee - actualGasCost;
+            (bool successExcess, ) = params.owner.call{ value: excessAmount }(""); // 21,000 gas
+            require(successExcess, "Transfer failed");
+        } else {
+            (bool successNetResp, ) = _msgSender().call{ value: netRespFee }(""); // 21,000 gas
+            require(successNetResp, "Transfer failed");
+        }
     }
 
     /**
@@ -606,25 +660,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             _getWalletByIndex(params.walletTypeId, params.owner, params.walletIndex)
         );
 
-        bytes32 walletId = keccak256(
-            abi.encode(params.walletTypeId, params.owner, params.walletIndex)
-        );
+        bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
 
         $._traceId = $._traceId + 1;
 
-        $.reqState[$._traceId] = SIG_REQ_IN_PROGRESS;
+        $.reqReg[$._traceId] = SignTypes.ReqRegistry({ status: SIG_REQ_IN_PROGRESS, value: 0 });
 
-        emit ZrSigRequest(
-            $._traceId,
-            walletId,
-            params.walletTypeId,
-            params.owner,
-            params.walletIndex,
-            params.dstChainId,
-            params.payload,
-            params.zrSignDataType,
-            params.broadcast
-        );
+        emit ZrSigRequest($._traceId, walletId, params);
     }
 
     /**
@@ -652,13 +694,13 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
 
-        if ($.reqState[params.traceId] != SIG_REQ_IN_PROGRESS) {
+        if ($.reqReg[params.traceId].status != SIG_REQ_IN_PROGRESS) {
             revert RequestNotFoundOrAlreadyProcessed({ traceId: params.traceId });
         }
 
         _mustValidateAuthSignature(payloadHash, params.authSignature);
 
-        $.reqState[params.traceId] = SIG_REQ_ALREADY_PROCESSED;
+        $.reqReg[params.traceId].status = SIG_REQ_ALREADY_PROCESSED;
 
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
     }
@@ -752,6 +794,18 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         }
     }
 
+    function _withdrawMPCFees() internal virtual {
+        SignStorage storage $ = _getSignStorage();
+
+        address payable sender = payable(_msgSender());
+        uint256 amount = $._totalMPCFee;
+        (bool success, ) = sender.call{ value: amount }("");
+        require(success, "Failed to send Ether"); // Checks if the low-level call was successful
+        $._totalMPCFee = 0;
+
+        emit MPCFeeWithdraw(sender, amount);
+    }
+
     /**
      * @dev Sets the base fee for operations within the contract. This fee is required for key or signature requests
      * and can be updated to reflect changes in operational or network costs.
@@ -766,8 +820,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         $._mpcFee = newMPCFee;
     }
 
+    function _updateRespGas(uint256 newRespGas) internal virtual {
+        SignStorage storage $ = _getSignStorage();
+        emit RespGasUpdate($._respGas, newRespGas);
+        $._respGas = newRespGas;
+    }
+
+    function _updateRespGasBuff(uint256 newRespGasPriceBuff) internal virtual {
+        SignStorage storage $ = _getSignStorage();
+        emit RespGasPriceBufferUpdate($._respGasPriceBuffer, newRespGasPriceBuff);
+        $._respGasPriceBuffer = newRespGasPriceBuff;
+    }
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
-    
+
     /**
      * @dev Internal function to estimate the fee required for a request. This function calculates the
      * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
@@ -775,38 +840,71 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
      * @param owner The address of the wallet owner.
      * @param walletIndex The index of the wallet within the owner's list of wallets.
-     * @return uint256 The estimated fee required for the signature request.
+     * @param value msg.value sent by the user.
+     * @return mpc The fee related to MPC.
+     * @return netResp The estimated response fee.
+     * @return total The total estimated fee required for the request.
      */
     function _estimateFee(
         bytes32 walletTypeId,
         address owner,
-        uint256 walletIndex
-    ) internal view virtual returns (uint256) {
+        uint256 walletIndex,
+        uint256 value
+    ) internal view virtual returns (uint256 mpc, uint256 netResp, uint256 total) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._mpcFee;
-        string memory wallet = _getWalletByIndex(walletTypeId, owner, walletIndex);
-        if ($.walletRegistry[wallet] == WALLET_REGISTERED_WITH_MONITORING) {
-            totalFee = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
+
+        mpc = $._mpcFee;
+
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+
+        if ($.walletReg[walletId].registered == WALLET_REGISTERED_WITH_MONITORING) {
+            mpc = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
         }
-        return totalFee;
+
+        netResp = ($._respGas * block.basefee * $._respGasPriceBuffer) / 100;
+        total = mpc + netResp;
+
+        // If the user sends more than the calculated total, add the excess to netResp
+        if (value > total) {
+            netResp += (value - total);
+            total = mpc + netResp;
+        }
+
+        return (mpc, netResp, total);
     }
 
     /**
      * @dev Internal function to estimate the fee required for a request. This function calculates the
      * total fee based on whether monitoring is included and calculates the response fee.
      *
-     * @param monitoring the flag specifiying if monitoring is set or not.
-     * @return uint256 The estimated fee required for the request.
+     * @param monitoring The flag specifying if monitoring is set or not.
+     * @param value msg.value sent by the user.
+     * @return mpc The fee related to MPC.
+     * @return netResp The estimated response fee.
+     * @return total The total estimated fee required for the request.
      */
     function _estimateFee(
-        bool monitoring
-    ) internal view virtual returns (uint256) {
+        uint8 monitoring,
+        uint256 value
+    ) internal view virtual returns (uint256 mpc, uint256 netResp, uint256 total) {
         SignStorage storage $ = _getSignStorage();
-        uint256 totalFee = $._mpcFee;
-        if (monitoring) {
-            totalFee = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
+        mpc = $._mpcFee;
+
+        if (monitoring == WALLET_REGISTERED_WITH_MONITORING) {
+            mpc = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
         }
-        return totalFee;
+
+        netResp = ($._respGas * block.basefee * $._respGasPriceBuffer) / 100;
+
+        total = mpc + netResp;
+
+        // If the user sends more than the calculated total, add the excess to netResp
+        if (value > total) {
+            netResp += (value - total);
+            total = mpc + netResp;
+        }
+
+        return (mpc, netResp, total);
     }
 
     /**
@@ -825,7 +923,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     ) internal view virtual returns (string memory) {
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 id = _getId(walletTypeId, owner);
+        bytes32 id = _getUserWalletTypeId(walletTypeId, owner);
         return $.wallets[id][index];
     }
 
@@ -843,7 +941,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     ) internal view virtual returns (string[] memory) {
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 id = _getId(walletTypeId, owner);
+        bytes32 id = _getUserWalletTypeId(walletTypeId, owner);
         return $.wallets[id];
     }
 
@@ -857,11 +955,19 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @param owner The owner's address for which the ID is being generated.
      * @return id bytes32 A unique identifier derived from the chain ID, contract address, wallet type, and owner's address.
      */
-    function _getId(
+    function _getUserWalletTypeId(
         bytes32 walletTypeId,
         address owner
     ) internal view virtual returns (bytes32 id) {
         return keccak256(abi.encode(block.chainid, address(this), walletTypeId, owner));
+    }
+
+    function _getWalletId(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) internal pure virtual returns (bytes32) {
+        return keccak256(abi.encode(walletTypeId, owner, walletIndex));
     }
 
     /**

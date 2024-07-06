@@ -35,23 +35,29 @@ interface ISign is IAccessControl {
         bytes32 walletTypeId,
         uint256 walletIndex,
         address owner
-    ) external view returns (uint8);
-
-    function estimateFee(
-        bool monitoring
-    ) external view returns (uint256);
+    ) external view returns (SignTypes.WalletRegistry memory);
 
     function estimateFee(
         bytes32 walletTypeId,
         address owner,
-        uint256 walletIndex
-    ) external view returns (uint256);
+        uint256 walletIndex,
+        uint256 value
+    ) external view returns (uint256 mpc, uint256 netResp, uint256 total);
+
+    function estimateFee(
+        uint8 monitoring,
+        uint256 value
+    ) external view returns (uint256 mpc, uint256 netResp, uint256 total);
 
     function getTraceId() external view returns (uint256);
 
-    function getRequestState(uint256 traceId) external view returns (uint8);
+    function getRequestState(
+        uint256 traceId
+    ) external view returns (SignTypes.ReqRegistry memory);
 
     function getMPCFee() external view returns (uint256);
+    function getRespGas() external view returns (uint256);
+    function getRespGasPriceBuffer() external view returns (uint256);
 
     function getWalletTypeInfo(
         bytes32 walletTypeId
@@ -73,7 +79,7 @@ interface ISign is IAccessControl {
         bytes32 indexed walletTypeId,
         address indexed owner,
         uint256 indexed walletIndex,
-        bool monitoring
+        uint8 walletRegistration
     );
 
     event ZrKeyResolve(
@@ -86,13 +92,7 @@ interface ISign is IAccessControl {
     event ZrSigRequest(
         uint256 indexed traceId,
         bytes32 indexed walletId,
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex,
-        bytes32 dstChainId,
-        bytes payload,
-        uint8 zrSignDataType,
-        bool broadcast
+        SignTypes.SigReqParams params
     );
 
     event ZrSigResolve(
@@ -103,4 +103,11 @@ interface ISign is IAccessControl {
     );
 
     event MPCFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
+    event RespGasUpdate(uint256 indexed oldGas, uint256 indexed newGas);
+    event RespGasPriceBufferUpdate(
+        uint256 indexed oldGasPriceBuff,
+        uint256 indexed newGasPriceBuff
+    );
+
+    event MPCFeeWithdraw(address indexed to, uint256 indexed amount);
 }
