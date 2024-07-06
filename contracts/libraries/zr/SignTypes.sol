@@ -6,7 +6,17 @@ pragma solidity 0.8.19;
 library SignTypes {
     struct ZrKeyReqParams {
         bytes32 walletTypeId;
-        bool monitoring;
+        uint8 monitoring;
+    }
+
+    struct WalletRegistry {
+        uint8 registered;
+        uint256 value;
+    }
+
+    struct ReqRegistry {
+        uint8 status;
+        uint256 value;
     }
 
     struct ZrKeyResParams {
@@ -14,7 +24,7 @@ library SignTypes {
         address owner;
         uint256 walletIndex;
         string wallet;
-        bool monitoring;
+        uint8 walletRegistration;
         bytes authSignature;
     }
 
@@ -62,7 +72,7 @@ library SignTypes {
         bytes32 dstChainId;
         bytes payload;
         address owner;
-        uint8 zrSignDataType;
+        uint8 zrSignReqType;
         bool broadcast;
     }
 
