@@ -598,23 +598,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.wallet);
 
         // Calculate the actual gas used and the refund amount
-        uint256 gasUsed = (initialGas - gasleft()) + 22000;
-        uint256 gasPrice = tx.gasprice;
-        uint256 actualGasCost = gasUsed * gasPrice;
-        uint256 netRespFee = $.walletReg[walletId].value;
-
-        if (netRespFee > actualGasCost) {
-            actualGasCost = (gasUsed + 21000) * gasPrice;
-            (bool successGasCost, ) = _msgSender().call{ value: actualGasCost }(""); // 21,000 gas
-            require(successGasCost, "Transfer failed");
-
-            uint256 excessAmount = netRespFee - actualGasCost;
-            (bool successExcess, ) = params.owner.call{ value: excessAmount }(""); // 21,000 gas
-            require(successExcess, "Transfer failed");
-        } else {
-            (bool successNetResp, ) = _msgSender().call{ value: netRespFee }(""); // 21,000 gas
-            require(successNetResp, "Transfer failed");
-        }
+        _processGasRefund(initialGas, netRespFee, params.owner);
     }
 
     /**
@@ -699,10 +683,17 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
 
         // Calculate the actual gas used and the refund amount
+        _processGasRefund(initialGas, netRespFee, params.owner);
+    }
+
+    function _processGasRefund(
+        uint256 initialGas,
+        uint256 netRespFee,
+        address recipient
+    ) internal nonReentrant {
         uint256 gasUsed = (initialGas - gasleft()) + 22000;
         uint256 gasPrice = tx.gasprice;
         uint256 actualGasCost = gasUsed * gasPrice;
-        uint256 netRespFee = $.reqReg[params.traceId].value;
 
         if (netRespFee > actualGasCost) {
             actualGasCost = (gasUsed + 21000) * gasPrice;
@@ -710,7 +701,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             require(successGasCost, "Transfer failed");
 
             uint256 excessAmount = netRespFee - actualGasCost;
-            (bool successExcess, ) = params.owner.call{ value: excessAmount }(""); // 21,000 gas
+            (bool successExcess, ) = recipient.call{ value: excessAmount }(""); // 21,000 gas
             require(successExcess, "Transfer failed");
         } else {
             (bool successNetResp, ) = _msgSender().call{ value: netRespFee }(""); // 21,000 gas
