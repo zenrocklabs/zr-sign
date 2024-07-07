@@ -89,23 +89,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
     //****************************************************************** MODIFIERS ******************************************************************/
 
-    modifier sigFee(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) {
-        (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
-            walletTypeId,
-            owner,
-            walletIndex,
-            msg.value
-        );
-        if (msg.value < totalFee) {
-            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
-        }
-        _;
-    }
-
     modifier monitoringGuard(
         bytes32 walletTypeId,
         address owner,
@@ -646,14 +629,17 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * @notice This function also applies the `sigFee` modifier to ensure that the appropriate fees are paid with the request.
      * Ensure that all addresses and wallet indices are validated prior to calling this function.
      */
-    function _sigReq(
-        SignTypes.SigReqParams memory params
-    )
-        internal
-        virtual
-        sigFee(params.walletTypeId, params.owner, params.walletIndex)
-        whenNotPaused
-    {
+    function _sigReq(SignTypes.SigReqParams memory params) internal virtual whenNotPaused {
+        (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
+            params.walletTypeId,
+            params.owner,
+            params.walletIndex,
+            msg.value
+        );
+        if (msg.value < totalFee) {
+            revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
+        }
+
         SignStorage storage $ = _getSignStorage();
 
         _validateAddress(
@@ -664,7 +650,12 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         $._traceId = $._traceId + 1;
 
-        $.reqReg[$._traceId] = SignTypes.ReqRegistry({ status: SIG_REQ_IN_PROGRESS, value: 0 });
+        $.reqReg[$._traceId] = SignTypes.ReqRegistry({
+            status: SIG_REQ_IN_PROGRESS,
+            value: netResp
+        });
+
+        $._totalMPCFee += mpc;
 
         emit ZrSigRequest($._traceId, walletId, params);
     }
@@ -682,11 +673,14 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
      */
     function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
+        uint256 initialGas = gasleft();
+
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
             SRC_CHAIN_ID,
             params.traceId,
+            params.owner,
             params.metaData,
             params.signature,
             params.broadcast
@@ -703,6 +697,25 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         $.reqReg[params.traceId].status = SIG_REQ_ALREADY_PROCESSED;
 
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
+
+        // Calculate the actual gas used and the refund amount
+        uint256 gasUsed = (initialGas - gasleft()) + 22000;
+        uint256 gasPrice = tx.gasprice;
+        uint256 actualGasCost = gasUsed * gasPrice;
+        uint256 netRespFee = $.reqReg[params.traceId].value;
+
+        if (netRespFee > actualGasCost) {
+            actualGasCost = (gasUsed + 21000) * gasPrice;
+            (bool successGasCost, ) = _msgSender().call{ value: actualGasCost }(""); // 21,000 gas
+            require(successGasCost, "Transfer failed");
+
+            uint256 excessAmount = netRespFee - actualGasCost;
+            (bool successExcess, ) = params.owner.call{ value: excessAmount }(""); // 21,000 gas
+            require(successExcess, "Transfer failed");
+        } else {
+            (bool successNetResp, ) = _msgSender().call{ value: netRespFee }(""); // 21,000 gas
+            require(successNetResp, "Transfer failed");
+        }
     }
 
     /**
