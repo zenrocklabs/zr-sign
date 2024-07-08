@@ -55,11 +55,25 @@ export default buildModule("ZrSignInit", (m) => {
     });
 
     console.log("Setting up base fee...");
-    m.call(ZrSignProxy, "setupBaseFee", [500000000000000], {
+    m.call(ZrSignProxy, "updateMPCFee", [500000000000000], {
         from: m.getAccount(3),
         after: [grantRoleTokenomics],
     });
     console.log("Base fee set up.");
+
+    console.log("Setting up response gas...");
+    m.call(ZrSignProxy, "updateRespGas", [200000], {
+        from: m.getAccount(3),
+        after: [grantRoleTokenomics],
+    });
+    console.log("Response gas set up.");
+
+    console.log("Setting up response gas buffer...");
+    m.call(ZrSignProxy, "updateRespGasBuffer", [120], { //120 = 20%
+        from: m.getAccount(3),
+        after: [grantRoleTokenomics],
+    });
+    console.log("Response gas buffer set up.");
 
     console.log("ZrSignInit module initialization completed.");
 

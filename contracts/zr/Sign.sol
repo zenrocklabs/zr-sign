@@ -8,13 +8,19 @@ import { AccessControlUpgradeable } from "../AccessControlUpgradeable.sol"; // A
 import { PausableUpgradeable } from "../PausableUpgradeable.sol"; // Pausable control functionalities
 import { ECDSA } from "../libraries/ECDSA.sol"; // Library for Elliptic Curve Digital Signature Algorithm operations
 import { MessageHashUtils } from "../libraries/MessageHashUtils.sol"; // Utility functions for message hashing
+import { ReentrancyGuardUpgradeable } from "../ReentrancyGuardUpgradeable.sol";
 
 import { ISign } from "../interfaces/zr/ISign.sol"; // Interface for the Sign contract
 import { SignTypes } from "../libraries/zr/SignTypes.sol"; // Definitions of various types used within the Sign contract
 import { ZrSignTypes } from "../libraries/zr/ZrSignTypes.sol"; // Definitions of types specific to Zenrock implementations
 
 // Abstract contract for signing functionalities, inheriting from AccessControl for role management
-abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
+abstract contract Sign is
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable,
+    ISign
+{
     using ZrSignTypes for ZrSignTypes.ChainInfo; // Attach methods from ZrSignTypes to ChainInfo type
     using MessageHashUtils for bytes32; // Attach message hashing utilities to bytes32 type
     using ECDSA for bytes32; // Attach ECDSA functions to bytes32 type
@@ -598,7 +604,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.wallet);
 
         // Calculate the actual gas used and the refund amount
-        _processGasRefund(initialGas, netRespFee, params.owner);
+        _processGasRefund(initialGas, $.walletReg[walletId].value, params.owner);
     }
 
     /**
@@ -683,7 +689,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
 
         // Calculate the actual gas used and the refund amount
-        _processGasRefund(initialGas, netRespFee, params.owner);
+        _processGasRefund(initialGas, $.reqReg[params.traceId].value, params.owner);
     }
 
     function _processGasRefund(

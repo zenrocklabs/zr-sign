@@ -2,12 +2,11 @@
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 pragma solidity 0.8.19;
-import { ReentrancyGuardUpgradeable } from "../ReentrancyGuardUpgradeable.sol";
 import { Sign } from "./Sign.sol";
 import { ZrSignTypes } from "../libraries/zr/ZrSignTypes.sol";
 import { IZrSign } from "../interfaces/zr/IZrSign.sol";
 
-contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
+contract ZrSign is Sign, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
 
     bytes32 public constant FEE_ROLE =
@@ -88,15 +87,11 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      *
      * @param newMPCFee The new base fee to be set for contract operations.
      */
-    function updateMPCFee(
-        uint256 newMPCFee
-    ) external virtual override onlyRole(FEE_ROLE) {
+    function updateMPCFee(uint256 newMPCFee) external virtual override onlyRole(FEE_ROLE) {
         _updateMPCFee(newMPCFee);
     }
 
-    function updateRespGas(
-        uint256 newRespGas
-    ) external virtual override onlyRole(FEE_ROLE) {
+    function updateRespGas(uint256 newRespGas) external virtual override onlyRole(FEE_ROLE) {
         _updateRespGas(newRespGas);
     }
 
