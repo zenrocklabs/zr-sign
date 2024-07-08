@@ -40,8 +40,10 @@ abstract contract Sign is
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
     uint8 public constant IS_SIMPLE_TX_MASK = 1 << 3; // 0b1000 //Simple Tx => to, value, data.
 
-    uint8 private constant WALLET_REGISTERED = 1;
-    uint8 private constant WALLET_REGISTERED_WITH_MONITORING = 2;
+    uint8 private constant WALLET_REQUESTED = 1;
+    uint8 private constant WALLET_REGISTERED = 2;
+
+    uint8 private constant OPTIONS_MONITORING = 2;
 
     uint8 private constant SIG_REQ_IN_PROGRESS = 1;
     uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
@@ -61,7 +63,9 @@ abstract contract Sign is
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
+
     error WalletAlreadyRegistered(string wallet);
+    error WalletNotRequested(string wallet);
     error WalletNotRegisteredForMonitoring(uint256 walletIndex);
 
     error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
@@ -102,7 +106,7 @@ abstract contract Sign is
     ) {
         SignStorage storage $ = _getSignStorage();
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
-        if ($.walletReg[walletId].registered != WALLET_REGISTERED_WITH_MONITORING) {
+        if ($.walletReg[walletId].options < WALLET_REGISTERED_WITH_MONITORING) {
             revert WalletNotRegisteredForMonitoring(walletIndex);
         }
         _;
@@ -524,14 +528,15 @@ abstract contract Sign is
      * have been met.
      */
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
+        require(params.options >= 1, "_zrKeyReq:options should be greater than 0");
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 walletTypeId = _getUserWalletTypeId(params.walletTypeId, _msgSender());
-        uint256 walletIndex = $.wallets[walletTypeId].length;
-        bytes32 walletId = _getWalletId(walletTypeId, _msgSender(), walletIndex);
+        bytes32 userWorkspaceId = _getUserWorkspaceId(params.walletTypeId, _msgSender());
+        uint256 walletIndex = $.wallets[userWorkspaceId].length;
+        bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
 
         (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
-            params.monitoring,
+            params.options,
             msg.value
         );
 
@@ -539,20 +544,22 @@ abstract contract Sign is
             revert InsufficientFee({ requiredFee: totalFee, providedFee: msg.value });
         }
 
-        if ($.walletReg[walletId].registered >= WALLET_REGISTERED) {
+        if ($.walletReg[walletId].status >= WALLET_REQUESTED) {
             if ($.walletReg[walletId].value < netResp) {
                 revert RequestUnderPriced($.walletReg[walletId].value, netResp);
             }
+            $.walletReg[walletId].value += netResp;
         } else {
             $._totalMPCFee += mpc;
         }
 
         $.walletReg[walletId] = SignTypes.WalletRegistry({
-            registered: params.monitoring,
+            status: WALLET_REQUESTED,
+            options: params.options,
             value: netResp
         });
 
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.monitoring);
+        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.options);
     }
 
     /**
@@ -567,8 +574,6 @@ abstract contract Sign is
      * that the wallet index is correct, preventing unauthorized key updates.
      */
     function _zrKeyRes(SignTypes.ZrKeyResParams memory params) internal virtual whenNotPaused {
-        uint256 initialGas = gasleft();
-
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -577,7 +582,7 @@ abstract contract Sign is
             params.owner,
             params.walletIndex,
             params.wallet,
-            params.walletRegistration
+            params.options
         );
 
         bytes32 payloadHash = keccak256(payload).toEthSignedMessageHash();
@@ -585,26 +590,32 @@ abstract contract Sign is
 
         _validateAddress(params.wallet);
 
-        bytes32 id = _getUserWalletTypeId(params.walletTypeId, params.owner);
+        bytes32 userWorkspaceId = _getUserWorkspaceId(params.walletTypeId, params.owner);
 
-        if ($.wallets[id].length != params.walletIndex) {
+        if ($.wallets[userWorkspaceId].length != params.walletIndex) {
             revert IncorrectWalletIndex({
-                expectedIndex: $.wallets[id].length,
+                expectedIndex: $.wallets[userWorkspaceId].length,
                 providedIndex: params.walletIndex
             });
         }
 
         bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
-        if ($.walletReg[walletId].registered >= WALLET_REGISTERED) {
+        SignTypes.WalletRegistry reg = $.walletReg[walletId];
+        if (reg.status != WALLET_REQUESTED) {
+            revert WalletNotRequested({ wallet: params.wallet });
+        }
+
+        if (reg.status == WALLET_REGISTERED) {
             revert WalletAlreadyRegistered({ wallet: params.wallet });
         }
 
-        $.wallets[id].push(params.wallet);
+        $.wallets[userWorkspaceId].push(params.wallet);
+        $.walletReg[walletId].status = WALLET_REGISTERED;
 
         emit ZrKeyResolve(params.walletTypeId, params.owner, params.walletIndex, params.wallet);
 
         // Calculate the actual gas used and the refund amount
-        _processGasRefund(initialGas, $.walletReg[walletId].value, params.owner);
+        _processGasRefund($._respGas, $.walletReg[walletId].value, params.owner);
     }
 
     /**
@@ -663,8 +674,6 @@ abstract contract Sign is
      * The function emits a `ZrSigResolve` event indicating the resolution of a signature request.
      */
     function _sigRes(SignTypes.SignResParams memory params) internal virtual whenNotPaused {
-        uint256 initialGas = gasleft();
-
         SignStorage storage $ = _getSignStorage();
 
         bytes memory payload = abi.encode(
@@ -687,9 +696,10 @@ abstract contract Sign is
         $.reqReg[params.traceId].status = SIG_REQ_ALREADY_PROCESSED;
 
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
-
+        uint256 netRespValue = $.reqReg[params.traceId].value;
+        uint256 initialGas = $._respGas;
         // Calculate the actual gas used and the refund amount
-        _processGasRefund(initialGas, $.reqReg[params.traceId].value, params.owner);
+        _processGasRefund(initialGas, netRespValue, params.owner);
     }
 
     function _processGasRefund(
@@ -697,20 +707,21 @@ abstract contract Sign is
         uint256 netRespFee,
         address recipient
     ) internal nonReentrant {
-        uint256 gasUsed = (initialGas - gasleft()) + 7210;
         uint256 gasPrice = tx.gasprice;
-        uint256 actualGasCost = gasUsed * gasPrice;
+        address payable sender = payable(_msgSender());
 
+        uint256 gasUsed = (initialGas - gasleft()) + 7210;
+        uint256 actualGasCost = gasUsed * gasPrice;
         if (netRespFee > actualGasCost) {
             actualGasCost = (gasUsed + 7210) * gasPrice;
-            (bool successGasCost, ) = _msgSender().call{ value: actualGasCost }(""); // 7210 gas
+            (bool successGasCost, ) = sender.call{ value: actualGasCost }(""); // 7210 gas
             require(successGasCost, "Transfer failed");
 
             uint256 excessAmount = netRespFee - actualGasCost;
             (bool successExcess, ) = recipient.call{ value: excessAmount }(""); // 7210 gas
             require(successExcess, "Transfer failed");
         } else {
-            (bool successNetResp, ) = _msgSender().call{ value: netRespFee }(""); // 7210 gas
+            (bool successNetResp, ) = sender.call{ value: netRespFee }(""); // 7210 gas
             require(successNetResp, "Transfer failed");
         }
     }
@@ -863,15 +874,10 @@ abstract contract Sign is
     ) internal view virtual returns (uint256 mpc, uint256 netResp, uint256 total) {
         SignStorage storage $ = _getSignStorage();
 
-        mpc = $._mpcFee;
-
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+        mpc = $._mpcFee * $.walletReg[walletId].options;
 
-        if ($.walletReg[walletId].registered == WALLET_REGISTERED_WITH_MONITORING) {
-            mpc = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
-        }
-
-        netResp = ($._respGas * block.basefee * $._respGasPriceBuffer) / 100;
+        netResp = ($._respGas * ((block.basefee * $._respGasPriceBuffer) / 100));
         total = mpc + netResp;
 
         // If the user sends more than the calculated total, add the excess to netResp
@@ -894,15 +900,11 @@ abstract contract Sign is
      * @return total The total estimated fee required for the request.
      */
     function _estimateFee(
-        uint8 monitoring,
+        uint8 options,
         uint256 value
     ) internal view virtual returns (uint256 mpc, uint256 netResp, uint256 total) {
         SignStorage storage $ = _getSignStorage();
-        mpc = $._mpcFee;
-
-        if (monitoring == WALLET_REGISTERED_WITH_MONITORING) {
-            mpc = ($._mpcFee * WALLET_REGISTERED_WITH_MONITORING);
-        }
+        mpc = $._mpcFee * options;
 
         netResp = ($._respGas * block.basefee * $._respGasPriceBuffer) / 100;
 
@@ -933,8 +935,8 @@ abstract contract Sign is
     ) internal view virtual returns (string memory) {
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 id = _getUserWalletTypeId(walletTypeId, owner);
-        return $.wallets[id][index];
+        bytes32 userWorkspaceId = _getUserWorkspaceId(walletTypeId, owner);
+        return $.wallets[userWorkspaceId][index];
     }
 
     /**
@@ -950,9 +952,7 @@ abstract contract Sign is
         address owner
     ) internal view virtual returns (string[] memory) {
         SignStorage storage $ = _getSignStorage();
-
-        bytes32 id = _getUserWalletTypeId(walletTypeId, owner);
-        return $.wallets[id];
+        return $.wallets[_getUserWorkspaceId(walletTypeId, owner)];
     }
 
     //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
@@ -965,7 +965,7 @@ abstract contract Sign is
      * @param owner The owner's address for which the ID is being generated.
      * @return id bytes32 A unique identifier derived from the chain ID, contract address, wallet type, and owner's address.
      */
-    function _getUserWalletTypeId(
+    function _getUserWorkspaceId(
         bytes32 walletTypeId,
         address owner
     ) internal view virtual returns (bytes32 id) {
