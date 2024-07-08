@@ -10,7 +10,7 @@ library SignTypes {
     }
 
     struct WalletRegistry {
-        uint8 state;
+        uint8 status;
         uint8 options;
         uint256 value;
     }
