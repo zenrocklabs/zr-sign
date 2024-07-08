@@ -79,7 +79,7 @@ interface ISign is IAccessControl {
         bytes32 indexed walletTypeId,
         address indexed owner,
         uint256 indexed walletIndex,
-        uint8 walletRegistration
+        uint8 options
     );
 
     event ZrKeyResolve(
