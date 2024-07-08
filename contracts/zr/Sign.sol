@@ -106,7 +106,7 @@ abstract contract Sign is
     ) {
         SignStorage storage $ = _getSignStorage();
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
-        if ($.walletReg[walletId].options < WALLET_REGISTERED_WITH_MONITORING) {
+        if ($.walletReg[walletId].options < OPTIONS_MONITORING) {
             revert WalletNotRegisteredForMonitoring(walletIndex);
         }
         _;
@@ -893,7 +893,7 @@ abstract contract Sign is
      * @dev Internal function to estimate the fee required for a request. This function calculates the
      * total fee based on whether monitoring is included and calculates the response fee.
      *
-     * @param monitoring The flag specifying if monitoring is set or not.
+     * @param options The flag specifying if monitoring is set or not.
      * @param value msg.value sent by the user.
      * @return mpc The fee related to MPC.
      * @return netResp The estimated response fee.
