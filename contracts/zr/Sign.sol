@@ -600,7 +600,7 @@ abstract contract Sign is
         }
 
         bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
-        SignTypes.WalletRegistry reg = $.walletReg[walletId];
+        SignTypes.WalletRegistry memory reg = $.walletReg[walletId];
         if (reg.status != WALLET_REQUESTED) {
             revert WalletNotRequested({ wallet: params.wallet });
         }
