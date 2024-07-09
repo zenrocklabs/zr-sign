@@ -548,16 +548,16 @@ abstract contract Sign is
             if ($.walletReg[walletId].value < netResp) {
                 revert RequestUnderPriced($.walletReg[walletId].value, netResp);
             }
-            $.walletReg[walletId].value += netResp;
+            uint256 currentValue = $.walletReg[walletId].value;
+            $.walletReg[walletId].value = currentValue + totalFee;
         } else {
             $._totalMPCFee += mpc;
+            $.walletReg[walletId] = SignTypes.WalletRegistry({
+                status: WALLET_REQUESTED,
+                options: params.options,
+                value: netResp
+            });
         }
-
-        $.walletReg[walletId] = SignTypes.WalletRegistry({
-            status: WALLET_REQUESTED,
-            options: params.options,
-            value: netResp
-        });
 
         emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.options);
     }

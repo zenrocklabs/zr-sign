@@ -7,7 +7,7 @@ const chainIdAmoy = "eip155:80002";
 const chainIdBlast = "eip155:168587773";
 const chainIdScroll = "eip155:534351";
 
-const mpcAddress = "0x2bb9cB3c6a87e537Ba89b214004dC691d8a83eF1";
+const mpcAddress = "0xF9F59E34fe863918be62EE585364Eb46ed7142DD";
 
 export default buildModule("ZrSignInit", (m) => {
     console.log("Starting ZrSignInit module initialization...");
