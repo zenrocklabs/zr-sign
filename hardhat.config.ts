@@ -58,7 +58,7 @@ const hardhatConfig: HardhatUserConfig = {
       polygonMumbai: conf.POLYGON_KEY,
       polygonAmoy: conf.POLYGON_KEY,
       optimism: conf.OPTIMISM_KEY,
-      arbitrum: conf.ARBITRUM_KEY,
+      arbitrumSepolia: conf.ARBITRUM_KEY,
       binance: conf.BINANCE_KEY,
       base: conf.BASE_KEY
     }
