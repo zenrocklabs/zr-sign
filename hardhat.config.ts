@@ -1,26 +1,13 @@
 import { HardhatUserConfig } from "hardhat/config";
-
-// Hardhat extensions
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-ethers";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import { config as conf } from "./config";
 
-let conf = {
-  MNEMONIC: "mandate dance blood bag income element maid void install hungry quarter rack",
-  INFURA_KEY: "2735c6483f3e4024b2862bbabe2edf19",
-  QUICKNODE_ZK_POLYGON_KEY: "",
-  ETHERSCAN_KEY: "",
-  ARBITRUM_KEY: "",
-  POLYGON_KEY: "",
-  ZK_POLYGON_KEY: "",
-  AVALANCHE_KEY: "",
-  OPTIMISM_KEY: "",
-};
-
-const config: HardhatUserConfig = {
+const hardhatConfig: HardhatUserConfig = {
   solidity: {
     version: "0.8.19",
     settings: {
@@ -35,15 +22,24 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: infuraProvider("sepolia"),
       accounts: hdWallet()
+    },
+    polygon: {
+      url: infuraProvider("polygon-amoy"),
+      accounts: hdWallet()
+    },
+    avalancheFuji: {
+      url: infuraProvider("avalanche-fuji"),
+      accounts: hdWallet()
     }
   },
   etherscan: {
     apiKey: {
-      sepolia: "QEWTQ1JEKQFT7I5E66NVU74D49VUTZH7N4",
-      avalancheFujiTestnet: "TDDWRZ349N42TWHNPVPPAFZVCF9D97CV7G",
-      polygonMumbai: "WZWUQZR5FVKNQ3TAWVRP8IZQIREHY43XZY",
-      optimism: "YOUR_OPTIMISM_API_KEY",
-      arbitrum: "YOUR_ARBISCAN_API_KEY"
+      sepolia: conf.ETHERSCAN_KEY,
+      avalancheFujiTestnet: conf.AVALANCHE_KEY,
+      polygonMumbai: conf.POLYGON_KEY,
+      polygon: conf.POLYGON_KEY,
+      optimism: conf.OPTIMISM_KEY,
+      arbitrum: conf.ARBITRUM_KEY
     }
   },
   paths: {
@@ -59,26 +55,24 @@ const config: HardhatUserConfig = {
 
 function infuraProvider(network: string) {
   if (!conf.INFURA_KEY) {
-    console.error("A valid INFURA_KEY must be provided in config.js");
+    console.error("A valid INFURA_KEY must be provided in config.ts");
     process.exit(1);
   }
-
-  return `https://${network}.infura.io/v3/${conf.INFURA_KEY}`
+  return `https://${network}.infura.io/v3/${conf.INFURA_KEY}`;
 }
 
 function hdWallet() {
   if (!conf.MNEMONIC) {
-    console.error("A valid MNEMONIC must be provided in config.js");
+    console.error("A valid MNEMONIC must be provided in config.ts");
     process.exit(1);
-  } 
-
-  return {
-      mnemonic: conf.MNEMONIC,
-      path: "m/44'/60'/0'/0",
-      initialIndex: 0,
-      count: 20,
-      passphrase: "",
   }
+  return {
+    mnemonic: conf.MNEMONIC,
+    path: "m/44'/60'/0'/0",
+    initialIndex: 0,
+    count: 20,
+    passphrase: ""
+  };
 }
 
-export default config;
+export default hardhatConfig;

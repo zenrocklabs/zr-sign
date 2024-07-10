@@ -2,12 +2,11 @@
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
 
 pragma solidity 0.8.19;
-import { ReentrancyGuardUpgradeable } from "../ReentrancyGuardUpgradeable.sol";
 import { Sign } from "./Sign.sol";
 import { ZrSignTypes } from "../libraries/zr/ZrSignTypes.sol";
 import { IZrSign } from "../interfaces/zr/IZrSign.sol";
 
-contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
+contract ZrSign is Sign, IZrSign {
     using ZrSignTypes for ZrSignTypes.ChainInfo;
 
     bytes32 public constant FEE_ROLE =
@@ -86,24 +85,28 @@ contract ZrSign is Sign, ReentrancyGuardUpgradeable, IZrSign {
      * @dev Sets the base fee required for initiating operations within the contract. This function is
      * restricted to roles managing tokenomics to adjust economic parameters as necessary.
      *
-     * @param newBaseFee The new base fee to be set for contract operations.
+     * @param newMPCFee The new base fee to be set for contract operations.
      */
-    function setupBaseFee(
-        uint256 newBaseFee
+    function updateMPCFee(uint256 newMPCFee) external virtual override onlyRole(FEE_ROLE) {
+        _updateMPCFee(newMPCFee);
+    }
+
+    function updateRespGas(uint256 newRespGas) external virtual override onlyRole(FEE_ROLE) {
+        _updateRespGas(newRespGas);
+    }
+
+    function updateRespGasBuffer(
+        uint256 newRespGasBuffer
     ) external virtual override onlyRole(FEE_ROLE) {
-        _setupBaseFee(newBaseFee);
+        _updateRespGasBuff(newRespGasBuffer);
     }
 
     /**
      * @dev Allows the withdrawal of collected fees from the contract. This operation is restricted to
      * roles designated with financial management responsibilities.
      */
-    function withdrawFees() external virtual override onlyRole(FEE_ROLE) nonReentrant {
-        address payable sender = payable(_msgSender());
-        uint256 amount = address(this).balance;
-        (bool success, ) = sender.call{ value: amount }("");
-        require(success, "Failed to send Ether"); // Checks if the low-level call was successful
-        emit FeeWithdraw(sender, amount);
+    function withdrawMPCFees() external virtual override onlyRole(FEE_ROLE) nonReentrant {
+        _withdrawMPCFees();
     }
 
     function pause() external virtual onlyRole(PAUSER_ROLE) {
