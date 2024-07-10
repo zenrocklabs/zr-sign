@@ -22,6 +22,14 @@ const hardhatConfig: HardhatUserConfig = {
     sepolia: {
       url: infuraProvider("sepolia"),
       accounts: hdWallet()
+    },
+    polygon: {
+      url: infuraProvider("polygon-amoy"),
+      accounts: hdWallet()
+    },
+    avalancheFuji: {
+      url: infuraProvider("avalanche-fuji"),
+      accounts: hdWallet()
     }
   },
   etherscan: {
@@ -29,6 +37,7 @@ const hardhatConfig: HardhatUserConfig = {
       sepolia: conf.ETHERSCAN_KEY,
       avalancheFujiTestnet: conf.AVALANCHE_KEY,
       polygonMumbai: conf.POLYGON_KEY,
+      polygon: conf.POLYGON_KEY,
       optimism: conf.OPTIMISM_KEY,
       arbitrum: conf.ARBITRUM_KEY
     }

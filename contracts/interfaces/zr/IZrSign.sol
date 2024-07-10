@@ -8,19 +8,14 @@ import { ISign } from "./ISign.sol";
 interface IZrSign is ISign {
     function initializeV1() external;
 
-    function walletTypeIdConfig(
-        uint256 purpose,
-        uint256 coinType,
-        bool support
-    ) external;
+    function walletTypeIdConfig(uint256 purpose, uint256 coinType, bool support) external;
 
     function chainIdConfig(bytes32 walletTypeId, string memory caip, bool support) external;
 
-    function setupBaseFee(uint256 newBaseFee) external;
-
-    function withdrawFees() external;
-
-    event FeeWithdraw(address indexed to, uint256 indexed amount);
+    function updateMPCFee(uint256 newMPCFee) external;
+    function updateRespGas(uint256 newRespGas) external;
+    function updateRespGasBuffer(uint256 newRespGasBuffer) external;
+    function withdrawMPCFees() external;
 
     event WalletTypeIdSupport(
         uint256 indexed purpose,
