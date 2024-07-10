@@ -1,0 +1,12 @@
+The contract 0x0533D45f99CB971f3d4093F77958F23C152eA574 has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://testnet.snowtrace.io/address/0x0533D45f99CB971f3d4093F77958F23C152eA574#code
+
+Successfully submitted source code for contract
+contracts/zr/ZrSign.sol:ZrSign at 0xcFaD1da231d058E3C3Bc1740744A0Fce0930caC4
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract ZrSign on the block explorer.
+https://testnet.snowtrace.io/address/0xcFaD1da231d058E3C3Bc1740744A0Fce0930caC4#code
+
+The contract 0x9cB4046eC25aC37D42dE5808C6B515ceAadA34b6 has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://testnet.snowtrace.io/address/0x9cB4046eC25aC37D42dE5808C6B515ceAadA34b6#code
