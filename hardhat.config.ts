@@ -18,16 +18,19 @@ const hardhatConfig: HardhatUserConfig = {
     }
   },
   networks: {
-    hardhat: {},
+    hardhat: {
+      initialBaseFeePerGas: 1000000000, // 1 Gwei
+      gasPrice: 1000000000
+    },
     sepolia: {
       url: infuraProvider("sepolia"),
       accounts: hdWallet()
     },
-    polygon: {
+    polygon_amoy: {
       url: infuraProvider("polygon-amoy"),
       accounts: hdWallet()
     },
-    avalancheFuji: {
+    avalanche_fuji: {
       url: infuraProvider("avalanche-fuji"),
       accounts: hdWallet()
     }
@@ -37,7 +40,7 @@ const hardhatConfig: HardhatUserConfig = {
       sepolia: conf.ETHERSCAN_KEY,
       avalancheFujiTestnet: conf.AVALANCHE_KEY,
       polygonMumbai: conf.POLYGON_KEY,
-      polygon: conf.POLYGON_KEY,
+      polygonAmoy: conf.POLYGON_KEY,
       optimism: conf.OPTIMISM_KEY,
       arbitrum: conf.ARBITRUM_KEY
     }
