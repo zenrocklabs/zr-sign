@@ -4,8 +4,11 @@ import ZrSignModule from "./zr-sign";
 const evmWalletTypeId = "0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a";
 const chainIdSepolia = "eip155:11155111";
 const chainIdAmoy = "eip155:80002";
-const chainIdBlast = "eip155:168587773";
-const chainIdScroll = "eip155:534351";
+const chainIdFuji = "eip155:43113";
+const chainIdArbSepolia = "eip155:421614";
+const chainIdBinanceTest = "eip155:97";
+const chainIdBaseSepolia = "eip155:84532";
+const chainIdOptimismSepolia = "eip155:11155420";
 
 const mpcAddress = "0xF9F59E34fe863918be62EE585364Eb46ed7142DD";
 
@@ -31,13 +34,26 @@ export default buildModule("ZrSignInit", (m) => {
         after: [callWalletTypeIdConfig],
     });
 
-    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdBlast, true], {
-        id: "chainConfigBlast",
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdFuji, true], {
+        id: "chainConfigFuji",
         after: [callWalletTypeIdConfig],
     });
 
-    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdScroll, true], {
-        id: "chainConfigScroll",
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdArbSepolia, true], {
+        id: "chainConfigArbSepolia",
+        after: [callWalletTypeIdConfig],
+    });
+
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdBinanceTest, true], {
+        id: "chainConfigBinanceTest",
+        after: [callWalletTypeIdConfig],
+    });
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdBaseSepolia, true], {
+        id: "chainConfigBaseSepolia",
+        after: [callWalletTypeIdConfig],
+    });
+    m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdOptimismSepolia, true], {
+        id: "chainConfigOptimismSepolia",
         after: [callWalletTypeIdConfig],
     });
     console.log("Chain IDs configured.");
