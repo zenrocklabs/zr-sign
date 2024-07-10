@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.19;
 
-import { Lib_RLPWriter } from "./Lib_RLPWriter.sol";
+import { Lib_RLPWriter } from "../libraries/Lib_RLPWriter.sol";
 
-import { SignTypes } from "./zr/SignTypes.sol";
+import { SignTypes } from "../libraries/zr/SignTypes.sol";
 
 import { IZrSign } from "../interfaces/zr/IZrSign.sol";
 
@@ -15,30 +15,39 @@ abstract contract ZrSignConnect {
     using Lib_RLPWriter for uint256;
     using Lib_RLPWriter for bytes;
     using Lib_RLPWriter for bytes[];
+    using SignTypes for SignTypes.SimpleTx;
 
-    uint8 private constant ADDRESS_REGISTERED = 1;
-    uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
+    uint8 private constant WALLET_REQUESTED = 1;
+    uint8 private constant WALLET_REGISTERED = 2;
+
+    uint8 private constant OPTIONS_MONITORING = 2;
+
+    uint8 private constant SIG_REQ_IN_PROGRESS = 1;
+    uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
 
     // Address of the ZrSign contract
-    address internal constant ZR_SIGN_ADDRESS =
-        payable(address(0xF6B22AcbA6D4b2887B36387ebDD81D17887aD652)); // ZrSign Sepolia address
+    address payable internal immutable ZR_SIGN_ADDRESS;
 
     // The wallet type for EVM-based wallets
     bytes32 internal constant EVM_WALLET_TYPE =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a;
 
+    constructor(address payable zrSignAddress) {
+        ZR_SIGN_ADDRESS = zrSignAddress;
+    }
+
     // Request a new EVM wallet
     // This function uses the ZrSign contract to request a new public key for the EVM wallet type
-    function requestNewEVMWallet(bool monitor) public virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getBaseFee();
+    function requestNewEVMWallet(uint8 options) public virtual {
+        (, , uint256 totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(options, 0);
 
         // Prepare the parameters for the key request
         SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
             walletTypeId: EVM_WALLET_TYPE,
-            monitoring: monitor
+            options: options
         });
 
-        IZrSign(ZR_SIGN_ADDRESS).zrKeyReq{ value: _fee }(params);
+        IZrSign(ZR_SIGN_ADDRESS).zrKeyReq{ value: totalFee }(params);
     }
 
     // Request a signature for a specific hash
@@ -54,7 +63,12 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes32 payloadHash
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        (, , uint totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(
+            walletTypeId,
+            address(this),
+            walletIndex,
+            0
+        );
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -64,7 +78,7 @@ abstract contract ZrSignConnect {
             broadcast: false // Not used in this context
         });
 
-        IZrSign(ZR_SIGN_ADDRESS).zrSignHash{ value: _fee }(params);
+        IZrSign(ZR_SIGN_ADDRESS).zrSignHash{ value: totalFee }(params);
     }
 
     // Request a signature for a specific data payload
@@ -80,7 +94,12 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes memory payload
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        (, , uint totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(
+            walletTypeId,
+            address(this),
+            walletIndex,
+            0
+        );
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -90,7 +109,7 @@ abstract contract ZrSignConnect {
             broadcast: false
         });
 
-        IZrSign(ZR_SIGN_ADDRESS).zrSignData{ value: _fee }(params);
+        IZrSign(ZR_SIGN_ADDRESS).zrSignData{ value: totalFee }(params);
     }
 
     // Request a signature for a transaction
@@ -109,7 +128,43 @@ abstract contract ZrSignConnect {
         bytes memory payload,
         bool broadcast
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        (, , uint totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(
+            walletTypeId,
+            address(this),
+            walletIndex,
+            0
+        );
+        SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
+            walletTypeId: walletTypeId,
+            walletIndex: walletIndex,
+            dstChainId: dstChainId,
+            payload: payload,
+            broadcast: broadcast
+        });
+
+        IZrSign(ZR_SIGN_ADDRESS).zrSignTx{ value: totalFee }(params);
+    }
+
+    function reqSignForSimpleTx(
+        bytes32 walletTypeId,
+        uint256 walletIndex,
+        bytes32 dstChainId,
+        string memory to,
+        uint256 value,
+        bytes memory data,
+        bool broadcast
+    ) internal virtual {
+        (, , uint totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(
+            walletTypeId,
+            address(this),
+            walletIndex,
+            0
+        );
+        bytes memory payload = SignTypes.SimpleTx({
+            to: to,
+            value: value,
+            data: data
+        }).encodeSimple();
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -119,18 +174,7 @@ abstract contract ZrSignConnect {
             broadcast: broadcast
         });
 
-        IZrSign(ZR_SIGN_ADDRESS).zrSignTx{ value: _fee }(params);
-    }
-
-    function calculateFeeForSign(
-        bytes32 walletTypeId,
-        uint256 walletIndex
-    ) public view returns (uint256) {
-        uint256 totalFee = IZrSign(ZR_SIGN_ADDRESS).getBaseFee();
-        if (IZrSign(ZR_SIGN_ADDRESS).getWalletRegistry(walletTypeId, walletIndex, msg.sender) == ADDRESS_REGISTERED_WITH_MONITORING) {
-            totalFee = totalFee * ADDRESS_REGISTERED_WITH_MONITORING;
-        }
-        return totalFee;
+        IZrSign(ZR_SIGN_ADDRESS).zrSignTx{ value: totalFee }(params);
     }
 
     // Get all EVM wallets associated with this contract
