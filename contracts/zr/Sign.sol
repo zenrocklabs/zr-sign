@@ -363,10 +363,10 @@ abstract contract Sign is
      * initial parameter preparations made in this public-facing function.
      */
     function estimateFee(
-        uint8 monitoring,
+        uint8 options,
         uint256 value
     ) external view virtual override returns (uint256, uint256, uint256) {
-        return _estimateFee(monitoring, value);
+        return _estimateFee(options, value);
     }
 
     /**
@@ -707,13 +707,14 @@ abstract contract Sign is
         uint256 netRespFee,
         address recipient
     ) internal nonReentrant {
+        uint256 lowLevelCallGas = 7210;
         uint256 gasPrice = tx.gasprice;
         address payable sender = payable(_msgSender());
 
-        uint256 gasUsed = (initialGas - gasleft()) + 7210;
+        uint256 gasUsed = (initialGas - gasleft()) + lowLevelCallGas;
         uint256 actualGasCost = gasUsed * gasPrice;
-        if (netRespFee > actualGasCost) {
-            actualGasCost = (gasUsed + 7210) * gasPrice;
+        if ((netRespFee + lowLevelCallGas) > actualGasCost) {
+            actualGasCost = (gasUsed + lowLevelCallGas) * gasPrice;
             (bool successGasCost, ) = sender.call{ value: actualGasCost }(""); // 7210 gas
             require(successGasCost, "Transfer failed");
 
@@ -902,11 +903,11 @@ abstract contract Sign is
     function _estimateFee(
         uint8 options,
         uint256 value
-    ) internal view virtual returns (uint256 mpc, uint256 netResp, uint256 total) {
+    ) internal view returns (uint256 mpc, uint256 netResp, uint256 total) {
         SignStorage storage $ = _getSignStorage();
         mpc = $._mpcFee * options;
 
-        netResp = ($._respGas * block.basefee * $._respGasPriceBuffer) / 100;
+        netResp = ($._respGas * ((block.basefee * $._respGasPriceBuffer) / 100));
 
         total = mpc + netResp;
 
