@@ -94,7 +94,7 @@ describe("ZrSign Fees", function () {
                 const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                 const payload = abi.encode(
                     ["bytes32", "bytes32", "address", "uint256", "string", "bool"],
-                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, false]
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, 0]
                 );
 
                 const plBytes = ethers.toBeArray(payload);
@@ -107,7 +107,7 @@ describe("ZrSign Fees", function () {
                     walletIndex: 0,
                     wallet: mockMPC.address,
                     options: 1,
-                    monitoring: false,
+                    monitoring: 0,
                     authSignature: sig
                 };
                 await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);

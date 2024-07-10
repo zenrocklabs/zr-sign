@@ -33,6 +33,22 @@ const hardhatConfig: HardhatUserConfig = {
     avalanche_fuji: {
       url: infuraProvider("avalanche-fuji"),
       accounts: hdWallet()
+    },
+    arb_sepolia: {
+      url: infuraProvider("arbitrum-sepolia"),
+      accounts: hdWallet()
+    },
+    binance_testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      accounts: hdWallet()
+    },
+    base_sepolia: {
+      url: infuraProvider("base-sepolia"),
+      accounts: hdWallet()
+    },
+    optimism_sepolia: {
+      url: infuraProvider("optimism-sepolia"),
+      accounts: hdWallet()
     }
   },
   etherscan: {
@@ -42,7 +58,9 @@ const hardhatConfig: HardhatUserConfig = {
       polygonMumbai: conf.POLYGON_KEY,
       polygonAmoy: conf.POLYGON_KEY,
       optimism: conf.OPTIMISM_KEY,
-      arbitrum: conf.ARBITRUM_KEY
+      arbitrum: conf.ARBITRUM_KEY,
+      binance: conf.BINANCE_KEY,
+      base: conf.BASE_KEY
     }
   },
   paths: {
