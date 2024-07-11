@@ -43,7 +43,7 @@ const hardhatConfig: HardhatUserConfig = {
       accounts: hdWallet()
     },
     base_sepolia: {
-      url: infuraProvider("base-sepolia"),
+      url: `https://frosty-bold-owl.base-sepolia.quiknode.pro/${conf.BASE_RPC_KEY}/`,
       accounts: hdWallet()
     },
     optimism_sepolia: {
@@ -60,7 +60,7 @@ const hardhatConfig: HardhatUserConfig = {
       optimism_sepolia: conf.OPTIMISM_KEY,
       arbitrumSepolia: conf.ARBITRUM_KEY,
       binance: conf.BINANCE_KEY,
-      base: conf.BASE_KEY
+      baseSepolia: conf.BASE_KEY
     },
     customChains: [
       {
