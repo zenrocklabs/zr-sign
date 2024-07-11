@@ -10,7 +10,7 @@ const chainIdBinanceTest = "eip155:97";
 const chainIdBaseSepolia = "eip155:84532";
 const chainIdOptimismSepolia = "eip155:11155420";
 
-const mpcAddress = "0xF9F59E34fe863918be62EE585364Eb46ed7142DD";
+const mpcAddress = "0xC8bf26D92A218d47cC8e4d0D69759310c20605D3";
 
 export default buildModule("ZrSignInit", (m) => {
     const { ZrSignTypes, ZrSignImpl, ZrSignProxy } = m.useModule(ZrSignModule);
