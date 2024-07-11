@@ -39,7 +39,7 @@ const hardhatConfig: HardhatUserConfig = {
       accounts: hdWallet()
     },
     binance_testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      url: `https://young-falling-diagram.bsc-testnet.quiknode.pro/${conf.BINANCE_RPC_KEY}/`,
       accounts: hdWallet()
     },
     base_sepolia: {
@@ -59,7 +59,7 @@ const hardhatConfig: HardhatUserConfig = {
       polygonAmoy: conf.POLYGON_KEY,
       optimism_sepolia: conf.OPTIMISM_KEY,
       arbitrumSepolia: conf.ARBITRUM_KEY,
-      binance: conf.BINANCE_KEY,
+      bscTestnet: conf.BINANCE_KEY,
       baseSepolia: conf.BASE_KEY
     },
     customChains: [
