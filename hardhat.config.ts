@@ -57,11 +57,21 @@ const hardhatConfig: HardhatUserConfig = {
       avalancheFujiTestnet: conf.AVALANCHE_KEY,
       polygonMumbai: conf.POLYGON_KEY,
       polygonAmoy: conf.POLYGON_KEY,
-      optimism: conf.OPTIMISM_KEY,
+      optimism_sepolia: conf.OPTIMISM_KEY,
       arbitrumSepolia: conf.ARBITRUM_KEY,
       binance: conf.BINANCE_KEY,
       base: conf.BASE_KEY
-    }
+    },
+    customChains: [
+      {
+        network: "optimism_sepolia",
+        chainId: 11155420,
+        urls: {
+          apiURL: "https://api-sepolia-optimistic.etherscan.io/api",
+          browserURL: "https://sepolia-optimism.etherscan.io"
+        }
+      }
+    ]
   },
   paths: {
     sources: "./contracts",
