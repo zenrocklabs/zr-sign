@@ -59,8 +59,6 @@ abstract contract Sign is
 
     error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
 
-    error RequestUnderPriced(uint256 actual, uint256 sent);
-
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
 
@@ -545,9 +543,6 @@ abstract contract Sign is
         }
 
         if ($.walletReg[walletId].status >= WALLET_REQUESTED) {
-            if ($.walletReg[walletId].value < netResp) {
-                revert RequestUnderPriced($.walletReg[walletId].value, netResp);
-            }
             uint256 currentValue = $.walletReg[walletId].value;
             $.walletReg[walletId].value = currentValue + totalFee;
         } else {
