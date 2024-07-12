@@ -59,6 +59,8 @@ abstract contract Sign is
 
     error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
 
+    error InvalidOptions();
+
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
 
@@ -871,6 +873,11 @@ abstract contract Sign is
         SignStorage storage $ = _getSignStorage();
 
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+
+        if ($.walletReg[walletId].options == 0) {
+            revert InvalidOptions();
+        }
+
         mpc = $._mpcFee * $.walletReg[walletId].options;
 
         netResp = ($._respGas * ((block.basefee * $._respGasPriceBuffer) / 100));
@@ -899,6 +906,10 @@ abstract contract Sign is
         uint8 options,
         uint256 value
     ) internal view returns (uint256 mpc, uint256 netResp, uint256 total) {
+        if (options == 0) {
+            revert InvalidOptions();
+        }
+        
         SignStorage storage $ = _getSignStorage();
         mpc = $._mpcFee * options;
 
