@@ -33,6 +33,22 @@ const hardhatConfig: HardhatUserConfig = {
     avalanche_fuji: {
       url: infuraProvider("avalanche-fuji"),
       accounts: hdWallet()
+    },
+    arb_sepolia: {
+      url: infuraProvider("arbitrum-sepolia"),
+      accounts: hdWallet()
+    },
+    binance_testnet: {
+      url: `https://young-falling-diagram.bsc-testnet.quiknode.pro/${conf.BINANCE_RPC_KEY}/`,
+      accounts: hdWallet()
+    },
+    base_sepolia: {
+      url: `https://frosty-bold-owl.base-sepolia.quiknode.pro/${conf.BASE_RPC_KEY}/`,
+      accounts: hdWallet()
+    },
+    optimism_sepolia: {
+      url: infuraProvider("optimism-sepolia"),
+      accounts: hdWallet()
     }
   },
   etherscan: {
@@ -41,9 +57,21 @@ const hardhatConfig: HardhatUserConfig = {
       avalancheFujiTestnet: conf.AVALANCHE_KEY,
       polygonMumbai: conf.POLYGON_KEY,
       polygonAmoy: conf.POLYGON_KEY,
-      optimism: conf.OPTIMISM_KEY,
-      arbitrum: conf.ARBITRUM_KEY
-    }
+      optimism_sepolia: conf.OPTIMISM_KEY,
+      arbitrumSepolia: conf.ARBITRUM_KEY,
+      bscTestnet: conf.BINANCE_KEY,
+      baseSepolia: conf.BASE_KEY
+    },
+    customChains: [
+      {
+        network: "optimism_sepolia",
+        chainId: 11155420,
+        urls: {
+          apiURL: "https://api-sepolia-optimistic.etherscan.io/api",
+          browserURL: "https://sepolia-optimism.etherscan.io"
+        }
+      }
+    ]
   },
   paths: {
     sources: "./contracts",
