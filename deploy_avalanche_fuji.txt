@@ -1,0 +1,13 @@
+ZrSignInit module initialization completed.
+The contract 0xa2f96900CFB87a645bE0f7d9ab5967c0B0BDcAbd has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://testnet.snowtrace.io/address/0xa2f96900CFB87a645bE0f7d9ab5967c0B0BDcAbd#code
+
+Successfully submitted source code for contract
+contracts/zr/ZrSign.sol:ZrSign at 0xEa5A454c64793c8CDbF7F433a188e71Bf9FdE20b
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract ZrSign on the block explorer.
+https://testnet.snowtrace.io/address/0xEa5A454c64793c8CDbF7F433a188e71Bf9FdE20b#code
+
+The contract 0xA7AdF06a1D3a2CA827D4EddA96a1520054713E1c has already been verified on the block explorer. If you're trying to verify a partially verified contract, please use the --force flag.
+https://testnet.snowtrace.io/address/0xA7AdF06a1D3a2CA827D4EddA96a1520054713E1c#code
