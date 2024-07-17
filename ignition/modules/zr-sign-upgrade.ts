@@ -22,8 +22,10 @@ export default buildModule("ZrSignUpgrade", (m) => {
   ], {
     libraries: {
       ZrSignTypes: ZrSignTypes,
-    }
+    },
+    after: [ZrSignImpl]
   });
+  
   console.log("ZrSignUpgrader implementation contract deployed successfully.");
 
   return { ZrSignTypes, ZrSignImpl, ZrSignUpgrader };
