@@ -43,19 +43,12 @@ async function main() {
         logToFile("ZrSign implementation contract verified");
 
         // Verify ZrSignProxy contract
-        const ZrSignContract = require("../artifacts/contracts/zr/ZrSign.sol/ZrSign.json");
-        const ZrSignInterface = new hre.ethers.Interface(ZrSignContract.abi);
-        const initData = ZrSignInterface.encodeFunctionData("initializeV1", []);
-
-        const accounts = await hre.ethers.getSigners();
-        const proxyAdminAddress = await accounts[1].getAddress();
-
         await hre.run("verify:verify", {
             address: await ZrSignUpgrader.getAddress(),
             constructorArguments: [
+                "0x797cFF3F2964D3654fa8507eBCF9B72F57fd926A",
                 await ZrSignImpl.getAddress(),
-                proxyAdminAddress,
-                initData,
+                "0xBAd71b1C8A807Cf8f9EC050B18b69C3f34076f0b",
             ],
         });
         logToFile("ZrSign proxy contract verified");

@@ -4,7 +4,6 @@
 pragma solidity 0.8.19;
 
 import { ZrProxy } from "../proxy/ZrProxy.sol";
-import { ZrSign } from "./ZrSign.sol";
 
 contract ZrSignUpgrader {
     ZrProxy internal _proxy;
@@ -17,14 +16,15 @@ contract ZrSignUpgrader {
         _;
     }
 
-    constructor(ZrProxy proxy, address newProxyAdmin) {
+    constructor(ZrProxy proxy, address implementation, address newProxyAdmin) {
         _proxy = proxy;
-        _implementation = address(new ZrSign());
+        _implementation = implementation;
         _newProxyAdmin = newProxyAdmin;
         _owner = msg.sender;
     }
 
     function upgrade() external onlyOwner {
+
         _proxy.upgradeTo(_implementation);
 
         // Transfer proxy admin role
@@ -39,13 +39,12 @@ contract ZrSignUpgrader {
     }
 
     /**
-     * @notice The address of the new ZrSign implementation contract
+     * @notice The address of the FiatTokenV2 implementation contract
      * @return Contract address
      */
     function implementation() external view returns (address) {
         return _implementation;
     }
-
     /**
      * @notice The address to which the proxy admin role will be transferred
      * after the upgrade is completed
