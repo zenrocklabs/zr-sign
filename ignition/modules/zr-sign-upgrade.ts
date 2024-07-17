@@ -16,16 +16,13 @@ export default buildModule("ZrSignUpgrade", (m) => {
 
   console.log("Deploying ZrSignUpgrader implementation contract...");
   const ZrSignUpgrader = m.contract("ZrSignUpgrader", [
-    "0x821980CB2Ee9Fb4FdF72FBc0bF5E4a728976D515",  // Proxy address
+    "0x797cFF3F2964D3654fa8507eBCF9B72F57fd926A",  // Proxy address
     ZrSignImpl,
-    "0x38322F1b884FF097E953f2eE68d2059416D7Caf2"  // New proxy admin address
+    "0xBAd71b1C8A807Cf8f9EC050B18b69C3f34076f0b"  // New proxy admin address
   ], {
-    libraries: {
-      ZrSignTypes: ZrSignTypes,
-    },
     after: [ZrSignImpl]
   });
-  
+
   console.log("ZrSignUpgrader implementation contract deployed successfully.");
 
   return { ZrSignTypes, ZrSignImpl, ZrSignUpgrader };
