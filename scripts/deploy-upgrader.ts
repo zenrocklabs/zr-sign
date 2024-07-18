@@ -46,7 +46,7 @@ async function main() {
         await hre.run("verify:verify", {
             address: await ZrSignUpgrader.getAddress(),
             constructorArguments: [
-                "0x797cFF3F2964D3654fa8507eBCF9B72F57fd926A",
+                "0xA7AdF06a1D3a2CA827D4EddA96a1520054713E1c",
                 await ZrSignImpl.getAddress(),
                 "0xBAd71b1C8A807Cf8f9EC050B18b69C3f34076f0b",
             ],
