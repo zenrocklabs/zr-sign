@@ -1,0 +1,6 @@
+Deploying on polygon_amoy network...
+Deployment successful.
+Verifying contracts...
+ZrSignTypes contract verified
+ZrSign implementation contract verified
+ZrSign proxy contract verified
