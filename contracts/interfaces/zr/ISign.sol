@@ -45,7 +45,7 @@ interface ISign is IAccessControl {
     ) external view returns (uint256 mpc, uint256 netResp, uint256 total);
 
     function estimateFee(
-        uint8 monitoring,
+        uint8 options,
         uint256 value
     ) external view returns (uint256 mpc, uint256 netResp, uint256 total);
 
