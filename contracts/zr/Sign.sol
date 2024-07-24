@@ -318,7 +318,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     function estimateFee(uint8 options) external view virtual override returns (uint256) {
-        _estimateFee(options);
+        return _estimateFee(options);
     }
 
     /**
