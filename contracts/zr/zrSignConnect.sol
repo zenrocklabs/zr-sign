@@ -174,7 +174,7 @@ abstract contract ZrSignConnect {
             broadcast: broadcast
         });
 
-        IZrSign(ZR_SIGN_ADDRESS).zrSignTx{ value: totalFee }(params);
+        IZrSign(ZR_SIGN_ADDRESS).zrSignSimpleTx{ value: totalFee }(params);
     }
 
     // Get all EVM wallets associated with this contract
