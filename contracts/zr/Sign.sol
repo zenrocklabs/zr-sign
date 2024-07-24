@@ -59,7 +59,7 @@ abstract contract Sign is
 
     error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
 
-    error InvalidOptions();
+    error InvalidOptions(uint8 option);
 
     error OwnableInvalidOwner(address owner);
     error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
@@ -528,7 +528,9 @@ abstract contract Sign is
      * have been met.
      */
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
-        require(params.options >= 1, "_zrKeyReq:options should be greater than 0");
+        if (params.options == 0) {
+            revert InvalidOptions(params.options);
+        }
         SignStorage storage $ = _getSignStorage();
 
         bytes32 userWorkspaceId = _getUserWorkspaceId(params.walletTypeId, _msgSender());
@@ -875,7 +877,7 @@ abstract contract Sign is
         bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
 
         if ($.walletReg[walletId].options == 0) {
-            revert InvalidOptions();
+            revert InvalidOptions($.walletReg[walletId].options);
         }
 
         mpc = $._mpcFee * $.walletReg[walletId].options;
@@ -907,9 +909,9 @@ abstract contract Sign is
         uint256 value
     ) internal view returns (uint256 mpc, uint256 netResp, uint256 total) {
         if (options == 0) {
-            revert InvalidOptions();
+            revert InvalidOptions(options);
         }
-        
+
         SignStorage storage $ = _getSignStorage();
         mpc = $._mpcFee * options;
 
