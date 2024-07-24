@@ -320,6 +320,18 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function estimateFee(uint8 options) external view virtual override returns (uint256) {
         return _estimateFee(options);
     }
+    /**
+     * @dev See the internal function `_estimateFee` for the core implementation details of fee estimation.
+     * This reference is provided to highlight where the detailed logic and calculations occur following the
+     * initial parameter preparations made in this public-facing function.
+     */
+    function estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) external view virtual override returns (uint256) {
+        return _estimateFee(walletTypeId, owner, walletIndex);
+    }
 
     /**
      * @dev Returns the version of the contract as a uint256. This is typically used to manage upgrades
@@ -423,6 +435,33 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
 
         return mpc;
     }
+    /**
+     * @dev Internal function to estimate the fee required for a request. This function calculates the
+     * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
+     *
+     * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
+     * @param owner The address of the wallet owner.
+     * @param walletIndex The index of the wallet within the owner's list of wallets.
+     * @return mpc The fee related to MPC.
+     */
+    function _estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) internal view virtual returns (uint256 mpc) {
+        SignStorage storage $ = _getSignStorage();
+
+        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
+
+        if ($.walletRegistry[walletId] == 0) {
+            revert InvalidOptions($.walletRegistry[walletId]);
+        }
+
+        mpc = $._mpcFee * $.walletRegistry[walletId];
+
+        return mpc;
+    }
+
     /**
      * @dev Sets the base fee for operations within the contract. This fee is required for key or signature requests
      * and can be updated to reflect changes in operational or network costs.

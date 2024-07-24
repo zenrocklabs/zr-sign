@@ -15,6 +15,7 @@ abstract contract ZrSignConnect {
     using Lib_RLPWriter for uint256;
     using Lib_RLPWriter for bytes;
     using Lib_RLPWriter for bytes[];
+    using SignTypes for SignTypes.SimpleTx;
 
     uint8 private constant ADDRESS_REGISTERED = 1;
     uint8 private constant ADDRESS_REGISTERED_WITH_MONITORING = 2;
@@ -29,13 +30,13 @@ abstract contract ZrSignConnect {
 
     // Request a new EVM wallet
     // This function uses the ZrSign contract to request a new public key for the EVM wallet type
-    function requestNewEVMWallet(bool monitor) public virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getBaseFee();
+    function requestNewEVMWallet(uint8 options) public virtual {
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(options);
 
         // Prepare the parameters for the key request
         SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
             walletTypeId: EVM_WALLET_TYPE,
-            monitoring: monitor
+            options: options
         });
 
         IZrSign(ZR_SIGN_ADDRESS).zrKeyReq{ value: _fee }(params);
@@ -54,7 +55,7 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes32 payloadHash
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -80,7 +81,7 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes memory payload
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -109,7 +110,7 @@ abstract contract ZrSignConnect {
         bytes memory payload,
         bool broadcast
     ) internal virtual {
-        uint256 _fee = calculateFeeForSign(walletTypeId, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -122,31 +123,33 @@ abstract contract ZrSignConnect {
         IZrSign(ZR_SIGN_ADDRESS).zrSignTx{ value: _fee }(params);
     }
 
-    function calculateFeeForSign(
+    function reqSignForSimpleTx(
         bytes32 walletTypeId,
-        uint256 walletIndex
-    ) public view returns (uint256) {
-        uint256 totalFee = IZrSign(ZR_SIGN_ADDRESS).getBaseFee();
-        if (IZrSign(ZR_SIGN_ADDRESS).getWalletRegistry(walletTypeId, walletIndex, msg.sender) == ADDRESS_REGISTERED_WITH_MONITORING) {
-            totalFee = totalFee * ADDRESS_REGISTERED_WITH_MONITORING;
-        }
-        return totalFee;
-    }
+        uint256 walletIndex,
+        bytes32 dstChainId,
+        string memory to,
+        uint256 value,
+        bytes memory data,
+        bool broadcast
+    ) internal virtual {
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
 
-    // Get all EVM wallets associated with this contract
-    // This function uses the QSign contract to get all wallets of the EVM type that belong to this contract
-    function getEVMWallets() public view virtual returns (string[] memory) {
-        return IZrSign(ZR_SIGN_ADDRESS).getZrKeys(EVM_WALLET_TYPE, address(this));
-    }
+        bytes memory payload = SignTypes.SimpleTx({
+            to: to,
+            value: value,
+            data: data
+        }).encodeSimple();
 
-    // Get an EVM wallet associated with this contract by index
-    // This function uses the QSign contract to get a specific EVM wallet that belongs to this contract, specified by an index
-    // Parameter:
-    // - index: The index of the EVM wallet to be retrieved
-    function getEVMWallet(uint256 index) public view returns (string memory) {
-        return IZrSign(ZR_SIGN_ADDRESS).getZrKey(EVM_WALLET_TYPE, address(this), index);
-    }
+        SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
+            walletTypeId: walletTypeId,
+            walletIndex: walletIndex,
+            dstChainId: dstChainId,
+            payload: payload,
+            broadcast: broadcast
+        });
 
+        IZrSign(ZR_SIGN_ADDRESS).zrSignSimpleTx{ value: _fee }(params);
+    }
     // Encode data using RLP
     // This function uses the RLPWriter library to encode data into RLP format
     function rlpEncodeData(bytes memory data) internal virtual returns (bytes memory) {

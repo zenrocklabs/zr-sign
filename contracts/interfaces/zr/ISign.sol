@@ -37,15 +37,20 @@ interface ISign is IAccessControl {
         uint256 walletIndex,
         address owner
     ) external view returns (uint8);
-    function getMPCFee() external view returns (uint256);
 
     function getTraceId() external view returns (uint256);
 
-    function getBaseFee() external view returns (uint256);
+    function getMPCFee() external view returns (uint256);
 
     function getWalletTypeInfo(
         bytes32 walletTypeId
     ) external view returns (ZrSignTypes.ChainInfo memory);
+    
+    function estimateFee(
+        bytes32 walletTypeId,
+        address owner,
+        uint256 walletIndex
+    ) external view returns (uint256);
 
     function estimateFee(uint8 options) external view returns (uint256);
 
