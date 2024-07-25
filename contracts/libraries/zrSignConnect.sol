@@ -22,7 +22,7 @@ abstract contract ZrSignConnect {
 
     // Address of the ZrSign contract
     address internal constant ZR_SIGN_ADDRESS =
-        payable(address(0xF6B22AcbA6D4b2887B36387ebDD81D17887aD652)); // ZrSign Sepolia address
+        payable(address(0xA7AdF06a1D3a2CA827D4EddA96a1520054713E1c)); // ZrSign Sepolia address
 
     // The wallet type for EVM-based wallets
     bytes32 internal constant EVM_WALLET_TYPE =
@@ -30,13 +30,12 @@ abstract contract ZrSignConnect {
 
     // Request a new EVM wallet
     // This function uses the ZrSign contract to request a new public key for the EVM wallet type
-    function requestNewEVMWallet(uint8 options) public virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(options);
+    function requestNewEVMWallet() public virtual {
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getMPCFee();
 
         // Prepare the parameters for the key request
         SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
-            walletTypeId: EVM_WALLET_TYPE,
-            options: options
+            walletTypeId: EVM_WALLET_TYPE
         });
 
         IZrSign(ZR_SIGN_ADDRESS).zrKeyReq{ value: _fee }(params);
@@ -55,7 +54,7 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes32 payloadHash
     ) internal virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getMPCFee();
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -81,7 +80,7 @@ abstract contract ZrSignConnect {
         bytes32 dstChainId,
         bytes memory payload
     ) internal virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getMPCFee();
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -110,7 +109,7 @@ abstract contract ZrSignConnect {
         bytes memory payload,
         bool broadcast
     ) internal virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getMPCFee();
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
@@ -132,7 +131,7 @@ abstract contract ZrSignConnect {
         bytes memory data,
         bool broadcast
     ) internal virtual {
-        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).estimateFee(walletTypeId, msg.sender, walletIndex);
+        uint256 _fee = IZrSign(ZR_SIGN_ADDRESS).getMPCFee();
 
         bytes memory payload = SignTypes.SimpleTx({
             to: to,

@@ -6,7 +6,6 @@ pragma solidity 0.8.19;
 library SignTypes {
     struct ZrKeyReqParams {
         bytes32 walletTypeId;
-        uint8 options;
     }
 
     struct ZrKeyResParams {

@@ -27,17 +27,6 @@ interface ISign is IAccessControl {
         bytes32 chainId
     ) external view returns (bool);
 
-    function getWalletsIndex(
-        bytes32 walletTypeId,
-        address owner
-    ) external view returns (uint256);
-
-    function getWalletRegistry(
-        bytes32 walletTypeId,
-        uint256 walletIndex,
-        address owner
-    ) external view returns (uint8);
-
     function getTraceId() external view returns (uint256);
 
     function getMPCFee() external view returns (uint256);
@@ -45,26 +34,13 @@ interface ISign is IAccessControl {
     function getWalletTypeInfo(
         bytes32 walletTypeId
     ) external view returns (ZrSignTypes.ChainInfo memory);
-    
-    function estimateFee(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) external view returns (uint256);
-
-    function estimateFee(uint8 options) external view returns (uint256);
 
     // Event declaration
-    event ZrKeyRequest(
-        bytes32 indexed walletTypeId,
-        address indexed owner,
-        uint256 indexed walletIndex,
-        uint8 options
-    );
+    event ZrKeyRequest(bytes32 indexed walletTypeId, address indexed owner);
 
     event ZrSigRequest(
-        uint256 indexed traceId,
-        bytes32 indexed walletId,
+        bytes32 indexed traceId,
+        bytes32 srcChain,
         bytes32 walletTypeId,
         address owner,
         uint256 walletIndex,

@@ -23,8 +23,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     bytes32 public constant MPC_ROLE =
         0x1788cbbd6512d9aa8da743e475ce7cbbc6aea08b483d7cd0c00586734a4f6f14;
 
-    bytes32 public constant SRC_WALLET_TYPE_ID =
-        0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a; // keccak256(abi.encode(ChainInfo{purpose:44 coinType: 60}));
     bytes32 public constant SRC_CHAIN_ID =
         0xafa90c317deacd3d68f330a30f96e4fa7736e35e8d1426b2e1b2c04bce1c2fb7; //keccak256(abi.encodePacked("eip155:11155111"));
 
@@ -32,11 +30,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
     uint8 public constant IS_SIMPLE_TX_MASK = 1 << 3; // 0b1000 //Simple Tx => to, value, data.
-
-    uint8 private constant ADDRESS_REQUESTED = 1;
-    uint8 private constant ADDRESS_REQUESTED_WITH_MONITORING = 2;
-
-    uint8 private constant OPTIONS_MONITORING = 2;
 
     // Error declaration
     error InsufficientFee(uint256 requiredFee, uint256 providedFee);
@@ -47,17 +40,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     error ChainIdNotSupported(bytes32 walletTypeId, bytes32 chainId);
     error ChainIdAlreadySupported(bytes32 walletTypeId, bytes32 chainId);
 
-    error RequestNotFoundOrAlreadyProcessed(uint256 traceId);
-    error InvalidOptions(uint8 option);
-    error WalletNotRegisteredForMonitoring(uint256 walletIndex);
-
-    error OwnableInvalidOwner(address owner);
-    error IncorrectWalletIndex(uint256 expectedIndex, uint256 providedIndex);
-    error AddressAlreadyRegistered(string addr);
-    error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
-    error InvalidSignature(ECDSA.RecoverError error);
-    error InvalidWalletIndex(uint256 lastIndex, uint256 reqIndex);
 
     /// @custom:storage-location erc7201:zrsign.storage.Sign
     struct SignStorage {
@@ -65,8 +48,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         uint256 _traceId;
         mapping(bytes32 => ZrSignTypes.ChainInfo) supportedWalletTypes; //keccak256(abi.encode(ChainInfo)) => ChainInfo
         mapping(bytes32 => mapping(bytes32 => bool)) supportedChainIds;
-        mapping(bytes32 => uint256) walletsIndex;
-        mapping(bytes32 => uint8) walletRegistry;
     }
 
     // keccak256(abi.encode(uint256(keccak256("zrsign.storage.sign")) - 1)) & ~bytes32(uint256(0xff));
@@ -80,17 +61,10 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     }
 
     //****************************************************************** MODIFIERS ******************************************************************/
-
-    // Modifier to ensure the provided fee covers the base fee required by the contract
-    modifier monitoringGuard(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) {
+    modifier withFee() {
         SignStorage storage $ = _getSignStorage();
-        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
-        if ($.walletRegistry[walletId] < OPTIONS_MONITORING) {
-            revert WalletNotRegisteredForMonitoring(walletIndex);
+        if (msg.value < $._mpcFee) {
+            revert InsufficientFee({ requiredFee: $._mpcFee, providedFee: msg.value });
         }
         _;
     }
@@ -131,7 +105,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function zrKeyReq(
         SignTypes.ZrKeyReqParams memory params
-    ) external payable override walletTypeGuard(params.walletTypeId) {
+    ) external payable virtual override withFee walletTypeGuard(params.walletTypeId) {
         _zrKeyReq(params);
     }
 
@@ -154,17 +128,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        virtual
+        withFee
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
-        // Check payload length
-        if (params.payload.length != 32) {
-            revert InvalidPayloadLength({
-                expectedLength: 32,
-                actualLength: params.payload.length
-            });
-        }
-
         // Check broadcast flag
         if (params.broadcast) {
             revert BroadcastNotAllowed();
@@ -201,6 +169,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        virtual
+        withFee
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -241,6 +211,8 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        virtual
+        withFee
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
@@ -276,10 +248,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     )
         external
         payable
+        virtual
         override
+        withFee
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
-        monitoringGuard(params.walletTypeId, _msgSender(), params.walletIndex)
     {
         SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
             walletTypeId: params.walletTypeId,
@@ -315,22 +288,6 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
     function getMPCFee() external view virtual override returns (uint256) {
         SignStorage storage $ = _getSignStorage();
         return $._mpcFee;
-    }
-
-    function estimateFee(uint8 options) external view virtual override returns (uint256) {
-        return _estimateFee(options);
-    }
-    /**
-     * @dev See the internal function `_estimateFee` for the core implementation details of fee estimation.
-     * This reference is provided to highlight where the detailed logic and calculations occur following the
-     * initial parameter preparations made in this public-facing function.
-     */
-    function estimateFee(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) external view virtual override returns (uint256) {
-        return _estimateFee(walletTypeId, owner, walletIndex);
     }
 
     /**
@@ -389,78 +346,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
         return $.supportedChainIds[walletTypeId][chainId];
     }
 
-    function getWalletRegistry(
-        bytes32 walletTypeId,
-        uint256 walletIndex,
-        address owner
-    ) public view virtual override returns (uint8) {
-        SignStorage storage $ = _getSignStorage();
-        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
-        return $.walletRegistry[walletId];
-    }
-
-    function getWalletsIndex(
-        bytes32 walletTypeId,
-        address owner
-    ) public view virtual override returns (uint256) {
-        return _getWalletsIndex(walletTypeId, owner);
-    }
-
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
-
-    function _getWalletsIndex(
-        bytes32 walletTypeId,
-        address owner
-    ) internal view virtual returns (uint256) {
-        SignStorage storage $ = _getSignStorage();
-        bytes32 walletId = _getUserWorkspaceId(walletTypeId, owner);
-        return $.walletsIndex[walletId];
-    }
-
-    /**
-     * @dev Internal function to estimate the fee required for a request. This function calculates the
-     * total fee based on whether monitoring is included.
-     *
-     * @param options The flag specifying if monitoring is set or not.
-     * @return mpc The fee related to MPC.
-     */
-    function _estimateFee(uint8 options) internal view returns (uint256 mpc) {
-        if (options == 0) {
-            revert InvalidOptions(options);
-        }
-
-        SignStorage storage $ = _getSignStorage();
-
-        mpc = $._mpcFee * options;
-
-        return mpc;
-    }
-    /**
-     * @dev Internal function to estimate the fee required for a request. This function calculates the
-     * total fee based on whether the wallet is registered with monitoring and calculates the response fee.
-     *
-     * @param walletTypeId The type ID of the wallet for which the fee is being estimated.
-     * @param owner The address of the wallet owner.
-     * @param walletIndex The index of the wallet within the owner's list of wallets.
-     * @return mpc The fee related to MPC.
-     */
-    function _estimateFee(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) internal view virtual returns (uint256 mpc) {
-        SignStorage storage $ = _getSignStorage();
-
-        bytes32 walletId = _getWalletId(walletTypeId, owner, walletIndex);
-
-        if ($.walletRegistry[walletId] == 0) {
-            revert InvalidOptions($.walletRegistry[walletId]);
-        }
-
-        mpc = $._mpcFee * $.walletRegistry[walletId];
-
-        return mpc;
-    }
 
     /**
      * @dev Sets the base fee for operations within the contract. This fee is required for key or signature requests
@@ -490,20 +376,7 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      * have been met.
      */
     function _zrKeyReq(SignTypes.ZrKeyReqParams memory params) internal virtual whenNotPaused {
-        if (params.options == 0) {
-            revert InvalidOptions(params.options);
-        }
-        SignStorage storage $ = _getSignStorage();
-
-        uint256 walletIndex = _getWalletsIndex(params.walletTypeId, _msgSender());
-
-        bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
-
-        $.walletRegistry[walletId] = params.options;
-
-        $.walletsIndex[walletId] += 1;
-
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.options);
+        emit ZrKeyRequest(params.walletTypeId, _msgSender());
     }
 
     /**
@@ -520,23 +393,11 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
      */
     function _sigReq(SignTypes.SigReqParams memory params) internal virtual whenNotPaused {
         SignStorage storage $ = _getSignStorage();
-        bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), params.walletIndex);
-
-        uint256 mpcFee = _estimateFee($.walletRegistry[walletId]);
-        if (msg.value < mpcFee) {
-            revert InsufficientFee({ requiredFee: mpcFee, providedFee: msg.value });
-        }
-        uint256 walletIndex = _getWalletsIndex(params.walletTypeId, params.owner);
-
-        if (walletIndex < params.walletIndex) {
-            revert InvalidWalletIndex({ lastIndex: walletIndex, reqIndex: params.walletIndex });
-        }
-
         $._traceId = $._traceId + 1;
-
+        bytes32 h = keccak256(abi.encode($._traceId, SRC_CHAIN_ID));
         emit ZrSigRequest(
-            $._traceId,
-            walletId,
+            h,
+            SRC_CHAIN_ID,
             params.walletTypeId,
             params.owner,
             params.walletIndex,
@@ -605,30 +466,5 @@ abstract contract Sign is AccessControlUpgradeable, PausableUpgradeable, ISign {
             }
             delete $.supportedChainIds[walletTypeId][chainId];
         }
-    }
-
-    //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
-
-    /**
-     * @dev Generates a unique identifier for a wallet based on the wallet type and owner. This ID is used to
-     * index and retrieve wallet-related data in storage.
-     *
-     * @param walletTypeId The identifier for the wallet type.
-     * @param owner The owner's address for which the ID is being generated.
-     * @return id bytes32 A unique identifier derived from the chain ID, contract address, wallet type, and owner's address.
-     */
-    function _getUserWorkspaceId(
-        bytes32 walletTypeId,
-        address owner
-    ) internal view virtual returns (bytes32 id) {
-        return keccak256(abi.encode(block.chainid, address(this), walletTypeId, owner));
-    }
-
-    function _getWalletId(
-        bytes32 walletTypeId,
-        address owner,
-        uint256 walletIndex
-    ) public pure returns (bytes32) {
-        return keccak256(abi.encode(walletTypeId, owner, walletIndex));
     }
 }
