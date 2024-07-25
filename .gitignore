@@ -5,4 +5,5 @@ typechain-types
 package-lock.json
 cache
 config.js
+config.ts
 *.go
