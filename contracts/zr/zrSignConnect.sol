@@ -32,6 +32,9 @@ abstract contract ZrSignConnect {
     bytes32 internal constant EVM_WALLET_TYPE =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a;
 
+    bytes32 internal constant BTC_WALLET_TYPE =
+        0xe03615811ae25b894de73e643038c13c37f602dc1e17ff1a02e5854893f3bd5e;
+
     constructor(address payable zrSignAddress) {
         ZR_SIGN_ADDRESS = zrSignAddress;
     }
@@ -45,6 +48,20 @@ abstract contract ZrSignConnect {
         SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
             owner: address(this),
             walletTypeId: EVM_WALLET_TYPE,
+            options: options
+        });
+
+        IZrSign(ZR_SIGN_ADDRESS).zrKeyReq{ value: totalFee }(params);
+    }
+
+    // This function uses the ZrSign contract to request a new public key for the EVM wallet type
+    function requestNewBTCWallet(uint8 options) public payable virtual {
+        (, , uint256 totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(options, 0);
+
+        // Prepare the parameters for the key request
+        SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
+            owner: address(this),
+            walletTypeId: BTC_WALLET_TYPE,
             options: options
         });
 
@@ -130,11 +147,9 @@ abstract contract ZrSignConnect {
             walletIndex,
             0
         );
-        bytes memory payload = SignTypes.SimpleTx({
-            to: to,
-            value: value,
-            data: data
-        }).encodeSimple();
+        bytes memory payload = SignTypes
+            .SimpleTx({ to: to, value: value, data: data })
+            .encodeSimple();
 
         SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
             walletTypeId: walletTypeId,
