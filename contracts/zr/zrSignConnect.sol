@@ -43,6 +43,7 @@ abstract contract ZrSignConnect {
 
         // Prepare the parameters for the key request
         SignTypes.ZrKeyReqParams memory params = SignTypes.ZrKeyReqParams({
+            owner: address(this),
             walletTypeId: EVM_WALLET_TYPE,
             options: options
         });
@@ -79,37 +80,6 @@ abstract contract ZrSignConnect {
         });
 
         IZrSign(ZR_SIGN_ADDRESS).zrSignHash{ value: totalFee }(params);
-    }
-
-    // Request a signature for a specific data payload
-    // This function uses the ZrSign contract to request a signature for a specific data payload
-    // Parameters:
-    // - walletTypeId: The ID of the wallet type associated with the data payload
-    // - fromAccountIndex: The index of the public key to be used for signing
-    // - dstChainId: The ID of the destination chain
-    // - payload: The data payload to be signed
-    function reqSignForData(
-        bytes32 walletTypeId,
-        uint256 walletIndex,
-        bytes32 dstChainId,
-        bytes memory payload
-    ) internal virtual {
-        (, , uint totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(
-            walletTypeId,
-            address(this),
-            walletIndex,
-            0
-        );
-
-        SignTypes.ZrSignParams memory params = SignTypes.ZrSignParams({
-            walletTypeId: walletTypeId,
-            walletIndex: walletIndex,
-            dstChainId: dstChainId,
-            payload: payload,
-            broadcast: false
-        });
-
-        IZrSign(ZR_SIGN_ADDRESS).zrSignData{ value: totalFee }(params);
     }
 
     // Request a signature for a transaction

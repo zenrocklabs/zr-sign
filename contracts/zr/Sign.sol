@@ -36,9 +36,8 @@ abstract contract Sign is
         0xafa90c317deacd3d68f330a30f96e4fa7736e35e8d1426b2e1b2c04bce1c2fb7; //keccak256(abi.encodePacked("eip155:11155111"));
 
     uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
-    uint8 public constant IS_DATA_MASK = 1 << 1; // 0b0010
-    uint8 public constant IS_TX_MASK = 1 << 2; // 0b0100
-    uint8 public constant IS_SIMPLE_TX_MASK = 1 << 3; // 0b1000 //Simple Tx => to, value, data.
+    uint8 public constant IS_TX_MASK = 1 << 1; // 0b0010
+    uint8 public constant IS_SIMPLE_TX_MASK = 1 << 2; // 0b0100 //Simple Tx => to, value, data.
 
     uint8 private constant WALLET_REQUESTED = 1;
     uint8 private constant WALLET_REGISTERED = 2;
@@ -68,7 +67,6 @@ abstract contract Sign is
     error WalletNotRequested(string wallet);
     error WalletNotRegisteredForMonitoring(uint256 walletIndex);
 
-    error InvalidPayloadLength(uint256 expectedLength, uint256 actualLength);
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
     error InvalidAddressLength(uint256 minLength, uint256 actualLength);
@@ -194,14 +192,6 @@ abstract contract Sign is
         walletTypeGuard(params.walletTypeId)
         chainIdGuard(params.walletTypeId, params.dstChainId)
     {
-        // Check payload length
-        if (params.payload.length != 32) {
-            revert InvalidPayloadLength({
-                expectedLength: 32,
-                actualLength: params.payload.length
-            });
-        }
-
         // Check broadcast flag
         if (params.broadcast) {
             revert BroadcastNotAllowed(); // Broadcasting not relevant for a hash
@@ -214,46 +204,6 @@ abstract contract Sign is
             payload: params.payload,
             owner: _msgSender(),
             zrSignReqType: IS_HASH_MASK,
-            broadcast: params.broadcast
-        });
-
-        _sigReq(sigReqParams);
-    }
-
-    /**
-     * @dev External function to handle signing data operations. This function ensures the operation is
-     * compatible with the wallet type and the destination chain ID. It specifically prohibits the broadcasting
-     * of the data being signed, focusing solely on signing operations without dissemination.
-     *
-     * @param params Struct containing all necessary parameters for the data signing operation. This includes
-     * wallet type ID, destination chain ID, and payload, among others. The function also checks if broadcasting
-     * is attempted and reverts if so.
-     *
-     * @notice This function employs `walletTypeGuard` and `chainIdGuard` modifiers to ensure that the operation
-     * conforms to valid and supported wallet types and chain IDs. It is critical that the broadcast flag is not
-     * set, as broadcasting is not allowed in this function.
-     */
-    function zrSignData(
-        SignTypes.ZrSignParams memory params
-    )
-        external
-        payable
-        override
-        walletTypeGuard(params.walletTypeId)
-        chainIdGuard(params.walletTypeId, params.dstChainId)
-    {
-        // Check broadcast flag
-        if (params.broadcast) {
-            revert BroadcastNotAllowed(); // Broadcasting not relevant for data
-        }
-
-        SignTypes.SigReqParams memory sigReqParams = SignTypes.SigReqParams({
-            walletTypeId: params.walletTypeId,
-            walletIndex: params.walletIndex,
-            dstChainId: params.dstChainId,
-            payload: params.payload,
-            owner: _msgSender(),
-            zrSignReqType: IS_DATA_MASK,
             broadcast: params.broadcast
         });
 
@@ -533,9 +483,9 @@ abstract contract Sign is
         }
         SignStorage storage $ = _getSignStorage();
 
-        bytes32 userWorkspaceId = _getUserWorkspaceId(params.walletTypeId, _msgSender());
+        bytes32 userWorkspaceId = _getUserWorkspaceId(params.walletTypeId, params.owner);
         uint256 walletIndex = $.wallets[userWorkspaceId].length;
-        bytes32 walletId = _getWalletId(params.walletTypeId, _msgSender(), walletIndex);
+        bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, walletIndex);
 
         (uint256 mpc, uint256 netResp, uint256 totalFee) = _estimateFee(
             params.options,
@@ -558,7 +508,7 @@ abstract contract Sign is
             });
         }
 
-        emit ZrKeyRequest(params.walletTypeId, _msgSender(), walletIndex, params.options);
+        emit ZrKeyRequest(params.walletTypeId, params.owner, walletIndex, params.options);
     }
 
     /**
