@@ -38,7 +38,7 @@ abstract contract ZrSignConnect {
 
     // Request a new EVM wallet
     // This function uses the ZrSign contract to request a new public key for the EVM wallet type
-    function requestNewEVMWallet(uint8 options) public virtual {
+    function requestNewEVMWallet(uint8 options) public payable virtual {
         (, , uint256 totalFee) = IZrSign(ZR_SIGN_ADDRESS).estimateFee(options, 0);
 
         // Prepare the parameters for the key request
