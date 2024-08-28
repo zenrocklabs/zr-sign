@@ -1,24 +1,36 @@
 import hre from "hardhat";
 import ZrSignInitModule from "../ignition/modules/zr-sign-init";
+import fs from "fs";
 
 async function main() {
-    // Deploy the module
-    const result = await hre.ignition.deploy(ZrSignInitModule);
+    const networkName = hre.network.name;
+    const logFile = `deploy_${networkName}.txt`;
 
-    // Fetch the deployed contract addresses
-    const ZrSignTypes = result.ZrSignTypes;
-    const ZrSignImpl = result.ZrSignImpl;
-    const ZrSignProxy = result.ZrSignProxy;
-    console.log()
-    console.log("Verifying contracts...");
+    // Function to log messages to a file
+    function logToFile(message: string) {
+        fs.appendFileSync(logFile, message + '\n', 'utf8');
+    }
+
+    logToFile(`Deploying on ${networkName} network...`);
 
     try {
+        // Deploy the module
+        const result = await hre.ignition.deploy(ZrSignInitModule);
+        logToFile("Deployment successful.");
+
+        // Fetch the deployed contract addresses
+        const ZrSignTypes = result.ZrSignTypes;
+        const ZrSignImpl = result.ZrSignImpl;
+        const ZrSignProxy = result.ZrSignProxy;
+
+        logToFile("Verifying contracts...");
+
         // Verify ZrSignTypes contract
         await hre.run("verify:verify", {
             address: await ZrSignTypes.getAddress(),
             constructorArguments: [],
         });
-        console.log("ZrSignTypes contract verified");
+        logToFile("ZrSignTypes contract verified");
 
         // Verify ZrSignImpl contract
         await hre.run("verify:verify", {
@@ -28,10 +40,10 @@ async function main() {
                 ZrSignTypes: await ZrSignTypes.getAddress(),
             },
         });
-        console.log("ZrSign implementation contract verified");
+        logToFile("ZrSign implementation contract verified");
 
-        // Verify ZrProxy contract
-        const ZrSignContract = require("../artifacts/contracts//zr/ZrSign.sol/ZrSign.json");
+        // Verify ZrSignProxy contract
+        const ZrSignContract = require("../artifacts/contracts/zr/ZrSign.sol/ZrSign.json");
         const ZrSignInterface = new hre.ethers.Interface(ZrSignContract.abi);
         const initData = ZrSignInterface.encodeFunctionData("initializeV1", []);
 
@@ -46,13 +58,18 @@ async function main() {
                 initData,
             ],
         });
-        console.log("ZrSign proxy contract verified");
+        logToFile("ZrSign proxy contract verified");
+
     } catch (err) {
+        logToFile(`Verification failed: ${err}`);
         console.error("Verification failed", err);
     }
 }
 
 main().catch((error) => {
+    const networkName = hre.network.name;
+    const logFile = `deploy_${networkName}.txt`;
+    fs.appendFileSync(logFile, `Error: ${error.message}\n`, 'utf8');
     console.error(error);
     process.exitCode = 1;
 });

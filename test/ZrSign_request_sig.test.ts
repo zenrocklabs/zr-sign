@@ -72,7 +72,7 @@ describe("ZrSign Fees", function () {
                 await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAcc.address);
                 await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
 
-                await instance.ZrSignProxy.connect(feeAcc).setupBaseFee(baseFee);
+                await instance.ZrSignProxy.connect(feeAcc).updateMPCFee(baseFee);
                 await instance.ZrSignProxy.walletTypeIdConfig(
                     wt.purpose, wt.coinType, true
                 );
@@ -84,10 +84,17 @@ describe("ZrSign Fees", function () {
                     wtIdHash, chains.ETH_SEPOLIA_CAIP, true
                 );
 
+                // Perform the key request
+                const keyReqParams = {
+                    walletTypeId: supportedWalletType,
+                    options: 1,
+                };
+                await instance.ZrSignProxy.connect(user).zrKeyReq(keyReqParams, { value: baseFee });
+
                 const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                 const payload = abi.encode(
                     ["bytes32", "bytes32", "address", "uint256", "string", "bool"],
-                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, false]
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, 0]
                 );
 
                 const plBytes = ethers.toBeArray(payload);
@@ -99,7 +106,8 @@ describe("ZrSign Fees", function () {
                     owner: user.address,
                     walletIndex: 0,
                     wallet: mockMPC.address,
-                    monitoring: false,
+                    options: 1,
+                    monitoring: 0,
                     authSignature: sig
                 };
                 await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
@@ -239,33 +247,32 @@ describe("ZrSign Fees", function () {
                         payload: payloadHash,
                         broadcast: c.broadcast
                     };
-
                     let tx: any;
                     switch (c.flag) {
                         case IS_TX_MASK: {
                             tx = instance.ZrSignProxy.connect(c.caller).zrSignTx(
                                 signPayload, { value: c.baseFee }
                             );
-
+    
                             break;
                         }
                         case IS_HASH_MASK: {
                             tx = instance.ZrSignProxy.connect(c.caller).zrSignHash(
                                 signPayload, { value: c.baseFee }
                             );
-
+    
                             break;
                         }
                     }
-
+    
                     if (c.customError != null) {
                         await expect(tx).to.revertedWithCustomError(
                             instance.ZrSignProxy, c.customError.name
                         ).withArgs(...c.customError.params);
-
+    
                     } else if (c.panicError != null) {
                         await expect(tx).to.revertedWithPanic(c.panicError);
-
+    
                     } else {
                         await expect(tx).to.emit(instance.ZrSignProxy, "ZrSigRequest")
                             .withArgs(
@@ -284,5 +291,4 @@ describe("ZrSign Fees", function () {
             }
         });
     });
-
 });

@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
 
 library SignTypes {
     struct ZrKeyReqParams {
+        address owner;
         bytes32 walletTypeId;
         uint8 options;
     }
@@ -34,7 +35,7 @@ library SignTypes {
         uint256 walletIndex;
         bytes32 dstChainId;
         bytes payload; // For `zrSignHash`, this would be the hash converted to bytes
-        bool broadcast; // Relevant for `zrSignTx`, must be ignored for others
+        bool broadcast; // Relevant for `zrSignTx and zrSignSimpleTx`, must be ignored for others
     }
 
     struct SimpleTx {
