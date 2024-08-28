@@ -39,13 +39,13 @@ abstract contract Sign is
     uint8 public constant IS_TX_MASK = 1 << 1; // 0b0010
     uint8 public constant IS_SIMPLE_TX_MASK = 1 << 2; // 0b0100 //Simple Tx => to, value, data.
 
-    uint8 private constant WALLET_REQUESTED = 1;
-    uint8 private constant WALLET_REGISTERED = 2;
+    uint8 public constant WALLET_REQUESTED = 1;
+    uint8 public constant WALLET_REGISTERED = 2;
 
-    uint8 private constant OPTIONS_MONITORING = 2;
+    uint8 public constant OPTIONS_MONITORING = 2;
 
-    uint8 private constant SIG_REQ_IN_PROGRESS = 1;
-    uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
+    uint8 public constant SIG_REQ_IN_PROGRESS = 1;
+    uint8 public constant SIG_REQ_ALREADY_PROCESSED = 2;
 
     // Error declaration
     error InsufficientFee(uint256 requiredFee, uint256 providedFee);
@@ -66,6 +66,8 @@ abstract contract Sign is
     error WalletAlreadyRegistered(string wallet);
     error WalletNotRequested(string wallet);
     error WalletNotRegisteredForMonitoring(uint256 walletIndex);
+
+    error InvalidWalletIndex(uint256 walletIndex);
 
     error BroadcastNotAllowed();
     error InvalidSignature(ECDSA.RecoverError error);
@@ -464,6 +466,11 @@ abstract contract Sign is
         return $.walletReg[_getWalletId(walletTypeId, owner, walletIndex)];
     }
 
+    function getColletedFees() public view virtual returns (uint256) {
+        SignStorage storage $ = _getSignStorage();
+        return $._totalMPCFee;
+    }
+
     //****************************************************************** INTERNAL FUNCTIONS ******************************************************************/
 
     /**
@@ -592,11 +599,12 @@ abstract contract Sign is
 
         SignStorage storage $ = _getSignStorage();
 
-        _validateAddress(
-            _getWalletByIndex(params.walletTypeId, params.owner, params.walletIndex)
-        );
-
         bytes32 walletId = _getWalletId(params.walletTypeId, params.owner, params.walletIndex);
+        SignTypes.WalletRegistry memory reg = $.walletReg[walletId];
+
+        if (reg.status != WALLET_REGISTERED) {
+            revert InvalidWalletIndex(params.walletIndex);
+        }
 
         $._traceId = $._traceId + 1;
 
@@ -802,6 +810,7 @@ abstract contract Sign is
         emit RespGasPriceBufferUpdate($._respGasPriceBuffer, newRespGasPriceBuff);
         $._respGasPriceBuffer = newRespGasPriceBuff;
     }
+    
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
 
     /**
@@ -914,8 +923,6 @@ abstract contract Sign is
         return $.wallets[_getUserWorkspaceId(walletTypeId, owner)];
     }
 
-    //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
-
     /**
      * @dev Generates a unique identifier for a wallet based on the wallet type and owner. This ID is used to
      * index and retrieve wallet-related data in storage.
@@ -935,9 +942,14 @@ abstract contract Sign is
         bytes32 walletTypeId,
         address owner,
         uint256 walletIndex
-    ) internal pure virtual returns (bytes32) {
-        return keccak256(abi.encode(walletTypeId, owner, walletIndex));
+    ) internal view virtual returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(block.chainid, address(this), walletTypeId, owner, walletIndex)
+            );
     }
+
+    //****************************************************************** INTERNAL PURE FUNCTIONS ******************************************************************/
 
     /**
      * @dev Validates the address by checking its length. This function ensures that the address meets

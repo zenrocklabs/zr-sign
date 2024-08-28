@@ -1,6 +1,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import ZrSignModule from "./zr-sign";
 
+const btcWalletTypeId = "0xe03615811ae25b894de73e643038c13c37f602dc1e17ff1a02e5854893f3bd5e";
+const btcTestnetChainId = 'bip122:000000000933ea01ad0ee984209779ba';
+
 const evmWalletTypeId = "0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a";
 const chainIdSepolia = "eip155:11155111";
 const chainIdAmoy = "eip155:80002";
@@ -15,40 +18,49 @@ const mpcAddress = "0xC8bf26D92A218d47cC8e4d0D69759310c20605D3";
 export default buildModule("ZrSignInit", (m) => {
     const { ZrSignTypes, ZrSignImpl, ZrSignProxy } = m.useModule(ZrSignModule);
 
-    const callWalletTypeIdConfig = m.call(ZrSignProxy, "walletTypeIdConfig", [44, 60, true]);
+    const callEVMWalletTypeIdConfig = m.call(ZrSignProxy, "walletTypeIdConfig", [44, 60, true]);
 
     // Chain setup
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdSepolia, true], {
         id: "chainConfigSepolia",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
     
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdAmoy, true], {
         id: "chainConfigAmoy",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
 
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdFuji, true], {
         id: "chainConfigFuji",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
 
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdArbSepolia, true], {
         id: "chainConfigArbSepolia",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
 
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdBinanceTest, true], {
         id: "chainConfigBinanceTest",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdBaseSepolia, true], {
         id: "chainConfigBaseSepolia",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
     });
     m.call(ZrSignProxy, "chainIdConfig", [evmWalletTypeId, chainIdOptimismSepolia, true], {
         id: "chainConfigOptimismSepolia",
-        after: [callWalletTypeIdConfig],
+        after: [callEVMWalletTypeIdConfig],
+    });
+
+    const callBTCWalletTypeIdConfig = m.call(ZrSignProxy, "walletTypeIdConfig", [44, 1, true], {
+        id: "walletTypeIdConfigBTC",  // Unique ID assigned here
+    });
+    
+    m.call(ZrSignProxy, "chainIdConfig", [btcWalletTypeId, btcTestnetChainId, true], {
+        id: "chainConfigBtcTestnet",  // Make sure this ID is also unique
+        after: [callBTCWalletTypeIdConfig],
     });
 
     // Role setup
