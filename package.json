@@ -70,5 +70,8 @@
     "typescript": "^5.4.5",
     "web3": "^1.8.1",
     "web3-eth-contract": "^1.7.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

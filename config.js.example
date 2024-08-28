@@ -5,15 +5,16 @@ module.exports = {
   // INFURA API key
   INFURA_KEY: "",
 
-  QUICKNODE_ZK_POLYGON_KEY: ""
+  BASE_RPC_KEY: ""
+  BINANCE_RPC_KEY: ""
 
   // ETHERSCAN API key
-  ETHERSCAN_KEY: "",
+  QUICKNODE_ZK_POLYGON_KEY: "",
 
   // OPTIMISM API key
-  OPTIMISM_KEY: "",
+  ETHERSCAN_KEY: "",
 
-  QUICKNODE_KEY: "",
+  OPTIMISM_KEY: "",
 
   // ARBITRUM API key
   ARBITRUM_KEY: "",
@@ -21,8 +22,17 @@ module.exports = {
   // POLYGON API key
   POLYGON_KEY: "",
 
+  // ZK_POLYGON_KEY API key
+  ZK_POLYGON_KEY: "",
+
   // AVALANCHE API key
   AVALANCHE_KEY: "",
+
+  // BINANCE_KEY API key
+  BINANCE_KEY: "",
+
+  // BINANCE_KEY API key
+  BASE_KEY: "",
 
   // Proxy admin - can upgrade implementation contract
   PROXY_ADMIN_ADDRESS: "",
