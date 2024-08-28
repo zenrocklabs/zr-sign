@@ -17,26 +17,43 @@ abstract contract ZrSignConnect {
     using Lib_RLPWriter for bytes[];
     using SignTypes for SignTypes.SimpleTx;
 
-    uint8 private constant WALLET_REQUESTED = 1;
-    uint8 private constant WALLET_REGISTERED = 2;
+    uint8 public constant WALLET_REQUESTED = 1;
+    uint8 public constant WALLET_REGISTERED = 2;
 
-    uint8 private constant OPTIONS_MONITORING = 2;
+    uint8 public constant OPTIONS_MONITORING = 2;
 
-    uint8 private constant SIG_REQ_IN_PROGRESS = 1;
-    uint8 private constant SIG_REQ_ALREADY_PROCESSED = 2;
+    uint8 public constant SIG_REQ_IN_PROGRESS = 1;
+    uint8 public constant SIG_REQ_ALREADY_PROCESSED = 2;
 
     // Address of the ZrSign contract
-    address payable internal immutable ZR_SIGN_ADDRESS;
+    address payable public immutable ZR_SIGN_ADDRESS;
 
     // The wallet type for EVM-based wallets
-    bytes32 internal constant EVM_WALLET_TYPE =
+    bytes32 public constant EVM_WALLET_TYPE =
         0xe146c2986893c43af5ff396310220be92058fb9f4ce76b929b80ef0d5307100a;
 
-    bytes32 internal constant BTC_WALLET_TYPE =
+    bytes32 public constant BTC_WALLET_TYPE =
         0xe03615811ae25b894de73e643038c13c37f602dc1e17ff1a02e5854893f3bd5e;
+
+    // Event for logging when ether is received
+    event Received(address indexed sender, uint256 amount);
+
+    // Event for logging when the fallback function is called
+    event FallbackCalled(address indexed sender, uint256 amount, bytes data);
 
     constructor(address payable zrSignAddress) {
         ZR_SIGN_ADDRESS = zrSignAddress;
+    }
+
+    // Receive function is called when ether is sent to the contract with empty data
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
+    }
+
+    // Fallback function is called when ether is sent to the contract with non-empty data,
+    // or when a non-existent function is called
+    fallback() external payable {
+        emit FallbackCalled(msg.sender, msg.value, msg.data);
     }
 
     // Request a new EVM wallet
@@ -176,6 +193,19 @@ abstract contract ZrSignConnect {
         return IZrSign(ZR_SIGN_ADDRESS).getZrKey(EVM_WALLET_TYPE, address(this), index);
     }
 
+    // Get all EVM wallets associated with this contract
+    // This function uses the ZrSign contract to get all wallets of the EVM type that belong to this contract
+    function getBTCWallets() public view virtual returns (string[] memory) {
+        return IZrSign(ZR_SIGN_ADDRESS).getZrKeys(BTC_WALLET_TYPE, address(this));
+    }
+
+    // Get an EVM wallet associated with this contract by index
+    // This function uses the ZrSign contract to get a specific EVM wallet that belongs to this contract, specified by an index
+    // Parameter:
+    // - index: The index of the EVM wallet to be retrieved
+    function getBTCWallet(uint256 index) public view returns (string memory) {
+        return IZrSign(ZR_SIGN_ADDRESS).getZrKey(BTC_WALLET_TYPE, address(this), index);
+    }
     // Encode data using RLP
     // This function uses the RLPWriter library to encode data into RLP format
     function rlpEncodeData(bytes memory data) internal virtual returns (bytes memory) {
