@@ -30,8 +30,10 @@ const abi = ethers.AbiCoder.defaultAbiCoder();
 
 describe("ZrSign Resolve Signatures", function () {
 
-    const baseFee = ethers.parseUnits("80", "gwei");
-    const networkFee = ethers.parseUnits("4", "wei");
+    const mpcFee = ethers.parseUnits("1000000000000000", "wei");
+    const respGas = ethers.parseUnits("2000000", "wei");
+    const gasBuff = 120;
+    const gasTotalFee = ethers.parseUnits("100000000000000000", "wei");
     const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
 
     let instance: IgnitionModuleResultsTToEthersContracts<string, {
@@ -65,8 +67,10 @@ describe("ZrSign Resolve Signatures", function () {
 
                 await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAcc.address);
                 await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
+                await instance.ZrSignProxy.connect(feeAcc).updateMPCFee(mpcFee);
+                await instance.ZrSignProxy.connect(feeAcc).updateRespGas(respGas);
+                await instance.ZrSignProxy.connect(feeAcc).updateRespGasBuffer(gasBuff);
 
-                await instance.ZrSignProxy.connect(feeAcc).setupBaseFee(baseFee);
                 await instance.ZrSignProxy.walletTypeIdConfig(
                     wt.purpose, wt.coinType, true
                 );
@@ -77,11 +81,19 @@ describe("ZrSign Resolve Signatures", function () {
                 await instance.ZrSignProxy.chainIdConfig(
                     wtIdHash, chains.ETH_SEPOLIA_CAIP, true
                 );
+                const options = 1
+                const keyReqParams = {
+                    owner: user.address,
+                    walletTypeId: supportedWalletType,
+                    options: options,
+                };
+
+                await instance.ZrSignProxy.connect(user).zrKeyReq(keyReqParams, { value: gasTotalFee });
 
                 const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                 const payload = abi.encode(
-                    ["bytes32", "bytes32", "address", "uint256", "string", "bool"],
-                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, false]
+                    ["bytes32", "bytes32", "address", "uint256", "string", "uint256"],
+                    [chainId, supportedWalletType, user.address, 0, mockMPC.address, options]
                 );
 
                 const plBytes = ethers.toBeArray(payload);
@@ -92,12 +104,12 @@ describe("ZrSign Resolve Signatures", function () {
                     walletTypeId: supportedWalletType,
                     owner: user.address,
                     walletIndex: 0,
+                    options: options,
                     wallet: mockMPC.address,
-                    monitoring: false,
                     authSignature: sig
                 };
-
-                await instance.ZrSignProxy.connect(ovm).zrKeyRes(params);
+                const gasLimit = await instance.ZrSignProxy.getRespGas();
+                await instance.ZrSignProxy.connect(ovm).zrKeyRes(params, { gasLimit: gasLimit });
             });
 
             testCases = [
@@ -137,7 +149,7 @@ describe("ZrSign Resolve Signatures", function () {
                     panicError: null,
                     customError: {
                         name: "RequestNotFoundOrAlreadyProcessed",
-                        params: [1]
+                        params: [0]
                     }
                 },
 
@@ -175,33 +187,35 @@ describe("ZrSign Resolve Signatures", function () {
                         payload: payloadHash,
                         broadcast: c.broadcast
                     };
-
+                    const traceId = await instance.ZrSignProxy.getTraceId()
                     await instance.ZrSignProxy.connect(user).zrSignHash(
-                        signPayload, { value: baseFee }
+                        signPayload, { value: gasTotalFee }
                     );
 
                     const signature = await mockMPC.signMessage(ethers.toBeArray(payloadHash));
                     const chainId = await instance.ZrSignProxy.SRC_CHAIN_ID();
                     let resPayload = abi.encode(
-                        ["bytes32", "uint256", "bytes", "bytes", "bool"],
-                        [chainId, 1, metaData, signature, c.broadcast]
+                        ["bytes32", "uint256", "address", "bytes", "bytes", "bool"],
+                        [chainId, traceId, user.address, metaData, signature, c.broadcast]
                     )
 
                     const resolvePayloadHash = ethers.keccak256(ethers.toBeArray(resPayload));
                     const authSignature = await c.caller.signMessage(ethers.toBeArray(resolvePayloadHash));
 
                     const params = {
-                        traceId: 1,
+                        traceId: traceId,
+                        owner: user.address,
                         metaData: metaData,
                         signature: signature,
                         broadcast: c.broadcast,
                         authSignature: authSignature
                     };
+                    const gasLimit = await instance.ZrSignProxy.getRespGas();
 
-                    let resolveTx = instance.ZrSignProxy.connect(c.caller).zrSignRes(params);
+                    let resolveTx = instance.ZrSignProxy.connect(c.caller).zrSignRes(params, { gasLimit: gasLimit });
 
                     if (c.rerun) {
-                        resolveTx = instance.ZrSignProxy.connect(c.caller).zrSignRes(params);
+                        resolveTx = instance.ZrSignProxy.connect(c.caller).zrSignRes(params, { gasLimit: gasLimit });
                     }
 
                     if (c.customError != null) {
