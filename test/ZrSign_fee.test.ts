@@ -9,28 +9,28 @@ import { NamedArtifactContractDeploymentFuture, NamedArtifactContractAtFuture } 
 
 describe("ZrSign Fees", function () {
 
-    let instance: IgnitionModuleResultsTToEthersContracts<string, { 
-        ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">; 
-        ZrProxy: NamedArtifactContractDeploymentFuture<"ZrProxy">; 
-        ZrSignProxy: NamedArtifactContractAtFuture<"ZrSign">; 
+    let instance: IgnitionModuleResultsTToEthersContracts<string, {
+        ZrSignImpl: NamedArtifactContractDeploymentFuture<"ZrSign">;
+        ZrProxy: NamedArtifactContractDeploymentFuture<"ZrProxy">;
+        ZrSignProxy: NamedArtifactContractAtFuture<"ZrSign">;
     }>;
 
     let accounts: Array<HardhatEthersSigner> | any;
     let feeAccount: HardhatEthersSigner;
 
-    this.beforeAll(async() => {
+    this.beforeAll(async () => {
         accounts = await ethers.getSigners();
         feeAccount = accounts[8];
     });
 
-    this.beforeEach(async() => {
+    this.beforeEach(async () => {
         instance = await loadFixture(ZrSignProxyFixture);
-        
+
         await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAccount.address);
     });
 
     describe("Positive scenarios", async () => {
-        it("should setup base fee", async () => {
+        it("should update base fee", async () => {
             // Given
             let oldFee = await instance.ZrSignProxy.getMPCFee();
             let expectedFee = ethers.parseUnits("80", "gwei");
@@ -46,7 +46,7 @@ describe("ZrSign Fees", function () {
                 .withArgs(oldFee, expectedFee);
         });
 
-        it("should setup response gas", async () => {
+        it("should update response gas", async () => {
             // Given
             let oldRespGas = await instance.ZrSignProxy.getRespGas();
             let expectedRespGas = ethers.parseUnits("200000", "wei");
@@ -62,7 +62,7 @@ describe("ZrSign Fees", function () {
                 .withArgs(oldRespGas, expectedRespGas);
         });
 
-        it("should setup response gas price buffer", async () => {
+        it("should update response gas price buffer", async () => {
             // Given
             let oldRespGasPriceBuffer = await instance.ZrSignProxy.getRespGasPriceBuffer();
             let expectedRespGasPriceBuffer = 150;
@@ -79,7 +79,7 @@ describe("ZrSign Fees", function () {
         });
     });
 
-    describe("Negative scenarios", async () => { 
+    describe("Negative scenarios", async () => {
         it("should not setup base fee without role", async () => {
             // Given
             const regularAddress = accounts[1];

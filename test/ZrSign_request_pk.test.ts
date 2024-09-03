@@ -4,6 +4,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/src/signers
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { ZrSignProxyFixture } from "./shared/fixtures";
 import { ethers } from "hardhat";
+import hre from "hardhat";
 import { expect } from "chai";
 import * as roles from "./shared/roles";
 import * as helpers from "./shared/walletTypes";
@@ -16,10 +17,11 @@ let instance: IgnitionModuleResultsTToEthersContracts<string, {
 
 describe("ZrSign key request", function () {
     const supportedWalletType = helpers.EVM_CHAIN_TYPE_HASH;
-    const mpcFee = ethers.parseUnits("500000000000000", "wei");
-    const respGas = ethers.parseUnits("200000", "wei");
-    const gasBuff = 120;
-
+    const mpcFee = ethers.parseUnits("1000000000000000", "wei");
+    const respGas = ethers.parseUnits("2000000", "wei");
+    const gasBuff = BigInt(120);
+    const gasTotalFee = ethers.parseUnits("100000000000000000", "wei");
+    const defaultOptions = BigInt(1);
     let accounts: Array<HardhatEthersSigner> | any;
     let regularAddress: HardhatEthersSigner;
     let feeAddress: HardhatEthersSigner;
@@ -41,15 +43,6 @@ describe("ZrSign key request", function () {
         await instance.ZrSignProxy.walletTypeIdConfig(
             wt.purpose, wt.coinType, true
         );
-
-        // const currentMPCFee = await instance.ZrSignProxy.getMPCFee();
-        // console.log("Current MPC Fee:", currentMPCFee.toString());
-
-        // const currentRespGas = await instance.ZrSignProxy.getRespGas();
-        // console.log("Current Resp Gas:", currentRespGas.toString());
-
-        // const currentRespGasPriceBuffer = await instance.ZrSignProxy.getRespGasPriceBuffer();
-        // console.log("Current Resp Gas Price Buffer:", currentRespGasPriceBuffer.toString());
     });
 
     it("should request public key", async () => {
@@ -58,25 +51,9 @@ describe("ZrSign key request", function () {
             regularAddress.address
         );
 
-        const [mpcFee, netRespFee, totalFee] = await instance.ZrSignProxy.estimateFee(
-            1, 0
-        );
-        const currentMPCFee = await instance.ZrSignProxy.getMPCFee();
-        console.log("Current MPC Fee:", currentMPCFee.toString());
-
-        const currentRespGas = await instance.ZrSignProxy.getRespGas();
-        console.log("Current Resp Gas:", currentRespGas.toString());
-
-        const currentRespGasPriceBuffer = await instance.ZrSignProxy.getRespGasPriceBuffer();
-        console.log("Current Resp Gas Price Buffer:", currentRespGasPriceBuffer.toString());
-
-        console.log("Estimated MPC Fee:", mpcFee.toString());
-        console.log("Estimated Net Resp Fee:", netRespFee.toString());
-        console.log("Estimated Total Fee:", totalFee.toString());
-
         await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
-            { walletTypeId: supportedWalletType, options: 1 },
-            { value: totalFee }
+            { owner: regularAddress.address, walletTypeId: supportedWalletType, options: defaultOptions },
+            { value: gasTotalFee }
         )).to.emit(instance.ZrSignProxy, "ZrKeyRequest").withArgs(
             supportedWalletType,
             regularAddress.address,
@@ -101,18 +78,26 @@ describe("ZrSign key request", function () {
             walletTypeId: helpers.EVM_CHAIN_TYPE_HASH,
             customError: {
                 name: "InsufficientFee",
-                params: [ethers.parseUnits("80", "gwei"), ethers.parseUnits("30", "gwei")],
+                params: [ethers.toBigInt("1752547048000000"), ethers.parseUnits("30", "gwei")],
             }
         },
     ];
 
     for (let c of negativeTests) {
         it(`should not ${c.testName}`, async () => {
-            await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
-                { walletTypeId: c.walletTypeId, options: 1 },
-                { value: c.fee }
-            )).to.be.revertedWithCustomError(instance.ZrSignProxy, c.customError.name)
-                .withArgs(...c.customError.params);
+            if (c.customError.name === "InsufficientFee") {
+                await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
+                    { owner: regularAddress.address, walletTypeId: c.walletTypeId, options: defaultOptions },
+                    { value: c.fee }
+                )).to.be.revertedWithCustomError(instance.ZrSignProxy, c.customError.name)
+            } else {
+                await expect(instance.ZrSignProxy.connect(regularAddress).zrKeyReq(
+                    { owner: regularAddress.address, walletTypeId: c.walletTypeId, options: defaultOptions },
+                    { value: c.fee }
+                )).to.be.revertedWithCustomError(instance.ZrSignProxy, c.customError.name)
+                    .withArgs(...c.customError.params);
+
+            }
         });
     };
 

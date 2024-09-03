@@ -22,7 +22,15 @@ const hardhatConfig: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 1000000000, // 1 Gwei
-      gasPrice: 1000000000,
+      gasPrice: 1000000000,             // 1 Gwei
+      blockGasLimit: 30000000,
+      accounts: {
+        mnemonic: "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat", // ganache deterministic mnemonic
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20,
+        passphrase: "",
+      }
     },
     sepolia: {
       url: infuraProvider("sepolia"),
