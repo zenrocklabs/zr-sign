@@ -613,9 +613,9 @@ abstract contract Sign is
 
         $._totalMPCFee += mpc;
 
-        $._traceId = $._traceId + 1;
-
         emit ZrSigRequest($._traceId, walletId, params);
+        
+        $._traceId = $._traceId + 1;
     }
 
     /**
@@ -665,7 +665,7 @@ abstract contract Sign is
         uint256 lowLevelCallGas = 7210;
         uint256 gasPrice = tx.gasprice;
         address payable sender = payable(_msgSender());
-        
+
         uint256 gasUsed = (initialGas - gasleft()) + lowLevelCallGas;
         uint256 actualGasCost = gasUsed * gasPrice;
         if ((netRespFee + lowLevelCallGas) > actualGasCost) {
@@ -808,7 +808,7 @@ abstract contract Sign is
         emit RespGasPriceBufferUpdate($._respGasPriceBuffer, newRespGasPriceBuff);
         $._respGasPriceBuffer = newRespGasPriceBuff;
     }
-    
+
     //****************************************************************** INTERNAL VIEW FUNCTIONS ******************************************************************/
 
     /**
