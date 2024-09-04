@@ -606,14 +606,14 @@ abstract contract Sign is
             revert InvalidWalletIndex(params.walletIndex);
         }
 
-        $._traceId = $._traceId + 1;
-
         $.reqReg[$._traceId] = SignTypes.ReqRegistry({
             status: SIG_REQ_IN_PROGRESS,
             value: netResp
         });
 
         $._totalMPCFee += mpc;
+
+        $._traceId = $._traceId + 1;
 
         emit ZrSigRequest($._traceId, walletId, params);
     }
@@ -653,10 +653,8 @@ abstract contract Sign is
         $.reqReg[params.traceId].status = SIG_REQ_ALREADY_PROCESSED;
 
         emit ZrSigResolve(params.traceId, params.metaData, params.signature, params.broadcast);
-        uint256 netRespValue = $.reqReg[params.traceId].value;
-        uint256 initialGas = $._respGas;
         // Calculate the actual gas used and the refund amount
-        _processGasRefund(initialGas, netRespValue, params.owner);
+        _processGasRefund($._respGas, $.reqReg[params.traceId].value, params.owner);
     }
 
     function _processGasRefund(
@@ -667,7 +665,7 @@ abstract contract Sign is
         uint256 lowLevelCallGas = 7210;
         uint256 gasPrice = tx.gasprice;
         address payable sender = payable(_msgSender());
-
+        
         uint256 gasUsed = (initialGas - gasleft()) + lowLevelCallGas;
         uint256 actualGasCost = gasUsed * gasPrice;
         if ((netRespFee + lowLevelCallGas) > actualGasCost) {
