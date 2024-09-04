@@ -49,7 +49,7 @@ describe("ZrSign End to end tests", function () {
         instance = await loadFixture(ZrSignProxyFixture);
 
         await instance.ZrSignProxy.grantRole(roles.FEE_ROLE, feeAcc.address);
-        // await instance.ZrSignProxy.grantRole(roles.MPC_ROLE, ovm.address);
+        // await instance.ZrSßignProxy.grantRole(roles.MPC_ROLE, ovm.address);
 
     });
 
@@ -57,26 +57,21 @@ describe("ZrSign End to end tests", function () {
         describe("Fee tests:", function () {
             let testCases: Array<FeeTestCase> = [
                 {
-                    testName: "set base fee",
+                    testName: "update MPC fee",
                     fee: ethers.parseUnits("30", "gwei"),
                     caller: feeAcc
-                },
-                {
-                    testName: "change base fee",
-                    fee: ethers.parseUnits("80", "gwei"),
-                    caller: feeAcc
-                },
+                }
             ]
 
             for (let c of testCases) {
                 it(`should ${c.testName}`, async () => {
                     let fee, updatedFee;
                     let tx;
-                    fee = await instance.ZrSignProxy.getBaseFee();
-                    tx = await instance.ZrSignProxy.connect(c.caller).setupBaseFee(c.fee);
-                    updatedFee = await instance.ZrSignProxy.getBaseFee();
+                    fee = await instance.ZrSignProxy.getMPCFee();
+                    tx = await instance.ZrSignProxy.connect(c.caller).updateMPCFee(c.fee);
+                    updatedFee = await instance.ZrSignProxy.getMPCFee();
 
-                    await expect(tx).to.emit(instance.ZrSignProxy, "BaseFeeUpdate")
+                    await expect(tx).to.emit(instance.ZrSignProxy, "MPCFeeUpdate")
                         .withArgs(fee, updatedFee);
 
 
