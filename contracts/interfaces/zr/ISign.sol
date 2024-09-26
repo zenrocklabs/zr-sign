@@ -77,7 +77,8 @@ interface ISign is IAccessControl {
         bytes32 indexed walletTypeId,
         address indexed owner,
         uint256 indexed walletIndex,
-        uint8 options
+        uint8 options,
+        uint256 value
     );
 
     event ZrKeyResolve(
@@ -90,6 +91,7 @@ interface ISign is IAccessControl {
     event ZrSigRequest(
         uint256 indexed traceId,
         bytes32 indexed walletId,
+        uint256 value,
         SignTypes.SigReqParams params
     );
 
@@ -98,6 +100,11 @@ interface ISign is IAccessControl {
         bytes metaData,
         bytes signature,
         bool broadcast
+    );
+
+    event ZrSigGasRefund(
+        uint256 actualCost,
+        uint256 excessAmount
     );
 
     event MPCFeeUpdate(uint256 indexed oldBaseFee, uint256 indexed newBaseFee);
