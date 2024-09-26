@@ -58,7 +58,8 @@ describe("ZrSign key request", function () {
             supportedWalletType,
             regularAddress.address,
             wallets.length,
-            1
+            1,
+            gasTotalFee
         );
     });
 
