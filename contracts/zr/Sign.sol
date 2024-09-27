@@ -35,9 +35,9 @@ abstract contract Sign is
     bytes32 public constant SRC_CHAIN_ID =
         0xafa90c317deacd3d68f330a30f96e4fa7736e35e8d1426b2e1b2c04bce1c2fb7; //keccak256(abi.encodePacked("eip155:11155111"));
 
-    uint8 public constant IS_HASH_MASK = 1 << 0; // 0b0001
-    uint8 public constant IS_TX_MASK = 1 << 1; // 0b0010
-    uint8 public constant IS_SIMPLE_TX_MASK = 1 << 2; // 0b0100 //Simple Tx => to, value, data.
+    uint8 public constant IS_HASH_MASK = 0;
+    uint8 public constant IS_TX_MASK = 1;
+    uint8 public constant IS_SIMPLE_TX_MASK = 2;
 
     uint8 public constant WALLET_REQUESTED = 1;
     uint8 public constant WALLET_REGISTERED = 2;
@@ -515,7 +515,13 @@ abstract contract Sign is
             });
         }
 
-        emit ZrKeyRequest(params.walletTypeId, params.owner, walletIndex, params.options);
+        emit ZrKeyRequest(
+            params.walletTypeId,
+            params.owner,
+            walletIndex,
+            params.options,
+            msg.value
+        );
     }
 
     /**
@@ -613,8 +619,8 @@ abstract contract Sign is
 
         $._totalMPCFee += mpc;
 
-        emit ZrSigRequest($._traceId, walletId, params);
-        
+        emit ZrSigRequest($._traceId, walletId, msg.value, params);
+
         $._traceId = $._traceId + 1;
     }
 
@@ -665,21 +671,22 @@ abstract contract Sign is
         uint256 lowLevelCallGas = 7210;
         uint256 gasPrice = tx.gasprice;
         address payable sender = payable(_msgSender());
-
+        uint256 excessAmount = 0;
         uint256 gasUsed = (initialGas - gasleft()) + lowLevelCallGas;
         uint256 actualGasCost = gasUsed * gasPrice;
         if ((netRespFee + lowLevelCallGas) > actualGasCost) {
             actualGasCost = (gasUsed + lowLevelCallGas) * gasPrice;
-            (bool successGasCost, ) = sender.call{ value: actualGasCost }(""); // 7210 gas
+            (bool successGasCost, ) = sender.call{ value: actualGasCost }("");
             require(successGasCost, "Transfer failed");
 
-            uint256 excessAmount = netRespFee - actualGasCost;
-            (bool successExcess, ) = recipient.call{ value: excessAmount }(""); // 7210 gas
+            excessAmount = netRespFee - actualGasCost;
+            (bool successExcess, ) = recipient.call{ value: excessAmount }("");
             require(successExcess, "Transfer failed");
         } else {
-            (bool successNetResp, ) = sender.call{ value: netRespFee }(""); // 7210 gas
+            (bool successNetResp, ) = sender.call{ value: netRespFee }("");
             require(successNetResp, "Transfer failed");
         }
+        emit ZrSigGasRefund(actualGasCost, excessAmount);
     }
 
     /**
