@@ -59,7 +59,8 @@ describe("ZrSign key request", function () {
             regularAddress.address,
             wallets.length,
             1,
-            gasTotalFee
+            gasTotalFee,
+            mpcFee
         );
     });
 
