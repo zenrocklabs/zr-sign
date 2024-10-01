@@ -520,7 +520,8 @@ abstract contract Sign is
             params.owner,
             walletIndex,
             params.options,
-            msg.value
+            msg.value,
+            mpc
         );
     }
 
@@ -619,7 +620,7 @@ abstract contract Sign is
 
         $._totalMPCFee += mpc;
 
-        emit ZrSigRequest($._traceId, walletId, msg.value, params);
+        emit ZrSigRequest($._traceId, walletId, msg.value, mpc, params);
 
         $._traceId = $._traceId + 1;
     }
